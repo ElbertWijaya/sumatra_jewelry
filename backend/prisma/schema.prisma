@@ -37,6 +37,7 @@ model Stage {
   allowsReturn Boolean @default(false)
   subtasks    StageSubtask[]
   stageProgress OrderStageProgress[]
+  orderFiles  OrderFile[]
 }
 
 model StageSubtask {
