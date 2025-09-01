@@ -1,0 +1,5 @@
+﻿# File / folder yang tidak ingin ikut ke repo
+node_modules/
+.env
+*.log
+.vscode/
