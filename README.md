@@ -50,6 +50,11 @@ ORDER_CREATED, SUBTASK_COMPLETED, STAGE_COMPLETED, STAGE_STARTED, VERIFY_REQUEST
 4. `npm run dev`
 5. (Nanti seeding roles + stages).
 
+### API Endpoints
+- `GET /health` - Status server
+- `GET /sapa` - Salam ramah dalam bahasa Indonesia
+- `POST /sapa` - Respons interaktif untuk sapaan
+
 ## Lisensi
 Internal (harap jangan sebar tanpa izin).
 
