@@ -20,32 +20,32 @@ model AppUser {
 }
 
 model Order {
-  id           Int       @id @default(autoincrement())
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  code         String?   @unique
-  customerName String
-  customerAddress String?
-  customerPhone String?
-  jenisBarang   String    @map("jenis")
-  jenisEmas     String
-  warnaEmas     String
-  beratAkhir   Decimal?  @db.Decimal(10,2)
-  ongkos       Decimal   @db.Decimal(14,2) // legacy primary cost
-  hargaEmasPerGram Decimal? @db.Decimal(14,2)
-  hargaPerkiraan  Decimal? @db.Decimal(14,2)
-  hargaAkhir      Decimal? @db.Decimal(14,2)
-  dp           Decimal   @default(0) @db.Decimal(14,2)
-  tanggalJanjiJadi DateTime?
-  tanggalSelesai DateTime?
-  tanggalAmbil   DateTime?
-  catatan      String?
-  fotoDesainUrl String?
-  referensiGambarUrl String?
-  referensiGambarUrls Json? // array of strings
-  status       OrderStatus @default(DRAFT)
-  createdById  String?
-  updatedById  String?
+  id           Int       @id @default(autoincrement()) @map("id")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  code         String?   @unique @map("code")
+  customerName String    @map("customer_name")
+  customerAddress String? @map("customer_address")
+  customerPhone String?  @map("customer_phone")
+  jenisBarang   String   @map("item_type") // previously 'jenis'
+  jenisEmas     String   @map("gold_type")
+  warnaEmas     String   @map("gold_color")
+  beratAkhir    Decimal? @db.Decimal(10,2) @map("final_weight")
+  ongkos        Decimal  @db.Decimal(14,2) @map("labor_cost") // legacy primary cost
+  hargaEmasPerGram Decimal? @db.Decimal(14,2) @map("gold_price_per_gram")
+  hargaPerkiraan  Decimal? @db.Decimal(14,2) @map("estimated_price")
+  hargaAkhir      Decimal? @db.Decimal(14,2) @map("final_price")
+  dp            Decimal   @default(0) @db.Decimal(14,2) @map("down_payment")
+  tanggalJanjiJadi DateTime? @map("promised_date")
+  tanggalSelesai  DateTime? @map("completed_date")
+  tanggalAmbil    DateTime? @map("pickup_date")
+  catatan       String?  @map("notes")
+  fotoDesainUrl String?  @map("design_image_url")
+  referensiGambarUrl  String? @map("reference_image_url")
+  referensiGambarUrls Json?   @map("reference_image_urls") // array of strings
+  status        OrderStatus @default(DRAFT) @map("status")
+  createdById   String? @map("created_by_id")
+  updatedById   String? @map("updated_by_id")
   createdBy    AppUser? @relation("OrdersCreated", fields: [createdById], references: [id])
   updatedBy    AppUser? @relation("OrdersUpdated", fields: [updatedById], references: [id])
   histories    OrderHistory[]

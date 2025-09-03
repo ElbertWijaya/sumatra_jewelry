@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, ScrollView, StyleSheet, Alert, TouchableOpacity, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { api } from '../api/client';
+import * as ImageManipulator from 'expo-image-manipulator';
+import * as FileSystem from 'expo-file-system';
+import { api, API_URL } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { JENIS_BARANG_OPTIONS, JENIS_EMAS_OPTIONS, WARNA_EMAS_OPTIONS, BENTUK_BATU_OPTIONS, emptyStone, StoneFormItem } from '../constants/orderOptions';
@@ -297,8 +299,13 @@ const styles = StyleSheet.create({
 
 async function compressImage(uri: string) {
   try {
-    const ImageManipulator = await import('expo-image-manipulator');
-    const result = await ImageManipulator.manipulateAsync(uri, [], { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG });
+    const info: any = await FileSystem.getInfoAsync(uri);
+    const large = info && info.size && info.size > 4.8 * 1024 * 1024;
+    const result = await ImageManipulator.manipulateAsync(
+      uri,
+      [{ resize: { width: 1600 } }],
+      { compress: large ? 0.55 : 0.7, format: ImageManipulator.SaveFormat.JPEG }
+    );
     return result.uri;
   } catch { return uri; }
 }
@@ -310,8 +317,11 @@ async function uploadAsset(token: string, uri?: string, name?: string | null, mi
   const safeMime = mimeType && mimeType.includes('/') ? mimeType : 'image/jpeg';
   const finalUri = await compressImage(uri);
   const form = new FormData();
-  form.append('file', { uri: finalUri, name: name || 'design.jpg', type: safeMime } as any);
-  const uploadRes = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api'}/files/upload`, {
+  const ensuredName = name && /\./.test(name) ? name : `design_${Date.now()}.jpg`;
+  form.append('file', { uri: finalUri, name: ensuredName, type: safeMime } as any);
+  const endpoint = `${API_URL.replace(/\/$/, '')}/files/upload`; // API_URL already includes /api
+  // Debug: console.log('Uploading to', endpoint, finalUri, ensuredName, safeMime);
+  const uploadRes = await fetch(endpoint, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
     body: form as any,
