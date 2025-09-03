@@ -25,6 +25,20 @@ export class OrdersController {
       images: dto.referensiGambarUrls?.length || 0,
       stones: dto.stones?.length || 0,
     });
+    console.log('[CreateOrder] dto types:', {
+      customerName: typeof (dto as any).customerName,
+      jenisBarang: typeof (dto as any).jenisBarang,
+      jenisEmas: typeof (dto as any).jenisEmas,
+      warnaEmas: typeof (dto as any).warnaEmas,
+    });
+    if (!dto.customerName && (dto as any)['__rawFallbackChecked'] !== true) {
+      // Attempt to recover raw body if available
+      try {
+        const anyReq = (global as any).process?.domain?.req; // usually undefined; alternative not reliable in Nest
+        // We can't easily access req here without decorator, leave a note
+        console.warn('[CreateOrder] Required fields empty. Consider adding @Req() req param for deeper debug.');
+      } catch {}
+    }
     if (!dto.customerName || !dto.jenisBarang || !dto.jenisEmas || !dto.warnaEmas) {
       console.warn('[CreateOrder] Falsy required fields BEFORE service:', {
         customerName: dto.customerName,

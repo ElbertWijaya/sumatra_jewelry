@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import dayjs from 'dayjs';
+import * as dayjs from 'dayjs';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';

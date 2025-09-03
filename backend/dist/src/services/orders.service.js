@@ -11,7 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrdersService = void 0;
 const common_1 = require("@nestjs/common");
-const dayjs_1 = require("dayjs");
+const dayjs = require("dayjs");
 const prisma_service_1 = require("../prisma/prisma.service");
 let OrdersService = class OrdersService {
     constructor(prisma) {
@@ -45,7 +45,7 @@ let OrdersService = class OrdersService {
                 data: dto.stones.map(s => ({ orderId: order.id, bentuk: s.bentuk, jumlah: s.jumlah, berat: s.berat }))
             });
         }
-        const code = `TM-${(0, dayjs_1.default)(order.createdAt).format('YYYYMM')}-${String(order.id).padStart(4, '0')}`;
+        const code = `TM-${dayjs(order.createdAt).format('YYYYMM')}-${String(order.id).padStart(4, '0')}`;
         await this.prisma.order.update({ where: { id: order.id }, data: { code } });
         return this.findById(order.id);
     }

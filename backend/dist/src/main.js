@@ -13,6 +13,29 @@ async function bootstrap() {
     const compressionMw = (compressionLib.default || compressionLib)();
     app.use(compressionMw);
     app.setGlobalPrefix('api');
+    try {
+        const express = require('express');
+        app.use(express.json({ limit: '2mb', type: ['application/json', 'application/*+json'] }));
+        app.use(express.text({ type: 'text/plain', limit: '2mb' }));
+        app.use((req, _res, next) => {
+            if (req.method === 'POST' && req.url.startsWith('/api/orders') && typeof req.body === 'string') {
+                const raw = req.body.trim();
+                if ((raw.startsWith('{') && raw.endsWith('}')) || (raw.startsWith('[') && raw.endsWith(']'))) {
+                    try {
+                        req.body = JSON.parse(raw);
+                        console.log('[TEXT->JSON] Converted text/plain body. Keys:', Object.keys(req.body));
+                    }
+                    catch (e) {
+                        console.warn('[TEXT->JSON] parse failed:', e?.message);
+                    }
+                }
+            }
+            next();
+        });
+    }
+    catch (e) {
+        console.warn('express.json load failed (will rely on Nest default):', e?.message);
+    }
     app.use((req, _res, next) => {
         if (req.method === 'POST' && req.url.startsWith('/api/orders')) {
             console.log('[PRE-VALIDATION] URL:', req.url, 'Body type:', typeof req.body, 'Keys:', req.body && Object.keys(req.body || {}));
@@ -20,6 +43,17 @@ async function bootstrap() {
                 if (req.body && typeof req.body === 'object') {
                     const { customerName, jenisBarang, jenisEmas, warnaEmas } = req.body;
                     console.log('[PRE-VALIDATION] preview:', { customerName, jenisBarang, jenisEmas, warnaEmas });
+                    console.log('[PRE-VALIDATION] types:', {
+                        customerName: typeof customerName,
+                        jenisBarang: typeof jenisBarang,
+                        jenisEmas: typeof jenisEmas,
+                        warnaEmas: typeof warnaEmas,
+                    });
+                    try {
+                        const snapshot = JSON.stringify(req.body).slice(0, 500);
+                        console.log('[PRE-VALIDATION] raw json (truncated 500):', snapshot);
+                    }
+                    catch { }
                 }
             }
             catch { }

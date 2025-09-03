@@ -34,6 +34,19 @@ let OrdersController = class OrdersController {
             images: dto.referensiGambarUrls?.length || 0,
             stones: dto.stones?.length || 0,
         });
+        console.log('[CreateOrder] dto types:', {
+            customerName: typeof dto.customerName,
+            jenisBarang: typeof dto.jenisBarang,
+            jenisEmas: typeof dto.jenisEmas,
+            warnaEmas: typeof dto.warnaEmas,
+        });
+        if (!dto.customerName && dto['__rawFallbackChecked'] !== true) {
+            try {
+                const anyReq = global.process?.domain?.req;
+                console.warn('[CreateOrder] Required fields empty. Consider adding @Req() req param for deeper debug.');
+            }
+            catch { }
+        }
         if (!dto.customerName || !dto.jenisBarang || !dto.jenisEmas || !dto.warnaEmas) {
             console.warn('[CreateOrder] Falsy required fields BEFORE service:', {
                 customerName: dto.customerName,
