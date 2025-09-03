@@ -5,7 +5,8 @@ import { extname } from 'path';
 
 import { JwtAuthGuard } from '../security/jwt-auth.guard';
 
-function filenameEdit(_req: any, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) {
+// Use loose typing to avoid build issues if Multer types not loaded yet
+function filenameEdit(_req: any, file: any, cb: (error: Error | null, filename: string) => void) {
   const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
   cb(null, unique + extname(file.originalname || '.jpg'));
 }
@@ -22,7 +23,7 @@ export class FilesController {
       cb(null, true);
     }
   }))
-  upload(@UploadedFile() file?: Express.Multer.File) {
+  upload(@UploadedFile() file?: any) {
     if (!file) throw new BadRequestException('File missing');
     return { filename: file.filename, url: `/uploads/${file.filename}` };
   }

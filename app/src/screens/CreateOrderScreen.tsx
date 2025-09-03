@@ -27,7 +27,8 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   const [tanggalAmbil, setTanggalAmbil] = useState<string>('');
   const [showPicker, setShowPicker] = useState<null | { field: 'janji' | 'selesai' | 'ambil'; date: Date }>(null);
   // Image reference now via upload, store returned path
-  const [referensiGambarUrl, setReferensiGambarUrl] = useState('');
+  const [referensiGambarUrl, setReferensiGambarUrl] = useState(''); // legacy first image
+  const [referensiGambarUrls, setReferensiGambarUrls] = useState<string[]>([]); // multiple images
   const [uploading, setUploading] = useState(false);
   const [localImageName, setLocalImageName] = useState<string | null>(null);
   const [catatan, setCatatan] = useState('');
@@ -51,6 +52,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       tanggalSelesai: tanggalSelesai || undefined,
       tanggalAmbil: tanggalAmbil || undefined,
   referensiGambarUrl: referensiGambarUrl || undefined,
+  referensiGambarUrls: referensiGambarUrls.length ? referensiGambarUrls : undefined,
       catatan: catatan || undefined,
       stones: stones.length ? stones.filter(s => s.bentuk && s.jumlah).map(s => ({
         bentuk: s.bentuk,
@@ -62,7 +64,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       qc.invalidateQueries({ queryKey: ['orders'] });
       onCreated && onCreated();
       Alert.alert('Sukses', 'Order dibuat');
-  setCustomerName(''); setCustomerAddress(''); setCustomerPhone(''); setJenisBarang(''); setJenisEmas(''); setWarnaEmas(''); setOngkos(''); setDp(''); setHargaEmasPerGram(''); setHargaPerkiraan(''); setHargaAkhir(''); setTanggalJanjiJadi(''); setTanggalSelesai(''); setTanggalAmbil(''); setReferensiGambarUrl(''); setCatatan(''); setStones([]); setLocalImageName(null);
+  setCustomerName(''); setCustomerAddress(''); setCustomerPhone(''); setJenisBarang(''); setJenisEmas(''); setWarnaEmas(''); setOngkos(''); setDp(''); setHargaEmasPerGram(''); setHargaPerkiraan(''); setHargaAkhir(''); setTanggalJanjiJadi(''); setTanggalSelesai(''); setTanggalAmbil(''); setReferensiGambarUrl(''); setReferensiGambarUrls([]); setCatatan(''); setStones([]); setLocalImageName(null);
     },
     onError: (e: any) => Alert.alert('Error', e.message || 'Gagal membuat order'),
   });
@@ -120,12 +122,25 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       {/* Image Upload */}
   <View style={{ marginBottom:12 }}>
         <Text style={styles.label}>Referensi Gambar</Text>
-        {referensiGambarUrl && (
-          <View style={{ marginBottom:8, alignItems:'flex-start' }}>
-            <Image source={{ uri: referensiGambarUrl }} style={{ width:120, height:120, borderRadius:8, marginBottom:6 }} />
-            <Text style={{ fontSize:12, color:'#555' }}>{localImageName || referensiGambarUrl}</Text>
-          </View>
-        )}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom:8 }}>
+          {[referensiGambarUrl, ...referensiGambarUrls.filter(u=>u && u !== referensiGambarUrl)].filter(Boolean).map((url, i) => (
+            <View key={url + i} style={{ marginRight:10, alignItems:'center' }}>
+              <Image source={{ uri: url }} style={{ width:90, height:90, borderRadius:6 }} />
+              <TouchableOpacity onPress={()=>{
+                if(url === referensiGambarUrl){
+                  // remove primary
+                  const rest = referensiGambarUrls.filter(u=>u!==url);
+                  setReferensiGambarUrl(rest[0] || '');
+                  setReferensiGambarUrls(rest.slice(1));
+                } else {
+                  setReferensiGambarUrls(prev=> prev.filter(u=>u!==url));
+                }
+              }} style={{ marginTop:4 }}>
+                <Text style={{ fontSize:11, color:'#b22' }}>Hapus</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </ScrollView>
         <View style={{ flexDirection:'row', gap:8, flexWrap:'wrap' }}>
           <Button title={uploading ? 'Mengupload...' : referensiGambarUrl ? 'Ganti Foto' : 'Pilih dari Galeri'} onPress={async ()=>{
             if(uploading) return;
@@ -139,8 +154,12 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
               if(result.canceled){ setUploading(false); return; }
               const asset = result.assets[0];
               const uploaded = await uploadAsset(token, asset.uri, asset.fileName, asset.mimeType);
-        setReferensiGambarUrl(uploaded.url);
-        setLocalImageName(asset.fileName || 'design.jpg');
+              if(!referensiGambarUrl){
+                setReferensiGambarUrl(uploaded.url);
+              } else {
+                setReferensiGambarUrls(prev => [...prev, uploaded.url]);
+              }
+              setLocalImageName(asset.fileName || 'design.jpg');
             } catch(e:any){ Alert.alert('Upload gagal', e.message || 'Error'); }
             finally { setUploading(false); }
           }} />
@@ -156,12 +175,16 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
               if(result.canceled){ setUploading(false); return; }
               const asset = result.assets[0];
               const uploaded = await uploadAsset(token, asset.uri, asset.fileName, asset.mimeType);
-        setReferensiGambarUrl(uploaded.url);
-        setLocalImageName(asset.fileName || 'design.jpg');
+              if(!referensiGambarUrl){
+                setReferensiGambarUrl(uploaded.url);
+              } else {
+                setReferensiGambarUrls(prev => [...prev, uploaded.url]);
+              }
+              setLocalImageName(asset.fileName || 'design.jpg');
             } catch(e:any){ Alert.alert('Upload gagal', e.message || 'Error'); }
             finally { setUploading(false); }
           }} />
-          {referensiGambarUrl ? <Button title='Hapus' color='#b22' onPress={()=>{ setReferensiGambarUrl(''); setLocalImageName(null); }} /> : null}
+          {referensiGambarUrl ? <Button title='Reset Semua' color='#b22' onPress={()=>{ setReferensiGambarUrl(''); setReferensiGambarUrls([]); setLocalImageName(null); }} /> : null}
         </View>
       </View>
 

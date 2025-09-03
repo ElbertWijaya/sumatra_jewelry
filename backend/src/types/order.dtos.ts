@@ -25,6 +25,7 @@ export class CreateOrderDto {
   @IsOptional() @IsDateString() tanggalAmbil?: string;
   @IsOptional() @IsString() catatan?: string;
   @IsOptional() @IsString() referensiGambarUrl?: string;
+  @IsOptional() @IsArray() @IsString({ each: true }) referensiGambarUrls?: string[];
   @IsOptional() @IsNumber() hargaEmasPerGram?: number;
   @IsOptional() @IsNumber() hargaPerkiraan?: number;
   @IsOptional() @IsNumber() hargaAkhir?: number;

@@ -45,6 +45,7 @@ model Order {
   catatan      String?
   fotoDesainUrl String?
   referensiGambarUrl String?
+  referensiGambarUrls Json? // array of strings
   status       OrderStatus @default(DRAFT)
   createdById  String?
   updatedById  String?

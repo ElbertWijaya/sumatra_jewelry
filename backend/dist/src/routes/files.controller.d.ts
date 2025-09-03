@@ -1,5 +1,5 @@
 export declare class FilesController {
-    upload(file?: Express.Multer.File): {
+    upload(file?: any): {
         filename: any;
         url: string;
     };

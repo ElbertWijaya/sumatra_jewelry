@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import dayjs from 'dayjs';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { CreateOrderDto, UpdateOrderStatusDto, OrderStatusEnum } from '../types/order.dtos';
 
 @Injectable()
@@ -30,8 +31,10 @@ export class OrdersService {
         tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : undefined,
         tanggalAmbil: dto.tanggalAmbil ? new Date(dto.tanggalAmbil) : undefined,
         catatan: dto.catatan,
-        referensiGambarUrl: dto.referensiGambarUrl,
-        status: 'DRAFT',
+  referensiGambarUrl: dto.referensiGambarUrl || (dto.referensiGambarUrls && dto.referensiGambarUrls[0]) || null,
+  // Prisma client may not yet expose strong type for JSON field; cast when present
+  ...(dto.referensiGambarUrls ? { referensiGambarUrls: dto.referensiGambarUrls as unknown as Prisma.InputJsonValue } : {}),
+  status: 'DRAFT',
         createdById: userId,
         updatedById: userId,
       },
@@ -44,7 +47,7 @@ export class OrdersService {
     // generate code after id known: TM-YYYYMM-XXXX
     const code = `TM-${dayjs(order.createdAt).format('YYYYMM')}-${String(order.id).padStart(4, '0')}`;
     await this.prisma.order.update({ where: { id: order.id }, data: { code } });
-    return this.findById(order.id);
+  return this.findById(order.id);
   }
 
   async findAll(params: { status?: OrderStatusEnum }) {
