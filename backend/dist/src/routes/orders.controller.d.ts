@@ -23,8 +23,6 @@ export declare class OrdersController {
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        kadar: number | null;
-        beratTarget: import("@prisma/client/runtime/library").Decimal | null;
         beratAkhir: import("@prisma/client/runtime/library").Decimal | null;
         ongkos: import("@prisma/client/runtime/library").Decimal;
         hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;
@@ -62,8 +60,6 @@ export declare class OrdersController {
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        kadar: number | null;
-        beratTarget: import("@prisma/client/runtime/library").Decimal | null;
         beratAkhir: import("@prisma/client/runtime/library").Decimal | null;
         ongkos: import("@prisma/client/runtime/library").Decimal;
         hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;
@@ -101,8 +97,6 @@ export declare class OrdersController {
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        kadar: number | null;
-        beratTarget: import("@prisma/client/runtime/library").Decimal | null;
         beratAkhir: import("@prisma/client/runtime/library").Decimal | null;
         ongkos: import("@prisma/client/runtime/library").Decimal;
         hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;
@@ -142,8 +136,6 @@ export declare class OrdersController {
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        kadar: number | null;
-        beratTarget: import("@prisma/client/runtime/library").Decimal | null;
         beratAkhir: import("@prisma/client/runtime/library").Decimal | null;
         ongkos: import("@prisma/client/runtime/library").Decimal;
         hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;

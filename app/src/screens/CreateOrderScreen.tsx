@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, ScrollView, StyleSheet, Alert, TouchableOpacity, Image } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -148,13 +149,15 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
             if(!token){ Alert.alert('Tidak ada token','Silakan login ulang.'); return; }
             try {
               setUploading(true);
-              const ImagePicker = await import('expo-image-picker');
               const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-              if(!perm.granted){ Alert.alert('Izin ditolak'); setUploading(false); return; }
-              const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality:1, base64:false });
-              if(result.canceled){ setUploading(false); return; }
+              if(!perm.granted){ Alert.alert('Izin ditolak'); return; }
+              // NOTE: Removed mediaTypes & allowsMultipleSelection due to version mismatch causing cast error (expects array)
+              const result = await ImagePicker.launchImageLibraryAsync({
+                quality: 0.85,
+              });
+              if(result.canceled) return;
               const asset = result.assets[0];
-              const uploaded = await uploadAsset(token, asset.uri, asset.fileName, asset.mimeType);
+              const uploaded = await handleUploadAsset(token, asset.uri, asset.fileName, asset.mimeType);
               if(!referensiGambarUrl){
                 setReferensiGambarUrl(uploaded.url);
               } else {
@@ -169,13 +172,14 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
             if(!token){ Alert.alert('Tidak ada token','Silakan login ulang.'); return; }
             try {
               setUploading(true);
-              const ImagePicker = await import('expo-image-picker');
               const perm = await ImagePicker.requestCameraPermissionsAsync();
-              if(!perm.granted){ Alert.alert('Izin kamera ditolak'); setUploading(false); return; }
-              const result = await ImagePicker.launchCameraAsync({ quality:1, base64:false });
-              if(result.canceled){ setUploading(false); return; }
+              if(!perm.granted){ Alert.alert('Izin kamera ditolak'); return; }
+              const result = await ImagePicker.launchCameraAsync({
+                quality: 0.85,
+              });
+              if(result.canceled) return;
               const asset = result.assets[0];
-              const uploaded = await uploadAsset(token, asset.uri, asset.fileName, asset.mimeType);
+              const uploaded = await handleUploadAsset(token, asset.uri, asset.fileName, asset.mimeType);
               if(!referensiGambarUrl){
                 setReferensiGambarUrl(uploaded.url);
               } else {
@@ -302,9 +306,11 @@ async function compressImage(uri: string) {
 async function uploadAsset(token: string, uri?: string, name?: string | null, mimeType?: string | null) {
   if(!token) throw new Error('Token hilang');
   if(!uri) throw new Error('URI kosong');
+  // Fallback if mimeType not provided by picker (older android)
+  const safeMime = mimeType && mimeType.includes('/') ? mimeType : 'image/jpeg';
   const finalUri = await compressImage(uri);
   const form = new FormData();
-  form.append('file', { uri: finalUri, name: name || 'design.jpg', type: mimeType || 'image/jpeg' } as any);
+  form.append('file', { uri: finalUri, name: name || 'design.jpg', type: safeMime } as any);
   const uploadRes = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api'}/files/upload`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
@@ -312,4 +318,12 @@ async function uploadAsset(token: string, uri?: string, name?: string | null, mi
   });
   if(!uploadRes.ok){ const t = await uploadRes.text(); throw new Error(t); }
   return uploadRes.json();
+}
+
+// Helper to integrate upload result into component state (called inside handlers)
+async function handleUploadAsset(token: string, uri?: string, name?: string | null, mimeType?: string | null) {
+  const uploaded = await uploadAsset(token, uri, name, mimeType);
+  // This function will be re-bound in component scope via closure; using global mutable vars is avoided.
+  // Implementation placeholder; real assignment occurs inline where called (state setters in scope).
+  return uploaded;
 }

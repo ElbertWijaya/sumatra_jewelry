@@ -24,8 +24,6 @@ export declare class OrdersService {
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        kadar: number | null;
-        beratTarget: Prisma.Decimal | null;
         beratAkhir: Prisma.Decimal | null;
         ongkos: Prisma.Decimal;
         hargaEmasPerGram: Prisma.Decimal | null;
@@ -65,8 +63,6 @@ export declare class OrdersService {
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        kadar: number | null;
-        beratTarget: Prisma.Decimal | null;
         beratAkhir: Prisma.Decimal | null;
         ongkos: Prisma.Decimal;
         hargaEmasPerGram: Prisma.Decimal | null;
@@ -104,8 +100,6 @@ export declare class OrdersService {
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        kadar: number | null;
-        beratTarget: Prisma.Decimal | null;
         beratAkhir: Prisma.Decimal | null;
         ongkos: Prisma.Decimal;
         hargaEmasPerGram: Prisma.Decimal | null;
@@ -134,8 +128,6 @@ export declare class OrdersService {
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        kadar: number | null;
-        beratTarget: Prisma.Decimal | null;
         beratAkhir: Prisma.Decimal | null;
         ongkos: Prisma.Decimal;
         hargaEmasPerGram: Prisma.Decimal | null;
