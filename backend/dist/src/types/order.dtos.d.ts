@@ -7,14 +7,29 @@ export interface RequestUser {
 }
 export declare class CreateOrderDto {
     customerName: string;
+    customerAddress?: string;
     customerPhone?: string;
-    jenis: string;
+    jenisBarang: string;
+    jenisEmas: string;
+    warnaEmas: string;
     kadar?: number;
     beratTarget?: number;
     ongkos: number;
     dp?: number;
     tanggalJanjiJadi?: string;
+    tanggalSelesai?: string;
+    tanggalAmbil?: string;
     catatan?: string;
+    referensiGambarUrl?: string;
+    hargaEmasPerGram?: number;
+    hargaPerkiraan?: number;
+    hargaAkhir?: number;
+    stones?: StoneDto[];
+}
+export declare class StoneDto {
+    bentuk: string;
+    jumlah: number;
+    berat?: number;
 }
 export declare class UpdateOrderStatusDto {
     status: OrderStatusEnum;

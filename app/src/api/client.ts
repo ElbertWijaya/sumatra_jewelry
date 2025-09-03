@@ -1,7 +1,14 @@
-export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
+import { Platform } from 'react-native';
+
+const RAW_BASE = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
+// Android emulator tidak bisa akses host via 'localhost', harus 10.0.2.2
+export const API_URL = (Platform.OS === 'android' && RAW_BASE.includes('localhost'))
+  ? RAW_BASE.replace('localhost', '10.0.2.2')
+  : RAW_BASE;
 
 async function request(path: string, options: RequestInit = {}) {
-  const res = await fetch(`${API_URL}${path}`, {
+  let url = `${API_URL}${path}`;
+  const res = await fetch(url, {
     headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
     ...options,
   });

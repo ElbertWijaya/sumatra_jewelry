@@ -24,7 +24,7 @@ export const OrdersListScreen: React.FC = () => {
         renderItem={({ item }) => (
           <View style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' }}>
             <Text style={{ fontWeight: '600' }}>{item.code || '(pending code)'}</Text>
-            <Text>{item.customerName} • {item.jenis} • {item.status}</Text>
+            <Text>{item.customerName} • {item.jenisBarang || item.jenis} • {item.status}</Text>
           </View>
         )}
       />

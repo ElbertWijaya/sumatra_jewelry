@@ -25,22 +25,44 @@ model Order {
   updatedAt    DateTime  @updatedAt
   code         String?   @unique
   customerName String
+  customerAddress String?
   customerPhone String?
-  jenis        String
+  jenisBarang   String    @map("jenis")
+  jenisEmas     String
+  warnaEmas     String
   kadar        Int?
   beratTarget  Decimal?  @db.Decimal(10,2)
   beratAkhir   Decimal?  @db.Decimal(10,2)
-  ongkos       Decimal   @db.Decimal(14,2)
+  ongkos       Decimal   @db.Decimal(14,2) // legacy primary cost
+  hargaEmasPerGram Decimal? @db.Decimal(14,2)
+  hargaPerkiraan  Decimal? @db.Decimal(14,2)
+  hargaAkhir      Decimal? @db.Decimal(14,2)
   dp           Decimal   @default(0) @db.Decimal(14,2)
   tanggalJanjiJadi DateTime?
+  tanggalSelesai DateTime?
+  tanggalAmbil   DateTime?
   catatan      String?
   fotoDesainUrl String?
+  referensiGambarUrl String?
   status       OrderStatus @default(DRAFT)
   createdById  String?
   updatedById  String?
   createdBy    AppUser? @relation("OrdersCreated", fields: [createdById], references: [id])
   updatedBy    AppUser? @relation("OrdersUpdated", fields: [updatedById], references: [id])
   histories    OrderHistory[]
+  stones       OrderStone[]
+}
+
+model OrderStone {
+  id       Int    @id @default(autoincrement())
+  order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId  Int
+  bentuk   String
+  jumlah   Int
+  berat    Decimal? @db.Decimal(10,2)
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
 }
 
 model OrderHistory {

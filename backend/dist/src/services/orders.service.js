@@ -24,19 +24,33 @@ let OrdersService = class OrdersService {
         const order = await this.prisma.order.create({
             data: {
                 customerName: dto.customerName,
+                customerAddress: dto.customerAddress,
                 customerPhone: dto.customerPhone,
-                jenis: dto.jenis,
+                jenisBarang: dto.jenisBarang,
+                jenisEmas: dto.jenisEmas,
+                warnaEmas: dto.warnaEmas,
                 kadar: dto.kadar,
                 beratTarget: dto.beratTarget ? dto.beratTarget : undefined,
                 ongkos: dto.ongkos,
+                hargaEmasPerGram: dto.hargaEmasPerGram,
+                hargaPerkiraan: dto.hargaPerkiraan,
+                hargaAkhir: dto.hargaAkhir,
                 dp: dto.dp || 0,
                 tanggalJanjiJadi: dto.tanggalJanjiJadi ? new Date(dto.tanggalJanjiJadi) : undefined,
+                tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : undefined,
+                tanggalAmbil: dto.tanggalAmbil ? new Date(dto.tanggalAmbil) : undefined,
                 catatan: dto.catatan,
+                referensiGambarUrl: dto.referensiGambarUrl,
                 status: 'DRAFT',
                 createdById: userId,
                 updatedById: userId,
             },
         });
+        if (dto.stones && dto.stones.length) {
+            await this.prisma.orderStone.createMany({
+                data: dto.stones.map(s => ({ orderId: order.id, bentuk: s.bentuk, jumlah: s.jumlah, berat: s.berat }))
+            });
+        }
         const code = `TM-${(0, dayjs_1.default)(order.createdAt).format('YYYYMM')}-${String(order.id).padStart(4, '0')}`;
         await this.prisma.order.update({ where: { id: order.id }, data: { code } });
         return this.findById(order.id);
@@ -45,10 +59,11 @@ let OrdersService = class OrdersService {
         return this.prisma.order.findMany({
             where: params.status ? { status: params.status } : undefined,
             orderBy: { createdAt: 'desc' },
+            include: { stones: true },
         });
     }
     async findById(id) {
-        const order = await this.prisma.order.findUnique({ where: { id } });
+        const order = await this.prisma.order.findUnique({ where: { id }, include: { stones: true } });
         if (!order)
             throw new common_1.NotFoundException('Order tidak ditemukan');
         return order;
