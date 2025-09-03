@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { OrderStatus } from '@prisma/client';
-import { CreateOrderDto, UpdateOrderStatusDto } from '../types/order.dtos';
+import { CreateOrderDto, UpdateOrderStatusDto, OrderStatusEnum } from '../types/order.dtos';
 import dayjs from 'dayjs';
 
 @Injectable()
@@ -34,7 +33,7 @@ export class OrdersService {
     return this.findById(order.id);
   }
 
-  async findAll(params: { status?: OrderStatus }) {
+  async findAll(params: { status?: OrderStatusEnum }) {
     return this.prisma.order.findMany({
       where: params.status ? { status: params.status } : undefined,
       orderBy: { createdAt: 'desc' },
@@ -49,7 +48,7 @@ export class OrdersService {
 
   async updateStatus(id: number, dto: UpdateOrderStatusDto, userId: string) {
     const order = await this.findById(id);
-    const allowed: Record<OrderStatus, OrderStatus[]> = {
+  const allowed: Record<OrderStatusEnum, OrderStatusEnum[]> = {
       DRAFT: ['DITERIMA', 'BATAL'],
       DITERIMA: ['DALAM_PROSES', 'BATAL'],
       DALAM_PROSES: ['SIAP', 'BATAL'],

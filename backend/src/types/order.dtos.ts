@@ -1,4 +1,7 @@
-import { IsDateString, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, Min } from 'class-validator';
+import { IsDateString, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+
+export const ORDER_STATUS_VALUES = ['DRAFT','DITERIMA','DALAM_PROSES','SIAP','DIAMBIL','BATAL'] as const;
+export type OrderStatusEnum = typeof ORDER_STATUS_VALUES[number];
 
 export class CreateOrderDto {
   @IsString() @IsNotEmpty() customerName!: string;
@@ -13,6 +16,6 @@ export class CreateOrderDto {
 }
 
 export class UpdateOrderStatusDto {
-  @IsString() @IsNotEmpty() status!: string; // validated in service
+  @IsIn(ORDER_STATUS_VALUES) status!: OrderStatusEnum;
   @IsOptional() @IsNumber() beratAkhir?: number;
 }

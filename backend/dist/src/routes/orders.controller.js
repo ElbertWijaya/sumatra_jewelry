@@ -19,13 +19,13 @@ const order_dtos_1 = require("../types/order.dtos");
 const jwt_auth_guard_1 = require("../security/jwt-auth.guard");
 const roles_guard_1 = require("../security/roles.guard");
 const roles_decorator_1 = require("../security/roles.decorator");
+const current_user_decorator_1 = require("../security/current-user.decorator");
 let OrdersController = class OrdersController {
     constructor(orders) {
         this.orders = orders;
     }
-    create(dto) {
-        const mockUser = 'system';
-        return this.orders.create(dto, mockUser);
+    create(dto, user) {
+        return this.orders.create(dto, user.userId);
     }
     findAll(status) {
         return this.orders.findAll({ status: status });
@@ -33,9 +33,8 @@ let OrdersController = class OrdersController {
     findOne(id) {
         return this.orders.findById(id);
     }
-    updateStatus(id, dto) {
-        const mockUser = 'system';
-        return this.orders.updateStatus(id, dto, mockUser);
+    updateStatus(id, dto, user) {
+        return this.orders.updateStatus(id, dto, user.userId);
     }
 };
 exports.OrdersController = OrdersController;
@@ -43,8 +42,9 @@ __decorate([
     (0, common_1.Post)(),
     (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner'),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [order_dtos_1.CreateOrderDto]),
+    __metadata("design:paramtypes", [order_dtos_1.CreateOrderDto, Object]),
     __metadata("design:returntype", void 0)
 ], OrdersController.prototype, "create", null);
 __decorate([
@@ -68,8 +68,9 @@ __decorate([
     (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, order_dtos_1.UpdateOrderStatusDto]),
+    __metadata("design:paramtypes", [Number, order_dtos_1.UpdateOrderStatusDto, Object]),
     __metadata("design:returntype", void 0)
 ], OrdersController.prototype, "updateStatus", null);
 exports.OrdersController = OrdersController = __decorate([

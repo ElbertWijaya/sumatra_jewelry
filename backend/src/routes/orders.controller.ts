@@ -4,6 +4,7 @@ import { CreateOrderDto, UpdateOrderStatusDto } from '../types/order.dtos';
 import { JwtAuthGuard } from '../security/jwt-auth.guard';
 import { RolesGuard } from '../security/roles.guard';
 import { Roles } from '../security/roles.decorator';
+import { CurrentUser } from '../security/current-user.decorator';
 
 @Controller('orders')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -12,10 +13,8 @@ export class OrdersController {
 
   @Post()
   @Roles('admin','kasir','owner')
-  create(@Body() dto: CreateOrderDto) {
-    // TODO: extract real user id from request.user
-    const mockUser = 'system';
-    return this.orders.create(dto, mockUser);
+  create(@Body() dto: CreateOrderDto, @CurrentUser() user: any) {
+    return this.orders.create(dto, user.userId);
   }
 
   @Get()
@@ -32,8 +31,7 @@ export class OrdersController {
 
   @Put(':id/status')
   @Roles('admin','kasir','owner')
-  updateStatus(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateOrderStatusDto) {
-    const mockUser = 'system';
-    return this.orders.updateStatus(id, dto, mockUser);
+  updateStatus(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateOrderStatusDto, @CurrentUser() user: any) {
+    return this.orders.updateStatus(id, dto, user.userId);
   }
 }

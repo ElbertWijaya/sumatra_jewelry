@@ -1,3 +1,5 @@
+export declare const ORDER_STATUS_VALUES: readonly ["DRAFT", "DITERIMA", "DALAM_PROSES", "SIAP", "DIAMBIL", "BATAL"];
+export type OrderStatusEnum = typeof ORDER_STATUS_VALUES[number];
 export declare class CreateOrderDto {
     customerName: string;
     customerPhone?: string;
@@ -10,6 +12,6 @@ export declare class CreateOrderDto {
     catatan?: string;
 }
 export declare class UpdateOrderStatusDto {
-    status: string;
+    status: OrderStatusEnum;
     beratAkhir?: number;
 }
