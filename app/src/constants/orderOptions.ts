@@ -1,11 +1,15 @@
+// Master option lists (dropdown categories)
 export const JENIS_BARANG_OPTIONS = [
-  'Cincin','Gelang','Kalung','Liontin','Anting','Giwang','Set Perhiasan'
+  'Bangle', 'Earring', 'Pendant', 'Necklace', 'Women Ring', 'Men Ring'
 ];
 export const JENIS_EMAS_OPTIONS = [
-  'Emas Kuning','Emas Putih','Rose Gold','Emas Muda','Emas Tua'
+  '24K','22K','18K','14K','12K','10K','9K'
 ];
 export const WARNA_EMAS_OPTIONS = [
-  'Kuning','Putih','Rose','Doff','Kombinasi'
+  'White Gold','Rose Gold','Yellow Gold'
+];
+export const BENTUK_BATU_OPTIONS = [
+  'Round','Princess','Heart','Oval','Cushion','Marquise','Pear','Emerald','Straight Baguette','Tapered Baguette'
 ];
 
 export interface StoneFormItem {

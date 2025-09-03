@@ -20,8 +20,7 @@ export class OrdersService {
         jenisBarang: dto.jenisBarang,
         jenisEmas: dto.jenisEmas,
         warnaEmas: dto.warnaEmas,
-        kadar: dto.kadar,
-        beratTarget: dto.beratTarget ? dto.beratTarget : undefined,
+  // Removed: kadar, beratTarget
         ongkos: dto.ongkos,
         hargaEmasPerGram: dto.hargaEmasPerGram,
         hargaPerkiraan: dto.hargaPerkiraan,

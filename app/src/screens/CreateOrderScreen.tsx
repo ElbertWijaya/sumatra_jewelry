@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, ScrollView, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, Button, ScrollView, StyleSheet, Alert, TouchableOpacity, Image } from 'react-native';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { JENIS_BARANG_OPTIONS, JENIS_EMAS_OPTIONS, WARNA_EMAS_OPTIONS, emptyStone, StoneFormItem } from '../constants/orderOptions';
+import { JENIS_BARANG_OPTIONS, JENIS_EMAS_OPTIONS, WARNA_EMAS_OPTIONS, BENTUK_BATU_OPTIONS, emptyStone, StoneFormItem } from '../constants/orderOptions';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Platform } from 'react-native';
 
 export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCreated }) => {
@@ -15,17 +16,20 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   const [jenisBarang, setJenisBarang] = useState('');
   const [jenisEmas, setJenisEmas] = useState('');
   const [warnaEmas, setWarnaEmas] = useState('');
-  const [kadar, setKadar] = useState('');
-  const [beratTarget, setBeratTarget] = useState('');
+  // Fields removed per spec: kadar, beratTarget
   const [ongkos, setOngkos] = useState('');
   const [dp, setDp] = useState('');
   const [hargaEmasPerGram, setHargaEmasPerGram] = useState('');
   const [hargaPerkiraan, setHargaPerkiraan] = useState('');
   const [hargaAkhir, setHargaAkhir] = useState('');
-  const [tanggalJanjiJadi, setTanggalJanjiJadi] = useState('');
-  const [tanggalSelesai, setTanggalSelesai] = useState('');
-  const [tanggalAmbil, setTanggalAmbil] = useState('');
+  const [tanggalJanjiJadi, setTanggalJanjiJadi] = useState<string>('');
+  const [tanggalSelesai, setTanggalSelesai] = useState<string>('');
+  const [tanggalAmbil, setTanggalAmbil] = useState<string>('');
+  const [showPicker, setShowPicker] = useState<null | { field: 'janji' | 'selesai' | 'ambil'; date: Date }>(null);
+  // Image reference now via upload, store returned path
   const [referensiGambarUrl, setReferensiGambarUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [localImageName, setLocalImageName] = useState<string | null>(null);
   const [catatan, setCatatan] = useState('');
   const [stones, setStones] = useState<StoneFormItem[]>([]);
 
@@ -37,8 +41,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       jenisBarang,
       jenisEmas,
       warnaEmas,
-      kadar: kadar ? Number(kadar) : undefined,
-      beratTarget: beratTarget ? Number(beratTarget) : undefined,
+  // removed: kadar, beratTarget
       ongkos: Number(ongkos || 0),
       dp: dp ? Number(dp) : undefined,
       hargaEmasPerGram: hargaEmasPerGram ? Number(hargaEmasPerGram) : undefined,
@@ -47,7 +50,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       tanggalJanjiJadi: tanggalJanjiJadi || undefined,
       tanggalSelesai: tanggalSelesai || undefined,
       tanggalAmbil: tanggalAmbil || undefined,
-      referensiGambarUrl: referensiGambarUrl || undefined,
+  referensiGambarUrl: referensiGambarUrl || undefined,
       catatan: catatan || undefined,
       stones: stones.length ? stones.filter(s => s.bentuk && s.jumlah).map(s => ({
         bentuk: s.bentuk,
@@ -59,12 +62,12 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       qc.invalidateQueries({ queryKey: ['orders'] });
       onCreated && onCreated();
       Alert.alert('Sukses', 'Order dibuat');
-  setCustomerName(''); setCustomerAddress(''); setCustomerPhone(''); setJenisBarang(''); setJenisEmas(''); setWarnaEmas(''); setKadar(''); setBeratTarget(''); setOngkos(''); setDp(''); setHargaEmasPerGram(''); setHargaPerkiraan(''); setHargaAkhir(''); setTanggalJanjiJadi(''); setTanggalSelesai(''); setTanggalAmbil(''); setReferensiGambarUrl(''); setCatatan(''); setStones([]);
+  setCustomerName(''); setCustomerAddress(''); setCustomerPhone(''); setJenisBarang(''); setJenisEmas(''); setWarnaEmas(''); setOngkos(''); setDp(''); setHargaEmasPerGram(''); setHargaPerkiraan(''); setHargaAkhir(''); setTanggalJanjiJadi(''); setTanggalSelesai(''); setTanggalAmbil(''); setReferensiGambarUrl(''); setCatatan(''); setStones([]); setLocalImageName(null);
     },
     onError: (e: any) => Alert.alert('Error', e.message || 'Gagal membuat order'),
   });
 
-  const disabled = !customerName || !jenisBarang || !jenisEmas || !warnaEmas || !ongkos || mutation.isPending;
+  const disabled = !customerName || !jenisBarang || !jenisEmas || !warnaEmas || !ongkos || mutation.isPending || uploading;
 
   const updateStone = (idx: number, patch: Partial<StoneFormItem>) => {
     setStones(prev => prev.map((s,i)=> i===idx ? { ...s, ...patch } : s));
@@ -85,6 +88,22 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
     </View>
   );
 
+  const pickDate = (field: 'janji' | 'selesai' | 'ambil') => {
+    const currentVal = (field === 'janji' ? tanggalJanjiJadi : field === 'selesai' ? tanggalSelesai : tanggalAmbil) || new Date().toISOString().slice(0,10);
+    setShowPicker({ field, date: new Date(currentVal) });
+  };
+
+  const onDateChange = (_: any, selected?: Date) => {
+    if (!showPicker) return;
+    if (Platform.OS !== 'ios') setShowPicker(null);
+    if (selected) {
+      const iso = selected.toISOString().slice(0,10);
+      if (showPicker.field === 'janji') setTanggalJanjiJadi(iso);
+      if (showPicker.field === 'selesai') setTanggalSelesai(iso);
+      if (showPicker.field === 'ambil') setTanggalAmbil(iso);
+    }
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Order Baru</Text>
@@ -97,14 +116,67 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       {renderSelectRow('Jenis Barang *', jenisBarang, JENIS_BARANG_OPTIONS, setJenisBarang)}
       {renderSelectRow('Jenis Emas *', jenisEmas, JENIS_EMAS_OPTIONS, setJenisEmas)}
       {renderSelectRow('Warna Emas *', warnaEmas, WARNA_EMAS_OPTIONS, setWarnaEmas)}
-      <TextInput placeholder='Kadar (%)' style={styles.input} value={kadar} onChangeText={setKadar} keyboardType='numeric' />
-      <TextInput placeholder='Berat Target (gr)' style={styles.input} value={beratTarget} onChangeText={setBeratTarget} keyboardType='numeric' />
-      <TextInput placeholder='Referensi Gambar URL' style={styles.input} value={referensiGambarUrl} onChangeText={setReferensiGambarUrl} />
+      {/* Removed inputs: Kadar, Berat Target. */}
+      {/* Image Upload */}
+  <View style={{ marginBottom:12 }}>
+        <Text style={styles.label}>Referensi Gambar</Text>
+        {referensiGambarUrl && (
+          <View style={{ marginBottom:8, alignItems:'flex-start' }}>
+            <Image source={{ uri: referensiGambarUrl }} style={{ width:120, height:120, borderRadius:8, marginBottom:6 }} />
+            <Text style={{ fontSize:12, color:'#555' }}>{localImageName || referensiGambarUrl}</Text>
+          </View>
+        )}
+        <View style={{ flexDirection:'row', gap:8, flexWrap:'wrap' }}>
+          <Button title={uploading ? 'Mengupload...' : referensiGambarUrl ? 'Ganti Foto' : 'Pilih dari Galeri'} onPress={async ()=>{
+            if(uploading) return;
+            if(!token){ Alert.alert('Tidak ada token','Silakan login ulang.'); return; }
+            try {
+              setUploading(true);
+              const ImagePicker = await import('expo-image-picker');
+              const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+              if(!perm.granted){ Alert.alert('Izin ditolak'); setUploading(false); return; }
+              const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality:1, base64:false });
+              if(result.canceled){ setUploading(false); return; }
+              const asset = result.assets[0];
+              const uploaded = await uploadAsset(token, asset.uri, asset.fileName, asset.mimeType);
+        setReferensiGambarUrl(uploaded.url);
+        setLocalImageName(asset.fileName || 'design.jpg');
+            } catch(e:any){ Alert.alert('Upload gagal', e.message || 'Error'); }
+            finally { setUploading(false); }
+          }} />
+      <Button title='Kamera' onPress={async ()=>{
+            if(uploading) return;
+            if(!token){ Alert.alert('Tidak ada token','Silakan login ulang.'); return; }
+            try {
+              setUploading(true);
+              const ImagePicker = await import('expo-image-picker');
+              const perm = await ImagePicker.requestCameraPermissionsAsync();
+              if(!perm.granted){ Alert.alert('Izin kamera ditolak'); setUploading(false); return; }
+              const result = await ImagePicker.launchCameraAsync({ quality:1, base64:false });
+              if(result.canceled){ setUploading(false); return; }
+              const asset = result.assets[0];
+              const uploaded = await uploadAsset(token, asset.uri, asset.fileName, asset.mimeType);
+        setReferensiGambarUrl(uploaded.url);
+        setLocalImageName(asset.fileName || 'design.jpg');
+            } catch(e:any){ Alert.alert('Upload gagal', e.message || 'Error'); }
+            finally { setUploading(false); }
+          }} />
+          {referensiGambarUrl ? <Button title='Hapus' color='#b22' onPress={()=>{ setReferensiGambarUrl(''); setLocalImageName(null); }} /> : null}
+        </View>
+      </View>
 
       <Text style={styles.subSection}>Batu / Stone</Text>
       {stones.map((s,idx)=>(
         <View key={idx} style={styles.stoneRow}>
-          <TextInput placeholder='Bentuk' style={[styles.input,styles.stoneInput]} value={s.bentuk} onChangeText={v=>updateStone(idx,{bentuk:v})} />
+          <View style={[styles.input, styles.stoneInput, { padding:4 }]}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {BENTUK_BATU_OPTIONS.map(opt => (
+                <TouchableOpacity key={opt} onPress={()=>updateStone(idx,{bentuk:opt})} style={[styles.pillSmall, s.bentuk===opt && styles.pillSmallActive]}>
+                  <Text style={s.bentuk===opt? styles.pillTextActive: styles.pillText}>{opt}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
           <TextInput placeholder='Jumlah' style={[styles.input,styles.stoneInput]} value={s.jumlah} onChangeText={v=>updateStone(idx,{jumlah:v})} keyboardType='numeric' />
           <TextInput placeholder='Berat' style={[styles.input,styles.stoneInput]} value={s.berat} onChangeText={v=>updateStone(idx,{berat:v})} keyboardType='numeric' />
           <TouchableOpacity onPress={()=>removeStone(idx)} style={styles.removeBtn}><Text style={{color:'#fff'}}>X</Text></TouchableOpacity>
@@ -120,9 +192,19 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       <TextInput placeholder='Ongkos *' style={styles.input} value={ongkos} onChangeText={setOngkos} keyboardType='numeric' />
 
       <Text style={styles.section}>Tanggal</Text>
-      <TextInput placeholder='Tanggal Janji Jadi (YYYY-MM-DD)' style={styles.input} value={tanggalJanjiJadi} onChangeText={setTanggalJanjiJadi} />
-      <TextInput placeholder='Tanggal Selesai (YYYY-MM-DD)' style={styles.input} value={tanggalSelesai} onChangeText={setTanggalSelesai} />
-      <TextInput placeholder='Tanggal Ambil (YYYY-MM-DD)' style={styles.input} value={tanggalAmbil} onChangeText={setTanggalAmbil} />
+      <View style={styles.dateRow}>
+        <TouchableOpacity style={styles.dateBtn} onPress={()=>pickDate('janji')}><Text>Janji Jadi: {tanggalJanjiJadi || '-'}</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.dateBtn} onPress={()=>pickDate('selesai')}><Text>Selesai: {tanggalSelesai || '-'}</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.dateBtn} onPress={()=>pickDate('ambil')}><Text>Ambil: {tanggalAmbil || '-'}</Text></TouchableOpacity>
+      </View>
+      {showPicker && (
+        <DateTimePicker
+          value={showPicker.date}
+          mode='date'
+          display='default'
+          onChange={onDateChange}
+        />
+      )}
 
       <TextInput placeholder='Catatan' style={[styles.input,{height:90}]} value={catatan} onChangeText={setCatatan} multiline />
       <Button title={mutation.isPending ? 'Menyimpan...' : 'Simpan'} disabled={disabled} onPress={() => mutation.mutate()} />
@@ -147,4 +229,31 @@ const styles = StyleSheet.create({
   stoneRow: { flexDirection:'row', alignItems:'center', marginBottom:8 },
   stoneInput: { flex:1, marginRight:6 },
   removeBtn: { backgroundColor:'#d33', padding:8, borderRadius:6 },
+  pillSmall: { paddingVertical:4, paddingHorizontal:10, borderRadius:14, borderWidth:1, borderColor:'#888', marginRight:6 },
+  pillSmallActive: { backgroundColor:'#333', borderColor:'#333' },
+  dateRow: { flexDirection:'row', justifyContent:'space-between', marginBottom:12 },
+  dateBtn: { flex:1, borderWidth:1, borderColor:'#ccc', padding:10, borderRadius:6, marginRight:8 },
 });
+
+async function compressImage(uri: string) {
+  try {
+    const ImageManipulator = await import('expo-image-manipulator');
+    const result = await ImageManipulator.manipulateAsync(uri, [], { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG });
+    return result.uri;
+  } catch { return uri; }
+}
+
+async function uploadAsset(token: string, uri?: string, name?: string | null, mimeType?: string | null) {
+  if(!token) throw new Error('Token hilang');
+  if(!uri) throw new Error('URI kosong');
+  const finalUri = await compressImage(uri);
+  const form = new FormData();
+  form.append('file', { uri: finalUri, name: name || 'design.jpg', type: mimeType || 'image/jpeg' } as any);
+  const uploadRes = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api'}/files/upload`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: form as any,
+  });
+  if(!uploadRes.ok){ const t = await uploadRes.text(); throw new Error(t); }
+  return uploadRes.json();
+}

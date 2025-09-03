@@ -30,8 +30,9 @@ model Order {
   jenisBarang   String    @map("jenis")
   jenisEmas     String
   warnaEmas     String
-  kadar        Int?
-  beratTarget  Decimal?  @db.Decimal(10,2)
+  // Removed by spec update (kept in DB for existing data; consider migration to drop later)
+  kadar        Int? @map("kadar")
+  beratTarget  Decimal?  @db.Decimal(10,2) @map("beratTarget")
   beratAkhir   Decimal?  @db.Decimal(10,2)
   ongkos       Decimal   @db.Decimal(14,2) // legacy primary cost
   hargaEmasPerGram Decimal? @db.Decimal(14,2)
