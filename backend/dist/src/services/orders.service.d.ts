@@ -4,6 +4,7 @@ export declare class OrdersService {
     private prisma;
     constructor(prisma: PrismaService);
     create(dto: CreateOrderDto, userId: string): Promise<{
+        id: number;
         createdAt: Date;
         updatedAt: Date;
         code: string | null;
@@ -19,13 +20,13 @@ export declare class OrdersService {
         catatan: string | null;
         fotoDesainUrl: string | null;
         status: import(".prisma/client").$Enums.OrderStatus;
-        id: number;
         createdById: string | null;
         updatedById: string | null;
     }>;
     findAll(params: {
         status?: OrderStatusEnum;
     }): Promise<{
+        id: number;
         createdAt: Date;
         updatedAt: Date;
         code: string | null;
@@ -41,11 +42,11 @@ export declare class OrdersService {
         catatan: string | null;
         fotoDesainUrl: string | null;
         status: import(".prisma/client").$Enums.OrderStatus;
-        id: number;
         createdById: string | null;
         updatedById: string | null;
     }[]>;
     findById(id: number): Promise<{
+        id: number;
         createdAt: Date;
         updatedAt: Date;
         code: string | null;
@@ -61,11 +62,11 @@ export declare class OrdersService {
         catatan: string | null;
         fotoDesainUrl: string | null;
         status: import(".prisma/client").$Enums.OrderStatus;
-        id: number;
         createdById: string | null;
         updatedById: string | null;
     }>;
     updateStatus(id: number, dto: UpdateOrderStatusDto, userId: string): Promise<{
+        id: number;
         createdAt: Date;
         updatedAt: Date;
         code: string | null;
@@ -81,7 +82,6 @@ export declare class OrdersService {
         catatan: string | null;
         fotoDesainUrl: string | null;
         status: import(".prisma/client").$Enums.OrderStatus;
-        id: number;
         createdById: string | null;
         updatedById: string | null;
     }>;

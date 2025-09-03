@@ -1,9 +1,10 @@
 import { OrdersService } from '../services/orders.service';
-import { CreateOrderDto, UpdateOrderStatusDto } from '../types/order.dtos';
+import { CreateOrderDto, UpdateOrderStatusDto, RequestUser, OrderStatusEnum } from '../types/order.dtos';
 export declare class OrdersController {
     private orders;
     constructor(orders: OrdersService);
-    create(dto: CreateOrderDto, user: any): Promise<{
+    create(dto: CreateOrderDto, user: RequestUser): Promise<{
+        id: number;
         createdAt: Date;
         updatedAt: Date;
         code: string | null;
@@ -19,11 +20,11 @@ export declare class OrdersController {
         catatan: string | null;
         fotoDesainUrl: string | null;
         status: import(".prisma/client").$Enums.OrderStatus;
-        id: number;
         createdById: string | null;
         updatedById: string | null;
     }>;
-    findAll(status?: string): Promise<{
+    findAll(status?: OrderStatusEnum): Promise<{
+        id: number;
         createdAt: Date;
         updatedAt: Date;
         code: string | null;
@@ -39,11 +40,11 @@ export declare class OrdersController {
         catatan: string | null;
         fotoDesainUrl: string | null;
         status: import(".prisma/client").$Enums.OrderStatus;
-        id: number;
         createdById: string | null;
         updatedById: string | null;
     }[]>;
     findOne(id: number): Promise<{
+        id: number;
         createdAt: Date;
         updatedAt: Date;
         code: string | null;
@@ -59,11 +60,11 @@ export declare class OrdersController {
         catatan: string | null;
         fotoDesainUrl: string | null;
         status: import(".prisma/client").$Enums.OrderStatus;
-        id: number;
         createdById: string | null;
         updatedById: string | null;
     }>;
-    updateStatus(id: number, dto: UpdateOrderStatusDto, user: any): Promise<{
+    updateStatus(id: number, dto: UpdateOrderStatusDto, user: RequestUser): Promise<{
+        id: number;
         createdAt: Date;
         updatedAt: Date;
         code: string | null;
@@ -79,7 +80,6 @@ export declare class OrdersController {
         catatan: string | null;
         fotoDesainUrl: string | null;
         status: import(".prisma/client").$Enums.OrderStatus;
-        id: number;
         createdById: string | null;
         updatedById: string | null;
     }>;

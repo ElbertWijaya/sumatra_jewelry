@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import dayjs from 'dayjs';
+
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto, UpdateOrderStatusDto, OrderStatusEnum } from '../types/order.dtos';
-import dayjs from 'dayjs';
 
 @Injectable()
 export class OrdersService {
@@ -48,14 +49,14 @@ export class OrdersService {
 
   async updateStatus(id: number, dto: UpdateOrderStatusDto, userId: string) {
     const order = await this.findById(id);
-  const allowed: Record<OrderStatusEnum, OrderStatusEnum[]> = {
+    const allowed: Record<OrderStatusEnum, OrderStatusEnum[]> = {
       DRAFT: ['DITERIMA', 'BATAL'],
       DITERIMA: ['DALAM_PROSES', 'BATAL'],
       DALAM_PROSES: ['SIAP', 'BATAL'],
       SIAP: ['DIAMBIL', 'BATAL'],
       DIAMBIL: [],
       BATAL: [],
-    } as any;
+    };
     if (!allowed[order.status].includes(dto.status)) {
       throw new BadRequestException('Transition status tidak valid');
     }

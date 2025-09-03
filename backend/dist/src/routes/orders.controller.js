@@ -14,12 +14,12 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrdersController = void 0;
 const common_1 = require("@nestjs/common");
+const current_user_decorator_1 = require("../security/current-user.decorator");
+const jwt_auth_guard_1 = require("../security/jwt-auth.guard");
+const roles_decorator_1 = require("../security/roles.decorator");
+const roles_guard_1 = require("../security/roles.guard");
 const orders_service_1 = require("../services/orders.service");
 const order_dtos_1 = require("../types/order.dtos");
-const jwt_auth_guard_1 = require("../security/jwt-auth.guard");
-const roles_guard_1 = require("../security/roles.guard");
-const roles_decorator_1 = require("../security/roles.decorator");
-const current_user_decorator_1 = require("../security/current-user.decorator");
 let OrdersController = class OrdersController {
     constructor(orders) {
         this.orders = orders;
@@ -28,7 +28,10 @@ let OrdersController = class OrdersController {
         return this.orders.create(dto, user.userId);
     }
     findAll(status) {
-        return this.orders.findAll({ status: status });
+        if (status && !order_dtos_1.ORDER_STATUS_VALUES.includes(status)) {
+            throw new common_1.BadRequestException('Status invalid');
+        }
+        return this.orders.findAll({ status });
     }
     findOne(id) {
         return this.orders.findById(id);

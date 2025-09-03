@@ -3,6 +3,12 @@ import { IsDateString, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, 
 export const ORDER_STATUS_VALUES = ['DRAFT','DITERIMA','DALAM_PROSES','SIAP','DIAMBIL','BATAL'] as const;
 export type OrderStatusEnum = typeof ORDER_STATUS_VALUES[number];
 
+export interface RequestUser {
+  userId: string;
+  role: string;
+  email: string;
+}
+
 export class CreateOrderDto {
   @IsString() @IsNotEmpty() customerName!: string;
   @IsOptional() @IsString() customerPhone?: string;

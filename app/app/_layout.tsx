@@ -2,6 +2,10 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
+import React from 'react';
+import { AuthProvider, useAuth } from '../src/context/AuthContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { LoginScreen } from '../src/screens/LoginScreen';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
@@ -45,15 +49,28 @@ export default function RootLayout() {
   return <RootLayoutNav />;
 }
 
+const qc = new QueryClient();
+
+const Gate: React.FC<{children: React.ReactNode}> = ({ children }) => {
+  const { token } = useAuth();
+  if (!token) return <LoginScreen />;
+  return <>{children}</>;
+};
+
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+    <AuthProvider>
+      <QueryClientProvider client={qc}>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Gate>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+            </Stack>
+          </Gate>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </AuthProvider>
   );
 }

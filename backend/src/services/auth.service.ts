@@ -1,7 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
+
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
@@ -24,10 +25,10 @@ export class AuthService {
     };
   }
 
-  async register(data: { email: string; password: string; fullName: string; role: string }) {
+  async register(data: { email: string; password: string; fullName: string; role: 'admin' | 'owner' | 'kasir' | 'pengrajin' }) {
     const hash = await argon2.hash(data.password);
     const user = await this.prisma.appUser.create({
-      data: { email: data.email, password: hash, fullName: data.fullName, role: data.role as any },
+      data: { email: data.email, password: hash, fullName: data.fullName, role: data.role },
     });
     return { id: user.id, email: user.email };
   }

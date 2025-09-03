@@ -1,17 +1,20 @@
 import { Body, Controller, Post } from '@nestjs/common';
+import { IsEmail, IsNotEmpty, MinLength, IsIn } from 'class-validator';
+
 import { AuthService } from '../services/auth.service';
-import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
 
 class LoginDto {
   @IsEmail() email!: string;
   @MinLength(6) password!: string;
 }
 
+const ROLES = ['admin','owner','kasir','pengrajin'] as const;
+type RoleUnion = typeof ROLES[number];
 class RegisterDto {
   @IsEmail() email!: string;
   @MinLength(6) password!: string;
   @IsNotEmpty() fullName!: string;
-  @IsNotEmpty() role!: string; // validate against enum later
+  @IsIn(ROLES) role!: RoleUnion;
 }
 
 @Controller('auth')

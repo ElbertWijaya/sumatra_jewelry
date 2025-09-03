@@ -14,8 +14,8 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthController = void 0;
 const common_1 = require("@nestjs/common");
-const auth_service_1 = require("../services/auth.service");
 const class_validator_1 = require("class-validator");
+const auth_service_1 = require("../services/auth.service");
 class LoginDto {
 }
 __decorate([
@@ -26,6 +26,7 @@ __decorate([
     (0, class_validator_1.MinLength)(6),
     __metadata("design:type", String)
 ], LoginDto.prototype, "password", void 0);
+const ROLES = ['admin', 'owner', 'kasir', 'pengrajin'];
 class RegisterDto {
 }
 __decorate([
@@ -41,7 +42,7 @@ __decorate([
     __metadata("design:type", String)
 ], RegisterDto.prototype, "fullName", void 0);
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsIn)(ROLES),
     __metadata("design:type", String)
 ], RegisterDto.prototype, "role", void 0);
 let AuthController = class AuthController {

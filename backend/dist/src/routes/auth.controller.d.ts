@@ -3,11 +3,13 @@ declare class LoginDto {
     email: string;
     password: string;
 }
+declare const ROLES: readonly ["admin", "owner", "kasir", "pengrajin"];
+type RoleUnion = typeof ROLES[number];
 declare class RegisterDto {
     email: string;
     password: string;
     fullName: string;
-    role: string;
+    role: RoleUnion;
 }
 export declare class AuthController {
     private auth;

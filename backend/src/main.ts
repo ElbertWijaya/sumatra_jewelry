@@ -1,8 +1,10 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './modules/app.module';
-import helmet from 'helmet';
-import compression from 'compression';
 import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import compression from 'compression';
+import helmet from 'helmet';
+
+import { AppModule } from './modules/app.module';
+
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
