@@ -34,7 +34,6 @@ export declare class OrdersService {
         tanggalAmbil: Date | null;
         catatan: string | null;
         fotoDesainUrl: string | null;
-        referensiGambarUrl: string | null;
         referensiGambarUrls: Prisma.JsonValue | null;
         status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;
@@ -72,7 +71,6 @@ export declare class OrdersService {
         tanggalAmbil: Date | null;
         catatan: string | null;
         fotoDesainUrl: string | null;
-        referensiGambarUrl: string | null;
         referensiGambarUrls: Prisma.JsonValue | null;
         status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;
@@ -108,7 +106,6 @@ export declare class OrdersService {
         tanggalAmbil: Date | null;
         catatan: string | null;
         fotoDesainUrl: string | null;
-        referensiGambarUrl: string | null;
         referensiGambarUrls: Prisma.JsonValue | null;
         status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;
@@ -135,7 +132,6 @@ export declare class OrdersService {
         tanggalAmbil: Date | null;
         catatan: string | null;
         fotoDesainUrl: string | null;
-        referensiGambarUrl: string | null;
         referensiGambarUrls: Prisma.JsonValue | null;
         status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;

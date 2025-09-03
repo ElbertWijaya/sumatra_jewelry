@@ -15,6 +15,24 @@ export class OrdersController {
   @Post()
   @Roles('admin','kasir','owner')
   create(@Body() dto: CreateOrderDto, @CurrentUser() user: RequestUser) {
+    // Debug log (sementara)
+    console.log('[CreateOrder] dto keys:', Object.keys(dto || {}));
+    console.log('[CreateOrder] dto preview:', {
+      customerName: dto.customerName,
+      jenisBarang: dto.jenisBarang,
+      jenisEmas: dto.jenisEmas,
+      warnaEmas: dto.warnaEmas,
+      images: dto.referensiGambarUrls?.length || 0,
+      stones: dto.stones?.length || 0,
+    });
+    if (!dto.customerName || !dto.jenisBarang || !dto.jenisEmas || !dto.warnaEmas) {
+      console.warn('[CreateOrder] Falsy required fields BEFORE service:', {
+        customerName: dto.customerName,
+        jenisBarang: dto.jenisBarang,
+        jenisEmas: dto.jenisEmas,
+        warnaEmas: dto.warnaEmas,
+      });
+    }
     return this.orders.create(dto, user.userId);
   }
 

@@ -17,7 +17,6 @@ export declare class CreateOrderDto {
     tanggalSelesai?: string;
     tanggalAmbil?: string;
     catatan?: string;
-    referensiGambarUrl?: string;
     referensiGambarUrls?: string[];
     hargaEmasPerGram?: number;
     hargaPerkiraan?: number;

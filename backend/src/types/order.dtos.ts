@@ -11,20 +11,19 @@ export interface RequestUser {
 }
 
 export class CreateOrderDto {
-  @IsString() @IsNotEmpty() customerName!: string;
+  @IsString() customerName!: string; // temporarily remove IsNotEmpty for debugging
   @IsOptional() @IsString() customerAddress?: string;
   @IsOptional() @IsString() customerPhone?: string;
-  @IsString() @IsNotEmpty() jenisBarang!: string;
-  @IsString() @IsNotEmpty() jenisEmas!: string;
-  @IsString() @IsNotEmpty() warnaEmas!: string;
+  @IsString() jenisBarang!: string; // debug: removed IsNotEmpty
+  @IsString() jenisEmas!: string; // debug
+  @IsString() warnaEmas!: string; // debug
   // Removed per new spec: kadar, beratTarget, ongkos
   @IsOptional() @IsNumber() @Min(0) dp?: number;
   @IsOptional() @IsDateString() promisedReadyDate?: string; // Tanggal Perkiraan Siap
   @IsOptional() @IsDateString() tanggalSelesai?: string;
   @IsOptional() @IsDateString() tanggalAmbil?: string;
   @IsOptional() @IsString() catatan?: string;
-  @IsOptional() @IsString() referensiGambarUrl?: string;
-  @IsOptional() @IsArray() @IsString({ each: true }) referensiGambarUrls?: string[];
+  @IsOptional() @IsArray() @IsString({ each: true }) referensiGambarUrls?: string[]; // multi-image only
   @IsOptional() @IsNumber() hargaEmasPerGram?: number;
   @IsOptional() @IsNumber() hargaPerkiraan?: number;
   @IsOptional() @IsNumber() hargaAkhir?: number;

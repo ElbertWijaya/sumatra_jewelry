@@ -33,8 +33,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   const [tanggalAmbil, setTanggalAmbil] = useState<string>('');
   const [showPicker, setShowPicker] = useState<null | { field: 'ready' | 'selesai' | 'ambil'; date: Date }>(null);
   // Image reference now via upload, store returned path
-  const [referensiGambarUrl, setReferensiGambarUrl] = useState(''); // legacy first image
-  const [referensiGambarUrls, setReferensiGambarUrls] = useState<string[]>([]); // multiple images
+  const [referensiGambarUrls, setReferensiGambarUrls] = useState<string[]>([]); // multi image only
   const [uploading, setUploading] = useState(false);
   const [localImageName, setLocalImageName] = useState<string | null>(null);
   const [catatan, setCatatan] = useState('');
@@ -44,7 +43,8 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   const [expandedStoneIndex, setExpandedStoneIndex] = useState<number | null>(null);
 
   const mutation = useMutation({
-    mutationFn: () => api.orders.create(token || '', {
+    mutationFn: () => {
+  const payloadRaw: any = {
       customerName,
       customerAddress: customerAddress || undefined,
       customerPhone: customerPhone || undefined,
@@ -60,7 +60,6 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   promisedReadyDate: promisedReadyDate || undefined,
       tanggalSelesai: tanggalSelesai || undefined,
       tanggalAmbil: tanggalAmbil || undefined,
-  referensiGambarUrl: referensiGambarUrl || undefined,
   referensiGambarUrls: referensiGambarUrls.length ? referensiGambarUrls : undefined,
       catatan: catatan || undefined,
       stones: stones.length ? stones.filter(s => s.bentuk && s.jumlah).map(s => ({
@@ -68,12 +67,20 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
         jumlah: Number(s.jumlah || 0),
         berat: s.berat ? Number(s.berat) : undefined,
       })) : undefined,
-    }),
+      };
+      // Filter undefined to avoid them being stripped weirdly
+      const payload: any = {};
+      Object.entries(payloadRaw).forEach(([k,v])=>{
+        if (v !== undefined) payload[k] = v;
+      });
+      console.log('[CreateOrderSubmit] payload', payload);
+      return api.orders.create(token || '', payload);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['orders'] });
       onCreated && onCreated();
       Alert.alert('Sukses', 'Order dibuat');
-  setCustomerName(''); setCustomerAddress(''); setCustomerPhone(''); setJenisBarang(''); setJenisEmas(''); setWarnaEmas(''); setDp(''); setHargaEmasPerGram(''); setHargaPerkiraan(''); setHargaAkhir(''); setPromisedReadyDate(''); setTanggalSelesai(''); setTanggalAmbil(''); setReferensiGambarUrl(''); setReferensiGambarUrls([]); setCatatan(''); setStones([]); setLocalImageName(null);
+  setCustomerName(''); setCustomerAddress(''); setCustomerPhone(''); setJenisBarang(''); setJenisEmas(''); setWarnaEmas(''); setDp(''); setHargaEmasPerGram(''); setHargaPerkiraan(''); setHargaAkhir(''); setPromisedReadyDate(''); setTanggalSelesai(''); setTanggalAmbil(''); setReferensiGambarUrls([]); setCatatan(''); setStones([]); setLocalImageName(null);
     },
     onError: (e: any) => Alert.alert('Error', e.message || 'Gagal membuat order'),
   });
@@ -127,18 +134,11 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   <View style={{ marginBottom:12 }}>
         <Text style={styles.label}>Referensi Gambar</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom:8 }}>
-          {[referensiGambarUrl, ...referensiGambarUrls.filter(u=>u && u !== referensiGambarUrl)].filter(Boolean).map((url, i) => (
+          {referensiGambarUrls.filter(Boolean).map((url, i) => (
             <View key={url + i} style={{ marginRight:10, alignItems:'center' }}>
               <Image source={{ uri: url }} style={{ width:90, height:90, borderRadius:6 }} />
               <TouchableOpacity onPress={()=>{
-                if(url === referensiGambarUrl){
-                  // remove primary
-                  const rest = referensiGambarUrls.filter(u=>u!==url);
-                  setReferensiGambarUrl(rest[0] || '');
-                  setReferensiGambarUrls(rest.slice(1));
-                } else {
-                  setReferensiGambarUrls(prev=> prev.filter(u=>u!==url));
-                }
+                setReferensiGambarUrls(prev=> prev.filter(u=>u!==url));
               }} style={{ marginTop:4 }}>
                 <Text style={{ fontSize:11, color:'#b22' }}>Hapus</Text>
               </TouchableOpacity>
@@ -146,7 +146,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
           ))}
         </ScrollView>
         <View style={{ flexDirection:'row', gap:8, flexWrap:'wrap' }}>
-          <Button title={uploading ? 'Mengupload...' : referensiGambarUrl ? 'Ganti Foto' : 'Pilih dari Galeri'} onPress={async ()=>{
+          <Button title={uploading ? 'Mengupload...' : 'Pilih dari Galeri'} onPress={async ()=>{
             if(uploading) return;
             if(!token){ Alert.alert('Tidak ada token','Silakan login ulang.'); return; }
             try {
@@ -160,11 +160,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
               if(result.canceled) return;
               const asset = result.assets[0];
               const uploaded = await handleUploadAsset(token, asset.uri, asset.fileName, asset.mimeType);
-              if(!referensiGambarUrl){
-                setReferensiGambarUrl(uploaded.url);
-              } else {
-                setReferensiGambarUrls(prev => [...prev, uploaded.url]);
-              }
+              setReferensiGambarUrls(prev => [...prev, uploaded.url]);
               setLocalImageName(asset.fileName || 'design.jpg');
             } catch(e:any){ Alert.alert('Upload gagal', e.message || 'Error'); }
             finally { setUploading(false); }
@@ -182,16 +178,12 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
               if(result.canceled) return;
               const asset = result.assets[0];
               const uploaded = await handleUploadAsset(token, asset.uri, asset.fileName, asset.mimeType);
-              if(!referensiGambarUrl){
-                setReferensiGambarUrl(uploaded.url);
-              } else {
-                setReferensiGambarUrls(prev => [...prev, uploaded.url]);
-              }
+              setReferensiGambarUrls(prev => [...prev, uploaded.url]);
               setLocalImageName(asset.fileName || 'design.jpg');
             } catch(e:any){ Alert.alert('Upload gagal', e.message || 'Error'); }
             finally { setUploading(false); }
           }} />
-          {referensiGambarUrl ? <Button title='Reset Semua' color='#b22' onPress={()=>{ setReferensiGambarUrl(''); setReferensiGambarUrls([]); setLocalImageName(null); }} /> : null}
+          {referensiGambarUrls.length ? <Button title='Reset Semua' color='#b22' onPress={()=>{ setReferensiGambarUrls([]); setLocalImageName(null); }} /> : null}
         </View>
       </View>
 

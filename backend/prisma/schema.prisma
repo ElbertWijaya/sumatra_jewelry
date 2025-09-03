@@ -40,7 +40,6 @@ model Order {
   tanggalAmbil    DateTime? @map("pickup_date")
   catatan       String?  @map("notes")
   fotoDesainUrl String?  @map("design_image_url")
-  referensiGambarUrl  String? @map("reference_image_url")
   referensiGambarUrls Json?   @map("reference_image_urls") // array of strings
   status        OrderStatus @default(DRAFT) @map("status")
   createdById   String? @map("created_by_id")

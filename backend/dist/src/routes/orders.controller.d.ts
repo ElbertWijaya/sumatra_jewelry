@@ -33,7 +33,6 @@ export declare class OrdersController {
         tanggalAmbil: Date | null;
         catatan: string | null;
         fotoDesainUrl: string | null;
-        referensiGambarUrl: string | null;
         referensiGambarUrls: import("@prisma/client/runtime/library").JsonValue | null;
         status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;
@@ -69,7 +68,6 @@ export declare class OrdersController {
         tanggalAmbil: Date | null;
         catatan: string | null;
         fotoDesainUrl: string | null;
-        referensiGambarUrl: string | null;
         referensiGambarUrls: import("@prisma/client/runtime/library").JsonValue | null;
         status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;
@@ -105,7 +103,6 @@ export declare class OrdersController {
         tanggalAmbil: Date | null;
         catatan: string | null;
         fotoDesainUrl: string | null;
-        referensiGambarUrl: string | null;
         referensiGambarUrls: import("@prisma/client/runtime/library").JsonValue | null;
         status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;
@@ -143,7 +140,6 @@ export declare class OrdersController {
         tanggalAmbil: Date | null;
         catatan: string | null;
         fotoDesainUrl: string | null;
-        referensiGambarUrl: string | null;
         referensiGambarUrls: import("@prisma/client/runtime/library").JsonValue | null;
         status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;

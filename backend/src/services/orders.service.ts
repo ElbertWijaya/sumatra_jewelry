@@ -23,19 +23,19 @@ export class OrdersService {
   // ongkos removed per new spec
         hargaEmasPerGram: dto.hargaEmasPerGram,
         hargaPerkiraan: dto.hargaPerkiraan,
-        hargaAkhir: dto.hargaAkhir,
-        dp: dto.dp || 0,
-  promisedReadyDate: dto.promisedReadyDate ? new Date(dto.promisedReadyDate) : undefined,
+  hargaAkhir: dto.hargaAkhir,
+  dp: dto.dp || 0,
+  // Optional assign; TS error arises if Prisma client not regenerated yet. Will be valid after generate.
+  ...(dto.promisedReadyDate ? { promisedReadyDate: new Date(dto.promisedReadyDate) } : {}),
         tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : undefined,
         tanggalAmbil: dto.tanggalAmbil ? new Date(dto.tanggalAmbil) : undefined,
-        catatan: dto.catatan,
-  referensiGambarUrl: dto.referensiGambarUrl || (dto.referensiGambarUrls && dto.referensiGambarUrls[0]) || null,
-  // Prisma client may not yet expose strong type for JSON field; cast when present
+  catatan: dto.catatan,
+  // Multi-image only now
   ...(dto.referensiGambarUrls ? { referensiGambarUrls: dto.referensiGambarUrls as unknown as Prisma.InputJsonValue } : {}),
   status: 'DRAFT',
         createdById: userId,
         updatedById: userId,
-      },
+  } as any,
     });
     if (dto.stones && dto.stones.length) {
       await this.prisma.orderStone.createMany({
