@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model AppUser {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  fullName  String
+  role      Role
+  password  String
+  createdAt DateTime @default(now())
+  ordersCreated Order[] @relation("OrdersCreated")
+  ordersUpdated Order[] @relation("OrdersUpdated")
+  histories OrderHistory[]
+}
+
+model Order {
+  id           Int       @id @default(autoincrement())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  code         String?   @unique
+  customerName String
+  customerPhone String?
+  jenis        String
+  kadar        Int?
+  beratTarget  Decimal?  @db.Decimal(10,2)
+  beratAkhir   Decimal?  @db.Decimal(10,2)
+  ongkos       Decimal   @db.Decimal(14,2)
+  dp           Decimal   @default(0) @db.Decimal(14,2)
+  tanggalJanjiJadi DateTime?
+  catatan      String?
+  fotoDesainUrl String?
+  status       OrderStatus @default(DRAFT)
+  createdById  String?
+  updatedById  String?
+  createdBy    AppUser? @relation("OrdersCreated", fields: [createdById], references: [id])
+  updatedBy    AppUser? @relation("OrdersUpdated", fields: [updatedById], references: [id])
+  histories    OrderHistory[]
+}
+
+model OrderHistory {
+  id         Int      @id @default(autoincrement())
+  order      Order    @relation(fields: [orderId], references: [id])
+  orderId    Int
+  changedAt  DateTime @default(now())
+  user       AppUser? @relation(fields: [userId], references: [id])
+  userId     String?
+  changeSummary String?
+  diff       Json?
+}
+
+enum Role {
+  admin
+  kasir
+  owner
+  pengrajin
+}
+
+enum OrderStatus {
+  DRAFT
+  DITERIMA
+  DALAM_PROSES
+  SIAP
+  DIAMBIL
+  BATAL
+}
+
+/// After migration, run a script to backfill the code field: TM-YYYYMM-XXXX
