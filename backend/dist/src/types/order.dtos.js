@@ -47,11 +47,6 @@ __decorate([
     __metadata("design:type", String)
 ], CreateOrderDto.prototype, "warnaEmas", void 0);
 __decorate([
-    (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.Min)(0),
-    __metadata("design:type", Number)
-], CreateOrderDto.prototype, "ongkos", void 0);
-__decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.Min)(0),
@@ -61,7 +56,7 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
-], CreateOrderDto.prototype, "tanggalJanjiJadi", void 0);
+], CreateOrderDto.prototype, "promisedReadyDate", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),

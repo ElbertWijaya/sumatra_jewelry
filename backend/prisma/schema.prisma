@@ -31,12 +31,11 @@ model Order {
   jenisEmas     String   @map("gold_type")
   warnaEmas     String   @map("gold_color")
   beratAkhir    Decimal? @db.Decimal(10,2) @map("final_weight")
-  ongkos        Decimal  @db.Decimal(14,2) @map("labor_cost") // legacy primary cost
   hargaEmasPerGram Decimal? @db.Decimal(14,2) @map("gold_price_per_gram")
   hargaPerkiraan  Decimal? @db.Decimal(14,2) @map("estimated_price")
   hargaAkhir      Decimal? @db.Decimal(14,2) @map("final_price")
   dp            Decimal   @default(0) @db.Decimal(14,2) @map("down_payment")
-  tanggalJanjiJadi DateTime? @map("promised_date")
+  promisedReadyDate DateTime? @map("promised_ready_date")
   tanggalSelesai  DateTime? @map("completed_date")
   tanggalAmbil    DateTime? @map("pickup_date")
   catatan       String?  @map("notes")

@@ -18,9 +18,6 @@ let OrdersService = class OrdersService {
         this.prisma = prisma;
     }
     async create(dto, userId) {
-        if (dto.dp && dto.ongkos && Number(dto.dp) > Number(dto.ongkos)) {
-            throw new common_1.BadRequestException('DP tidak boleh lebih besar dari ongkos');
-        }
         const order = await this.prisma.order.create({
             data: {
                 customerName: dto.customerName,
@@ -29,12 +26,11 @@ let OrdersService = class OrdersService {
                 jenisBarang: dto.jenisBarang,
                 jenisEmas: dto.jenisEmas,
                 warnaEmas: dto.warnaEmas,
-                ongkos: dto.ongkos,
                 hargaEmasPerGram: dto.hargaEmasPerGram,
                 hargaPerkiraan: dto.hargaPerkiraan,
                 hargaAkhir: dto.hargaAkhir,
                 dp: dto.dp || 0,
-                tanggalJanjiJadi: dto.tanggalJanjiJadi ? new Date(dto.tanggalJanjiJadi) : undefined,
+                promisedReadyDate: dto.promisedReadyDate ? new Date(dto.promisedReadyDate) : undefined,
                 tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : undefined,
                 tanggalAmbil: dto.tanggalAmbil ? new Date(dto.tanggalAmbil) : undefined,
                 catatan: dto.catatan,

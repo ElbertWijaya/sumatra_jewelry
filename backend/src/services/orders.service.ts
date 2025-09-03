@@ -10,9 +10,7 @@ export class OrdersService {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateOrderDto, userId: string) {
-    if (dto.dp && dto.ongkos && Number(dto.dp) > Number(dto.ongkos)) {
-      throw new BadRequestException('DP tidak boleh lebih besar dari ongkos');
-    }
+  // Removed ongkos & related DP validation
     const order = await this.prisma.order.create({
       data: {
         customerName: dto.customerName,
@@ -22,12 +20,12 @@ export class OrdersService {
         jenisEmas: dto.jenisEmas,
         warnaEmas: dto.warnaEmas,
   // Removed: kadar, beratTarget
-        ongkos: dto.ongkos,
+  // ongkos removed per new spec
         hargaEmasPerGram: dto.hargaEmasPerGram,
         hargaPerkiraan: dto.hargaPerkiraan,
         hargaAkhir: dto.hargaAkhir,
         dp: dto.dp || 0,
-        tanggalJanjiJadi: dto.tanggalJanjiJadi ? new Date(dto.tanggalJanjiJadi) : undefined,
+  promisedReadyDate: dto.promisedReadyDate ? new Date(dto.promisedReadyDate) : undefined,
         tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : undefined,
         tanggalAmbil: dto.tanggalAmbil ? new Date(dto.tanggalAmbil) : undefined,
         catatan: dto.catatan,

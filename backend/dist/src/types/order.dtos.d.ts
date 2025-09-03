@@ -12,9 +12,8 @@ export declare class CreateOrderDto {
     jenisBarang: string;
     jenisEmas: string;
     warnaEmas: string;
-    ongkos: number;
     dp?: number;
-    tanggalJanjiJadi?: string;
+    promisedReadyDate?: string;
     tanggalSelesai?: string;
     tanggalAmbil?: string;
     catatan?: string;

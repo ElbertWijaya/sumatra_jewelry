@@ -23,15 +23,15 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   const [jenisEmas, setJenisEmas] = useState('');
   const [warnaEmas, setWarnaEmas] = useState('');
   // Fields removed per spec: kadar, beratTarget
-  const [ongkos, setOngkos] = useState('');
+  // Removed: ongkos
   const [dp, setDp] = useState('');
   const [hargaEmasPerGram, setHargaEmasPerGram] = useState('');
   const [hargaPerkiraan, setHargaPerkiraan] = useState('');
   const [hargaAkhir, setHargaAkhir] = useState('');
-  const [tanggalJanjiJadi, setTanggalJanjiJadi] = useState<string>('');
+  const [promisedReadyDate, setPromisedReadyDate] = useState<string>(''); // Tanggal Perkiraan Siap
   const [tanggalSelesai, setTanggalSelesai] = useState<string>('');
   const [tanggalAmbil, setTanggalAmbil] = useState<string>('');
-  const [showPicker, setShowPicker] = useState<null | { field: 'janji' | 'selesai' | 'ambil'; date: Date }>(null);
+  const [showPicker, setShowPicker] = useState<null | { field: 'ready' | 'selesai' | 'ambil'; date: Date }>(null);
   // Image reference now via upload, store returned path
   const [referensiGambarUrl, setReferensiGambarUrl] = useState(''); // legacy first image
   const [referensiGambarUrls, setReferensiGambarUrls] = useState<string[]>([]); // multiple images
@@ -52,12 +52,12 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       jenisEmas,
       warnaEmas,
   // removed: kadar, beratTarget
-      ongkos: Number(ongkos || 0),
+  // ongkos removed
       dp: dp ? Number(dp) : undefined,
       hargaEmasPerGram: hargaEmasPerGram ? Number(hargaEmasPerGram) : undefined,
       hargaPerkiraan: hargaPerkiraan ? Number(hargaPerkiraan) : undefined,
       hargaAkhir: hargaAkhir ? Number(hargaAkhir) : undefined,
-      tanggalJanjiJadi: tanggalJanjiJadi || undefined,
+  promisedReadyDate: promisedReadyDate || undefined,
       tanggalSelesai: tanggalSelesai || undefined,
       tanggalAmbil: tanggalAmbil || undefined,
   referensiGambarUrl: referensiGambarUrl || undefined,
@@ -73,12 +73,12 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       qc.invalidateQueries({ queryKey: ['orders'] });
       onCreated && onCreated();
       Alert.alert('Sukses', 'Order dibuat');
-  setCustomerName(''); setCustomerAddress(''); setCustomerPhone(''); setJenisBarang(''); setJenisEmas(''); setWarnaEmas(''); setOngkos(''); setDp(''); setHargaEmasPerGram(''); setHargaPerkiraan(''); setHargaAkhir(''); setTanggalJanjiJadi(''); setTanggalSelesai(''); setTanggalAmbil(''); setReferensiGambarUrl(''); setReferensiGambarUrls([]); setCatatan(''); setStones([]); setLocalImageName(null);
+  setCustomerName(''); setCustomerAddress(''); setCustomerPhone(''); setJenisBarang(''); setJenisEmas(''); setWarnaEmas(''); setDp(''); setHargaEmasPerGram(''); setHargaPerkiraan(''); setHargaAkhir(''); setPromisedReadyDate(''); setTanggalSelesai(''); setTanggalAmbil(''); setReferensiGambarUrl(''); setReferensiGambarUrls([]); setCatatan(''); setStones([]); setLocalImageName(null);
     },
     onError: (e: any) => Alert.alert('Error', e.message || 'Gagal membuat order'),
   });
 
-  const disabled = !customerName || !jenisBarang || !jenisEmas || !warnaEmas || !ongkos || mutation.isPending || uploading;
+  const disabled = !customerName || !jenisBarang || !jenisEmas || !warnaEmas || mutation.isPending || uploading;
 
   const updateStone = (idx: number, patch: Partial<StoneFormItem>) => {
     setStones(prev => prev.map((s,i)=> i===idx ? { ...s, ...patch } : s));
@@ -90,8 +90,8 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
     <InlineSelect label={label} value={value} options={options} onChange={onChange} />
   );
 
-  const pickDate = (field: 'janji' | 'selesai' | 'ambil') => {
-    const currentVal = (field === 'janji' ? tanggalJanjiJadi : field === 'selesai' ? tanggalSelesai : tanggalAmbil) || new Date().toISOString().slice(0,10);
+  const pickDate = (field: 'ready' | 'selesai' | 'ambil') => {
+    const currentVal = (field === 'ready' ? promisedReadyDate : field === 'selesai' ? tanggalSelesai : tanggalAmbil) || new Date().toISOString().slice(0,10);
     setShowPicker({ field, date: new Date(currentVal) });
   };
 
@@ -100,7 +100,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
     if (Platform.OS !== 'ios') setShowPicker(null);
     if (selected) {
       const iso = selected.toISOString().slice(0,10);
-      if (showPicker.field === 'janji') setTanggalJanjiJadi(iso);
+      if (showPicker.field === 'ready') setPromisedReadyDate(iso);
       if (showPicker.field === 'selesai') setTanggalSelesai(iso);
       if (showPicker.field === 'ambil') setTanggalAmbil(iso);
     }
@@ -226,17 +226,17 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       <Button title='Tambah Batu' onPress={addStone} />
       </FormSection>
 
-      <FormSection title='Pembayaran'>
+  <FormSection title='Pembayaran'>
         <Field label='Harga Emas per Gram' value={hargaEmasPerGram} onChangeText={setHargaEmasPerGram} keyboardType='numeric' />
         <Field label='Harga Perkiraan' value={hargaPerkiraan} onChangeText={setHargaPerkiraan} keyboardType='numeric' />
         <Field label='DP' value={dp} onChangeText={setDp} keyboardType='numeric' />
         <Field label='Harga Akhir' value={hargaAkhir} onChangeText={setHargaAkhir} keyboardType='numeric' />
-        <Field label='Ongkos' required value={ongkos} onChangeText={setOngkos} keyboardType='numeric' />
+  {/* Ongkos removed */}
       </FormSection>
 
       <FormSection title='Tanggal'>
         <View style={styles.dateRow}>
-        <TouchableOpacity style={styles.dateBtn} onPress={()=>pickDate('janji')}><Text>Janji Jadi: {tanggalJanjiJadi || '-'}</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.dateBtn} onPress={()=>pickDate('ready')}><Text>Perkiraan Siap: {promisedReadyDate || '-'}</Text></TouchableOpacity>
         <TouchableOpacity style={styles.dateBtn} onPress={()=>pickDate('selesai')}><Text>Selesai: {tanggalSelesai || '-'}</Text></TouchableOpacity>
         <TouchableOpacity style={styles.dateBtn} onPress={()=>pickDate('ambil')}><Text>Ambil: {tanggalAmbil || '-'}</Text></TouchableOpacity>
         </View>

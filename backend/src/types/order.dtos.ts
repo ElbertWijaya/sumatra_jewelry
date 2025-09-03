@@ -17,10 +17,9 @@ export class CreateOrderDto {
   @IsString() @IsNotEmpty() jenisBarang!: string;
   @IsString() @IsNotEmpty() jenisEmas!: string;
   @IsString() @IsNotEmpty() warnaEmas!: string;
-  // Removed per new spec: kadar, beratTarget
-  @IsNumber() @Min(0) ongkos!: number;
+  // Removed per new spec: kadar, beratTarget, ongkos
   @IsOptional() @IsNumber() @Min(0) dp?: number;
-  @IsOptional() @IsDateString() tanggalJanjiJadi?: string;
+  @IsOptional() @IsDateString() promisedReadyDate?: string; // Tanggal Perkiraan Siap
   @IsOptional() @IsDateString() tanggalSelesai?: string;
   @IsOptional() @IsDateString() tanggalAmbil?: string;
   @IsOptional() @IsString() catatan?: string;
