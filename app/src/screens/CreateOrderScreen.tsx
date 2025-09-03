@@ -204,13 +204,16 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
             <TouchableOpacity onPress={()=>removeStone(idx)} style={styles.removeBtn}><Text style={{color:'#fff'}}>X</Text></TouchableOpacity>
           </View>
           {expandedStoneIndex === idx && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom:8, marginLeft:4 }}>
-              {BENTUK_BATU_OPTIONS.map(opt => (
-                <TouchableOpacity key={opt} onPress={()=>{ updateStone(idx,{bentuk:opt}); setExpandedStoneIndex(null); }} style={[styles.pillSmall, s.bentuk===opt && styles.pillSmallActive]}>
-                  <Text style={s.bentuk===opt? styles.pillTextActive: styles.pillText}>{opt}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <View style={styles.stoneDropdown}> 
+              {BENTUK_BATU_OPTIONS.map(opt => {
+                const active = s.bentuk === opt;
+                return (
+                  <TouchableOpacity key={opt} onPress={()=>{ updateStone(idx,{bentuk:opt}); setExpandedStoneIndex(null); }} style={[styles.stoneItem, active && styles.stoneItemActive]}>
+                    <Text style={[styles.stoneItemText, active && styles.stoneItemTextActive]}>{opt}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           )}
         </View>
       ))}
@@ -281,6 +284,11 @@ const styles = StyleSheet.create({
   stoneRowWrapper: { marginBottom:4 },
   stoneSelect: { flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:0 },
   stoneSelectText: { color:'#333' },
+  stoneDropdown: { marginTop:6, borderWidth:1, borderColor:'#ddd', borderRadius:10, backgroundColor:'#fff', overflow:'hidden' },
+  stoneItem: { paddingVertical:10, paddingHorizontal:14, borderBottomWidth:1, borderBottomColor:'#f0f0f0' },
+  stoneItemActive: { backgroundColor:'#222' },
+  stoneItemText: { fontSize:13, color:'#333' },
+  stoneItemTextActive: { color:'#fff', fontWeight:'600' },
 });
 
 async function compressImage(uri: string) {
