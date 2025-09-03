@@ -33,6 +33,12 @@ export class OrdersController {
     return this.orders.findById(id);
   }
 
+  @Get(':id/history')
+  @Roles('admin','kasir','owner','pengrajin')
+  history(@Param('id', ParseIntPipe) id: number) {
+    return this.orders.history(id);
+  }
+
   @Put(':id/status')
   @Roles('admin','kasir','owner')
   updateStatus(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateOrderStatusDto, @CurrentUser() user: RequestUser) {

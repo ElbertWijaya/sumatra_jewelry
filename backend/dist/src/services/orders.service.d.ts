@@ -85,4 +85,15 @@ export declare class OrdersService {
         createdById: string | null;
         updatedById: string | null;
     }>;
+    history(id: number): Promise<{
+        id: number;
+        changedAt: Date;
+        by: {
+            id: string;
+            fullName: string;
+            role: import(".prisma/client").$Enums.Role;
+        } | null;
+        summary: string | null;
+        diff: import("@prisma/client/runtime/library").JsonValue;
+    }[]>;
 }

@@ -87,6 +87,21 @@ let OrdersService = class OrdersService {
         });
         return updated;
     }
+    async history(id) {
+        await this.findById(id);
+        const records = await this.prisma.orderHistory.findMany({
+            where: { orderId: id },
+            include: { user: { select: { id: true, fullName: true, role: true } } },
+            orderBy: { changedAt: 'asc' }
+        });
+        return records.map(r => ({
+            id: r.id,
+            changedAt: r.changedAt,
+            by: r.user ? { id: r.user.id, fullName: r.user.fullName, role: r.user.role } : null,
+            summary: r.changeSummary,
+            diff: r.diff
+        }));
+    }
 };
 exports.OrdersService = OrdersService;
 exports.OrdersService = OrdersService = __decorate([

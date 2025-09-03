@@ -36,6 +36,9 @@ let OrdersController = class OrdersController {
     findOne(id) {
         return this.orders.findById(id);
     }
+    history(id) {
+        return this.orders.history(id);
+    }
     updateStatus(id, dto, user) {
         return this.orders.updateStatus(id, dto, user.userId);
     }
@@ -66,6 +69,14 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", void 0)
 ], OrdersController.prototype, "findOne", null);
+__decorate([
+    (0, common_1.Get)(':id/history'),
+    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner', 'pengrajin'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], OrdersController.prototype, "history", null);
 __decorate([
     (0, common_1.Put)(':id/status'),
     (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner'),

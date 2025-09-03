@@ -16,5 +16,6 @@ export const api = {
   login: (email: string, password: string) => request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   orders: {
     list: (token: string) => request('/orders', { headers: { Authorization: `Bearer ${token}` } }),
+  create: (token: string, payload: any) => request('/orders', { method: 'POST', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` } }),
   },
 };

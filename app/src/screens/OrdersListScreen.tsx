@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, FlatList, RefreshControl } from 'react-native';
+import { View, Text, FlatList, RefreshControl, Button, Modal } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client';
+import { CreateOrderScreen } from './CreateOrderScreen';
 import { useAuth } from '../context/AuthContext';
 
 export const OrdersListScreen: React.FC = () => {
@@ -11,8 +12,10 @@ export const OrdersListScreen: React.FC = () => {
     queryFn: () => api.orders.list(token || ''),
     enabled: !!token,
   });
+  const [open, setOpen] = React.useState(false);
   return (
     <View style={{ flex: 1, padding: 16 }}>
+      <Button title='Order Baru' onPress={() => setOpen(true)} />
       {error && <Text style={{ color: 'red' }}>{String((error as any).message)}</Text>}
       <FlatList
         data={data || []}
@@ -25,6 +28,14 @@ export const OrdersListScreen: React.FC = () => {
           </View>
         )}
       />
+      <Modal visible={open} animationType='slide'>
+        <View style={{ flex:1, backgroundColor:'#fff' }}>
+          <View style={{ padding:8 }}>
+            <Button title='Tutup' onPress={() => setOpen(false)} />
+          </View>
+          <CreateOrderScreen onCreated={() => { setOpen(false); }} />
+        </View>
+      </Modal>
     </View>
   );
 };
