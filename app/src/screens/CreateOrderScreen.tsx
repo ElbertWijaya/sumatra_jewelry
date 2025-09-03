@@ -4,6 +4,9 @@ import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { JENIS_BARANG_OPTIONS, JENIS_EMAS_OPTIONS, WARNA_EMAS_OPTIONS, BENTUK_BATU_OPTIONS, emptyStone, StoneFormItem } from '../constants/orderOptions';
+import { FormSection } from '../components/FormSection';
+import { Field } from '../components/Field';
+import { InlineSelect } from '../components/InlineSelect';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Platform } from 'react-native';
 
@@ -33,6 +36,9 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   const [localImageName, setLocalImageName] = useState<string | null>(null);
   const [catatan, setCatatan] = useState('');
   const [stones, setStones] = useState<StoneFormItem[]>([]);
+  // Expanded selectors (single-line then expand on press)
+  const [expandedField, setExpandedField] = useState<null | 'jenisBarang' | 'jenisEmas' | 'warnaEmas'>(null); // retained for compatibility if needed later
+  const [expandedStoneIndex, setExpandedStoneIndex] = useState<number | null>(null);
 
   const mutation = useMutation({
     mutationFn: () => api.orders.create(token || '', {
@@ -77,17 +83,8 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   const removeStone = (idx: number) => setStones(prev => prev.filter((_,i)=>i!==idx));
   const addStone = () => setStones(prev => [...prev, emptyStone()]);
 
-  const renderSelectRow = (label: string, value: string, options: string[], onChange: (v:string)=>void) => (
-    <View style={styles.fieldGroup}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={styles.pillRow}>
-        {options.map(opt => (
-          <TouchableOpacity key={opt} onPress={()=>onChange(opt)} style={[styles.pill, value===opt && styles.pillActive]}>
-            <Text style={value===opt? styles.pillTextActive: styles.pillText}>{opt}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>
+  const renderSelectRow = (fieldKey: 'jenisBarang' | 'jenisEmas' | 'warnaEmas', label: string, value: string, options: string[], onChange: (v:string)=>void) => (
+    <InlineSelect label={label} value={value} options={options} onChange={onChange} />
   );
 
   const pickDate = (field: 'janji' | 'selesai' | 'ambil') => {
@@ -109,17 +106,21 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Order Baru</Text>
-      <Text style={styles.section}>Informasi Customer</Text>
-      <TextInput placeholder='Nama Customer *' style={styles.input} value={customerName} onChangeText={setCustomerName} />
-      <TextInput placeholder='Alamat Customer' style={styles.input} value={customerAddress} onChangeText={setCustomerAddress} />
-      <TextInput placeholder='No Telepon Customer' style={styles.input} value={customerPhone} onChangeText={setCustomerPhone} keyboardType='phone-pad' />
 
-      <Text style={styles.section}>Informasi Order</Text>
-      {renderSelectRow('Jenis Barang *', jenisBarang, JENIS_BARANG_OPTIONS, setJenisBarang)}
-      {renderSelectRow('Jenis Emas *', jenisEmas, JENIS_EMAS_OPTIONS, setJenisEmas)}
-      {renderSelectRow('Warna Emas *', warnaEmas, WARNA_EMAS_OPTIONS, setWarnaEmas)}
-      {/* Removed inputs: Kadar, Berat Target. */}
-      {/* Image Upload */}
+      <FormSection title='Informasi Customer'>
+        <Field label='Nama Customer' required value={customerName} onChangeText={setCustomerName} />
+        <Field label='Alamat Customer' value={customerAddress} onChangeText={setCustomerAddress} />
+        <Field label='No Telepon Customer' value={customerPhone} onChangeText={setCustomerPhone} keyboardType='phone-pad' />
+      </FormSection>
+
+      <FormSection title='Informasi Order'>
+        {renderSelectRow('jenisBarang', 'Jenis Barang', jenisBarang, JENIS_BARANG_OPTIONS, setJenisBarang)}
+        {renderSelectRow('jenisEmas', 'Jenis Emas', jenisEmas, JENIS_EMAS_OPTIONS, setJenisEmas)}
+        {renderSelectRow('warnaEmas', 'Warna Emas', warnaEmas, WARNA_EMAS_OPTIONS, setWarnaEmas)}
+        {/* Removed inputs: Kadar, Berat Target. */}
+      </FormSection>
+
+      <FormSection title='Referensi Gambar'>
   <View style={{ marginBottom:12 }}>
         <Text style={styles.label}>Referensi Gambar</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom:8 }}>
@@ -188,38 +189,48 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
         </View>
       </View>
 
-      <Text style={styles.subSection}>Batu / Stone</Text>
+  </FormSection>
+
+  <FormSection title='Batu / Stone'>
       {stones.map((s,idx)=>(
-        <View key={idx} style={styles.stoneRow}>
-          <View style={[styles.input, styles.stoneInput, { padding:4 }]}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <View key={idx} style={styles.stoneRowWrapper}>
+          <View style={styles.stoneRow}> 
+            <TouchableOpacity style={[styles.input, styles.stoneInput, styles.stoneSelect]} onPress={()=> setExpandedStoneIndex(expandedStoneIndex === idx ? null : idx)}>
+              <Text style={styles.stoneSelectText}>{s.bentuk || 'Bentuk Batu'}</Text>
+              <Text style={styles.selectHeaderArrow}>{expandedStoneIndex === idx ? '▲' : '▼'}</Text>
+            </TouchableOpacity>
+            <TextInput placeholder='Jumlah' style={[styles.input,styles.stoneInput]} value={s.jumlah} onChangeText={v=>updateStone(idx,{jumlah:v})} keyboardType='numeric' />
+            <TextInput placeholder='Berat' style={[styles.input,styles.stoneInput]} value={s.berat} onChangeText={v=>updateStone(idx,{berat:v})} keyboardType='numeric' />
+            <TouchableOpacity onPress={()=>removeStone(idx)} style={styles.removeBtn}><Text style={{color:'#fff'}}>X</Text></TouchableOpacity>
+          </View>
+          {expandedStoneIndex === idx && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom:8, marginLeft:4 }}>
               {BENTUK_BATU_OPTIONS.map(opt => (
-                <TouchableOpacity key={opt} onPress={()=>updateStone(idx,{bentuk:opt})} style={[styles.pillSmall, s.bentuk===opt && styles.pillSmallActive]}>
+                <TouchableOpacity key={opt} onPress={()=>{ updateStone(idx,{bentuk:opt}); setExpandedStoneIndex(null); }} style={[styles.pillSmall, s.bentuk===opt && styles.pillSmallActive]}>
                   <Text style={s.bentuk===opt? styles.pillTextActive: styles.pillText}>{opt}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
-          </View>
-          <TextInput placeholder='Jumlah' style={[styles.input,styles.stoneInput]} value={s.jumlah} onChangeText={v=>updateStone(idx,{jumlah:v})} keyboardType='numeric' />
-          <TextInput placeholder='Berat' style={[styles.input,styles.stoneInput]} value={s.berat} onChangeText={v=>updateStone(idx,{berat:v})} keyboardType='numeric' />
-          <TouchableOpacity onPress={()=>removeStone(idx)} style={styles.removeBtn}><Text style={{color:'#fff'}}>X</Text></TouchableOpacity>
+          )}
         </View>
       ))}
       <Button title='Tambah Batu' onPress={addStone} />
+      </FormSection>
 
-      <Text style={styles.section}>Pembayaran</Text>
-      <TextInput placeholder='Harga Emas per Gram' style={styles.input} value={hargaEmasPerGram} onChangeText={setHargaEmasPerGram} keyboardType='numeric' />
-      <TextInput placeholder='Harga Perkiraan' style={styles.input} value={hargaPerkiraan} onChangeText={setHargaPerkiraan} keyboardType='numeric' />
-      <TextInput placeholder='DP' style={styles.input} value={dp} onChangeText={setDp} keyboardType='numeric' />
-      <TextInput placeholder='Harga Akhir' style={styles.input} value={hargaAkhir} onChangeText={setHargaAkhir} keyboardType='numeric' />
-      <TextInput placeholder='Ongkos *' style={styles.input} value={ongkos} onChangeText={setOngkos} keyboardType='numeric' />
+      <FormSection title='Pembayaran'>
+        <Field label='Harga Emas per Gram' value={hargaEmasPerGram} onChangeText={setHargaEmasPerGram} keyboardType='numeric' />
+        <Field label='Harga Perkiraan' value={hargaPerkiraan} onChangeText={setHargaPerkiraan} keyboardType='numeric' />
+        <Field label='DP' value={dp} onChangeText={setDp} keyboardType='numeric' />
+        <Field label='Harga Akhir' value={hargaAkhir} onChangeText={setHargaAkhir} keyboardType='numeric' />
+        <Field label='Ongkos' required value={ongkos} onChangeText={setOngkos} keyboardType='numeric' />
+      </FormSection>
 
-      <Text style={styles.section}>Tanggal</Text>
-      <View style={styles.dateRow}>
+      <FormSection title='Tanggal'>
+        <View style={styles.dateRow}>
         <TouchableOpacity style={styles.dateBtn} onPress={()=>pickDate('janji')}><Text>Janji Jadi: {tanggalJanjiJadi || '-'}</Text></TouchableOpacity>
         <TouchableOpacity style={styles.dateBtn} onPress={()=>pickDate('selesai')}><Text>Selesai: {tanggalSelesai || '-'}</Text></TouchableOpacity>
         <TouchableOpacity style={styles.dateBtn} onPress={()=>pickDate('ambil')}><Text>Ambil: {tanggalAmbil || '-'}</Text></TouchableOpacity>
-      </View>
+        </View>
       {showPicker && (
         <DateTimePicker
           value={showPicker.date}
@@ -228,20 +239,26 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
           onChange={onDateChange}
         />
       )}
+      </FormSection>
 
-      <TextInput placeholder='Catatan' style={[styles.input,{height:90}]} value={catatan} onChangeText={setCatatan} multiline />
-      <Button title={mutation.isPending ? 'Menyimpan...' : 'Simpan'} disabled={disabled} onPress={() => mutation.mutate()} />
+      <FormSection title='Catatan'>
+        <TextInput placeholder='Catatan' style={[styles.input,{height:90}]} value={catatan} onChangeText={setCatatan} multiline />
+      </FormSection>
+
+      <View style={{ paddingHorizontal:4, marginTop:10 }}>
+        <Button title={mutation.isPending ? 'Menyimpan...' : 'Simpan'} disabled={disabled} onPress={() => mutation.mutate()} />
+      </View>
       <View style={{ height: Platform.OS==='web' ? 40 : 120 }} />
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { padding: 16 },
+  container: { padding: 18, backgroundColor:'#f7f7f8' },
   title: { fontSize: 22, fontWeight: '700', marginBottom: 18 },
   section: { fontSize: 16, fontWeight: '600', marginTop: 12, marginBottom: 8 },
   subSection: { fontSize: 14, fontWeight: '600', marginTop: 8, marginBottom: 4 },
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 6, marginBottom: 12 },
+  input: { borderWidth: 1, borderColor: '#e1e1e3', backgroundColor:'#fff', padding: 12, borderRadius: 10, marginBottom: 12, fontSize:14 },
   fieldGroup: { marginBottom: 12 },
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   pill: { paddingVertical:6, paddingHorizontal:12, borderRadius:20, borderWidth:1, borderColor:'#888', marginRight:6, marginBottom:6 },
@@ -256,6 +273,14 @@ const styles = StyleSheet.create({
   pillSmallActive: { backgroundColor:'#333', borderColor:'#333' },
   dateRow: { flexDirection:'row', justifyContent:'space-between', marginBottom:12 },
   dateBtn: { flex:1, borderWidth:1, borderColor:'#ccc', padding:10, borderRadius:6, marginRight:8 },
+  // New expandable select styles
+  selectHeader: { flexDirection:'row', alignItems:'center', borderWidth:1, borderColor:'#ccc', borderRadius:8, paddingHorizontal:12, paddingVertical:10 },
+  selectHeaderLabel: { flex:1, fontWeight:'500', color:'#333' },
+  selectHeaderValue: { flex:1, textAlign:'right', color:'#555', marginRight:8 },
+  selectHeaderArrow: { color:'#666', fontSize:12 },
+  stoneRowWrapper: { marginBottom:4 },
+  stoneSelect: { flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:0 },
+  stoneSelectText: { color:'#333' },
 });
 
 async function compressImage(uri: string) {
