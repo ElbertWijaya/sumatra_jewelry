@@ -1,11 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, Button, ScrollView, StyleSheet, Alert, TouchableOpacity, Image, Modal, PanResponder, Dimensions } from 'react-native';
+import { View, Text, TextInput, Button, ScrollView, StyleSheet, Alert, TouchableOpacity, Image, Modal, PanResponder, Animated } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system';
 // Pastikan menambahkan dependency: expo install expo-camera (untuk modal kamera lanjutan)
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import ImageCropper from '../components/ImageCropper';
 import { api, API_URL } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -39,9 +38,8 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   const [referensiGambarUrls, setReferensiGambarUrls] = useState<string[]>([]); // multi image only (relative paths from server)
   const [uploading, setUploading] = useState(false);
   const [localImageName, setLocalImageName] = useState<string | null>(null);
-  // Free-form crop modal state
-  const [pendingAsset, setPendingAsset] = useState<{ uri: string; width: number; height: number; fileName?: string | null; mimeType?: string | null } | null>(null);
-  const [cropping, setCropping] = useState(false);
+  // Image preview (zoom only) modal state
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   // Advanced camera modal
   const [showCamera, setShowCamera] = useState(false);
   // Gunakan any agar tidak error: 'Camera' refers to a value but is being used as a type
@@ -49,53 +47,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   const cameraRef = useRef<CameraView | null>(null);
   const [cameraType, setCameraType] = useState<'back' | 'front'>('back');
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
-  const windowW = Dimensions.get('window').width;
-  const cropPadding = 24;
-  const displayWidth = windowW - cropPadding * 2;
-  const [displayHeight, setDisplayHeight] = useState(260);
-  const [rect, setRect] = useState({ x: 20, y: 20, w: 180, h: 180 });
-  const dragType = useRef<'move' | 'tl' | 'tr' | 'bl' | 'br' | null>(null);
-  const startRef = useRef({ startX:0, startY:0, origRect: rect });
-
-  const clampRect = (r: typeof rect) => {
-    const minSize = 40;
-    let { x, y, w, h } = r;
-    if (w < minSize) w = minSize;
-    if (h < minSize) h = minSize;
-    if (x < 0) x = 0;
-    if (y < 0) y = 0;
-    if (x + w > displayWidth) x = displayWidth - w;
-    if (y + h > displayHeight) y = displayHeight - h;
-    return { x, y, w, h };
-  };
-
-  const createPan = (type: typeof dragType.current) => PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onPanResponderGrant: (_, g) => {
-      dragType.current = type;
-      startRef.current = { startX: g.moveX, startY: g.moveY, origRect: rect };
-    },
-    onPanResponderMove: (_, g) => {
-      const dx = g.moveX - startRef.current.startX;
-      const dy = g.moveY - startRef.current.startY;
-      let newRect = { ...startRef.current.origRect };
-      switch (dragType.current) {
-        case 'move': newRect.x += dx; newRect.y += dy; break;
-        case 'tl': newRect.x += dx; newRect.y += dy; newRect.w -= dx; newRect.h -= dy; break;
-        case 'tr': newRect.y += dy; newRect.w += dx; newRect.h -= dy; break;
-        case 'bl': newRect.x += dx; newRect.w -= dx; newRect.h += dy; break;
-        case 'br': newRect.w += dx; newRect.h += dy; break;
-      }
-      setRect(clampRect(newRect));
-    },
-    onPanResponderRelease: () => { dragType.current = null; }
-  });
-
-  const movePan = useRef(createPan('move')).current;
-  const tlPan = useRef(createPan('tl')).current;
-  const trPan = useRef(createPan('tr')).current;
-  const blPan = useRef(createPan('bl')).current;
-  const brPan = useRef(createPan('br')).current;
+  // (Cropping logic removed per new requirement: now only preview zoom after upload)
   const [catatan, setCatatan] = useState('');
   const [stones, setStones] = useState<StoneFormItem[]>([]);
   // Expanded selectors (single-line then expand on press)
@@ -229,7 +181,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
         {/* Removed inputs: Kadar, Berat Target. */}
       </FormSection>
 
-      <FormSection title='Referensi Gambar'>
+  <FormSection title='Referensi Gambar'>
   <View style={{ marginBottom:12 }}>
         <Text style={styles.label}>Referensi Gambar</Text>
   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom:8 }}>
@@ -237,7 +189,9 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
             const display = toDisplayUrl(url);
             return (
               <View key={url + i} style={{ marginRight:10, alignItems:'center' }}>
-                <Image source={{ uri: display }} style={{ width:90, height:90, borderRadius:6, backgroundColor:'#eee' }} />
+                <TouchableOpacity onPress={()=> setPreviewUrl(display)}>
+                  <Image source={{ uri: display }} style={{ width:90, height:90, borderRadius:6, backgroundColor:'#eee' }} />
+                </TouchableOpacity>
                 <TouchableOpacity onPress={()=>{
                   setReferensiGambarUrls(prev=> prev.filter(u=>u!==url));
                 }} style={{ marginTop:4 }}>
@@ -259,8 +213,9 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
               const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.85, exif: true });
               if(result.canceled) return;
               let asset = await normalizeOrientation(result.assets[0]);
-              setPendingAsset({ uri: asset.uri, width: asset.width || 1, height: asset.height || 1, fileName: asset.fileName, mimeType: asset.mimeType });
-      setCropping(true);
+              const uploaded = await handleUploadAsset(token || '', asset.uri, asset.fileName, asset.mimeType);
+              setReferensiGambarUrls(prev => [...prev, uploaded.url]);
+              setLocalImageName(asset.fileName || 'design.jpg');
             } catch(e:any){ Alert.alert('Upload gagal', e.message || 'Error'); }
             finally { setUploading(false); }
           }} />
@@ -341,7 +296,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       </View>
       <View style={{ height: Platform.OS==='web' ? 40 : 120 }} />
   </ScrollView>
-  {/* Crop modal removed, integrated into ImageCropper component */}
+  {/* (Crop feature dihapus) */}
   {/* Advanced Camera Modal */}
   <Modal visible={showCamera} animationType='slide' onRequestClose={()=>setShowCamera(false)}>
     <View style={{ flex:1, backgroundColor:'#000' }}>
@@ -368,9 +323,10 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
               setUploading(true);
               const photo = await (cameraRef.current as any)?.takePictureAsync({ quality:1, exif:true, skipProcessing:false });
               const normalized = await normalizeOrientation(photo as any);
-              setPendingAsset({ uri: normalized.uri, width: normalized.width || 1, height: normalized.height || 1, fileName: 'camera.jpg', mimeType: 'image/jpeg' });
+              const uploaded = await handleUploadAsset(token || '', normalized.uri, 'camera.jpg', 'image/jpeg');
+              setReferensiGambarUrls(prev => [...prev, uploaded.url]);
+              setLocalImageName('camera.jpg');
               setShowCamera(false);
-              setCropping(true);
             } catch(e:any){ Alert.alert('Gagal ambil foto', e.message || 'Error'); }
             finally { setUploading(false); }
           }} style={{ width:80, height:80, borderRadius:40, backgroundColor:'#fff', justifyContent:'center', alignItems:'center' }}>
@@ -381,21 +337,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       </View>
     </View>
   </Modal>
-  {pendingAsset && cropping && (
-    <ImageCropper
-      asset={pendingAsset}
-      onCancel={()=>{ setCropping(false); setPendingAsset(null); }}
-  onSave={async (croppedUri: string) => {
-        try {
-          setUploading(true);
-          const uploaded = await handleUploadAsset(token || '', croppedUri, pendingAsset.fileName, pendingAsset.mimeType);
-          setReferensiGambarUrls(prev => [...prev, uploaded.url]);
-          setLocalImageName(pendingAsset.fileName || 'design.jpg');
-        } catch(e:any){ Alert.alert('Crop/Upload gagal', e.message || 'Error'); }
-        finally { setUploading(false); setCropping(false); setPendingAsset(null); }
-      }}
-    />
-  )}
+  <ImagePreviewModal url={previewUrl} onClose={()=> setPreviewUrl(null)} />
   </>
   );
 };
@@ -466,3 +408,69 @@ async function uploadAsset(token: string, asset: { uri: string; fileName?: strin
 async function handleUploadAsset(token: string, uri: string, fileName?: string | null, mimeType?: string | null) {
   return uploadAsset(token, { uri, fileName, mimeType });
 }
+
+// --- Image Preview Modal (Pinch & Pan Only) ---
+const ImagePreviewModal: React.FC<{ url: string | null; onClose: ()=>void }> = ({ url, onClose }) => {
+  const scale = useRef(new Animated.Value(1)).current;
+  const translateX = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
+  const gesture = useRef({ mode: 'none' as 'none'|'pan'|'pinch', startScale:1, startX:0, startY:0, startTX:0, startTY:0, startDist:0 }).current;
+
+  if(!url) return null;
+
+  const dist = (a:any,b:any)=>{ const dx=a.pageX-b.pageX, dy=a.pageY-b.pageY; return Math.sqrt(dx*dx+dy*dy); };
+
+  const panResponder = useRef(PanResponder.create({
+    onStartShouldSetPanResponder:()=>true,
+    onMoveShouldSetPanResponder:()=>true,
+    onPanResponderGrant: (e)=> {
+      const touches = (e.nativeEvent as any).touches;
+      gesture.startScale = (scale as any)._value || 1;
+      gesture.startTX = (translateX as any)._value || 0;
+      gesture.startTY = (translateY as any)._value || 0;
+      if(touches.length>=2){
+        gesture.mode='pinch';
+        gesture.startDist = dist(touches[0], touches[1]);
+      } else {
+        gesture.mode='pan';
+        gesture.startX = touches[0].pageX;
+        gesture.startY = touches[0].pageY;
+      }
+    },
+    onPanResponderMove: (e)=> {
+      const touches = (e.nativeEvent as any).touches;
+      if(gesture.mode==='pinch' && touches.length>=2){
+        const d = dist(touches[0], touches[1]);
+        const factor = d / (gesture.startDist || d);
+        let newScale = gesture.startScale * factor;
+        newScale = Math.max(1, Math.min(6, newScale));
+        scale.setValue(newScale);
+      } else if(gesture.mode==='pan' && touches.length===1){
+        const dx = touches[0].pageX - gesture.startX;
+        const dy = touches[0].pageY - gesture.startY;
+        translateX.setValue(gesture.startTX + dx);
+        translateY.setValue(gesture.startTY + dy);
+      }
+    },
+    onPanResponderRelease: ()=>{ gesture.mode='none'; },
+    onPanResponderTerminationRequest: ()=>true,
+    onPanResponderTerminate: ()=>{ gesture.mode='none'; }
+  })).current;
+
+  const reset = () => {
+    scale.setValue(1); translateX.setValue(0); translateY.setValue(0);
+  };
+
+  return (
+    <Modal visible transparent onRequestClose={()=>{ reset(); onClose(); }}>
+      <View style={{ flex:1, backgroundColor:'#000' }}>
+        <TouchableOpacity onPress={()=>{ reset(); onClose(); }} style={{ position:'absolute', top:40, left:20, zIndex:20, backgroundColor:'rgba(0,0,0,0.5)', paddingHorizontal:14, paddingVertical:8, borderRadius:30 }}>
+          <Text style={{ color:'#fff', fontSize:16 }}>Tutup</Text>
+        </TouchableOpacity>
+        <View style={{ flex:1 }} {...panResponder.panHandlers}>
+          <Animated.Image source={{ uri:url }} resizeMode='contain' style={{ flex:1, transform:[{ translateX }, { translateY }, { scale }] }} />
+        </View>
+      </View>
+    </Modal>
+  );
+};
