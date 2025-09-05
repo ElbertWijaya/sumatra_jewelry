@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, ScrollView, StyleSheet, Alert, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, TextInput, Button, ScrollView, StyleSheet, Alert, TouchableOpacity, Image, Modal, PanResponder, Dimensions } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system';
@@ -33,9 +33,65 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   const [tanggalAmbil, setTanggalAmbil] = useState<string>('');
   const [showPicker, setShowPicker] = useState<null | { field: 'ready' | 'selesai' | 'ambil'; date: Date }>(null);
   // Image reference now via upload, store returned path
-  const [referensiGambarUrls, setReferensiGambarUrls] = useState<string[]>([]); // multi image only
+  const [referensiGambarUrls, setReferensiGambarUrls] = useState<string[]>([]); // multi image only (relative paths from server)
   const [uploading, setUploading] = useState(false);
   const [localImageName, setLocalImageName] = useState<string | null>(null);
+  // Cropping modal state (free-form)
+  const [pendingAsset, setPendingAsset] = useState<{ uri: string; width: number; height: number; fileName?: string | null; mimeType?: string | null } | null>(null);
+  const [cropModalVisible, setCropModalVisible] = useState(false);
+  const windowW = Dimensions.get('window').width;
+  const cropPadding = 24; // horizontal padding inside modal container
+  const displayWidth = windowW - cropPadding * 2;
+  const [displayHeight, setDisplayHeight] = useState(260);
+  // Selection rect in display coordinates
+  const [rect, setRect] = useState({ x: 20, y: 20, w: 200, h: 200 });
+  const dragType = useRef<'move' | 'tl' | 'tr' | 'bl' | 'br' | null>(null);
+  const startRef = useRef({ startX:0, startY:0, origRect: rect });
+
+  const clampRect = (r: typeof rect) => {
+    const minSize = 40;
+    let { x, y, w, h } = r;
+    if (w < minSize) w = minSize;
+    if (h < minSize) h = minSize;
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+    if (x + w > displayWidth) x = displayWidth - w;
+    if (y + h > displayHeight) y = displayHeight - h;
+    return { x, y, w, h };
+  };
+
+  const createPan = (type: typeof dragType.current) => PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onPanResponderGrant: (_, g) => {
+      dragType.current = type;
+      startRef.current = { startX: g.moveX, startY: g.moveY, origRect: rect };
+    },
+    onPanResponderMove: (_, g) => {
+      const dx = g.moveX - startRef.current.startX;
+      const dy = g.moveY - startRef.current.startY;
+      let newRect = { ...startRef.current.origRect };
+      switch (dragType.current) {
+        case 'move':
+          newRect.x += dx; newRect.y += dy; break;
+        case 'tl':
+          newRect.x += dx; newRect.y += dy; newRect.w -= dx; newRect.h -= dy; break;
+        case 'tr':
+          newRect.y += dy; newRect.w += dx; newRect.h -= dy; break;
+        case 'bl':
+          newRect.x += dx; newRect.w -= dx; newRect.h += dy; break;
+        case 'br':
+          newRect.w += dx; newRect.h += dy; break;
+      }
+      setRect(clampRect(newRect));
+    },
+    onPanResponderRelease: () => { dragType.current = null; }
+  });
+
+  const movePan = useRef(createPan('move')).current;
+  const tlPan = useRef(createPan('tl')).current;
+  const trPan = useRef(createPan('tr')).current;
+  const blPan = useRef(createPan('bl')).current;
+  const brPan = useRef(createPan('br')).current;
   const [catatan, setCatatan] = useState('');
   const [stones, setStones] = useState<StoneFormItem[]>([]);
   // Expanded selectors (single-line then expand on press)
@@ -87,6 +143,47 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
 
   const disabled = !customerName || !jenisBarang || !jenisEmas || !warnaEmas || mutation.isPending || uploading;
 
+  // Convert relative /uploads path to absolute for Image component
+  const toDisplayUrl = (p: string) => {
+    if (!p) return p;
+    if (/^https?:\/\//i.test(p)) return p;
+    const base = API_URL.replace(/\/api\/?$/, '').replace(/\/$/, '');
+    return p.startsWith('/uploads') ? base + p : p;
+  };
+
+  const performCrop = async () => {
+    if (!pendingAsset) return;
+    try {
+      setUploading(true);
+      // Map display rect to original coordinates
+      const scaleX = pendingAsset.width / displayWidth;
+      const scaleY = pendingAsset.height / displayHeight;
+      const originX = Math.max(0, Math.round(rect.x * scaleX));
+      const originY = Math.max(0, Math.round(rect.y * scaleY));
+      const cropW = Math.min(pendingAsset.width - originX, Math.round(rect.w * scaleX));
+      const cropH = Math.min(pendingAsset.height - originY, Math.round(rect.h * scaleY));
+      let workingUri = pendingAsset.uri;
+      // Only crop if rect not covering whole image
+      if (!(originX === 0 && originY === 0 && cropW === pendingAsset.width && cropH === pendingAsset.height)) {
+        const cropped = await ImageManipulator.manipulateAsync(
+          workingUri,
+          [{ crop: { originX, originY, width: cropW, height: cropH } }],
+          { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG }
+        );
+        workingUri = cropped.uri;
+      }
+      const uploaded = await handleUploadAsset(token || '', workingUri, pendingAsset.fileName, pendingAsset.mimeType);
+      setReferensiGambarUrls(prev => [...prev, uploaded.url]);
+      setLocalImageName(pendingAsset.fileName || 'design.jpg');
+      setCropModalVisible(false);
+      setPendingAsset(null);
+    } catch (e: any) {
+      Alert.alert('Crop/Upload gagal', e.message || 'Error');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const updateStone = (idx: number, patch: Partial<StoneFormItem>) => {
     setStones(prev => prev.map((s,i)=> i===idx ? { ...s, ...patch } : s));
   };
@@ -114,6 +211,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   };
 
   return (
+    <>
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Order Baru</Text>
 
@@ -134,16 +232,19 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   <View style={{ marginBottom:12 }}>
         <Text style={styles.label}>Referensi Gambar</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom:8 }}>
-          {referensiGambarUrls.filter(Boolean).map((url, i) => (
-            <View key={url + i} style={{ marginRight:10, alignItems:'center' }}>
-              <Image source={{ uri: url }} style={{ width:90, height:90, borderRadius:6 }} />
-              <TouchableOpacity onPress={()=>{
-                setReferensiGambarUrls(prev=> prev.filter(u=>u!==url));
-              }} style={{ marginTop:4 }}>
-                <Text style={{ fontSize:11, color:'#b22' }}>Hapus</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
+          {referensiGambarUrls.filter(Boolean).map((url, i) => {
+            const display = toDisplayUrl(url);
+            return (
+              <View key={url + i} style={{ marginRight:10, alignItems:'center' }}>
+                <Image source={{ uri: display }} style={{ width:90, height:90, borderRadius:6, backgroundColor:'#eee' }} />
+                <TouchableOpacity onPress={()=>{
+                  setReferensiGambarUrls(prev=> prev.filter(u=>u!==url));
+                }} style={{ marginTop:4 }}>
+                  <Text style={{ fontSize:11, color:'#b22' }}>Hapus</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })}
         </ScrollView>
         <View style={{ flexDirection:'row', gap:8, flexWrap:'wrap' }}>
           <Button title={uploading ? 'Mengupload...' : 'Pilih dari Galeri'} onPress={async ()=>{
@@ -159,9 +260,8 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
               });
               if(result.canceled) return;
               const asset = result.assets[0];
-              const uploaded = await handleUploadAsset(token, asset.uri, asset.fileName, asset.mimeType);
-              setReferensiGambarUrls(prev => [...prev, uploaded.url]);
-              setLocalImageName(asset.fileName || 'design.jpg');
+              setPendingAsset({ uri: asset.uri, width: asset.width || 0, height: asset.height || 0, fileName: asset.fileName, mimeType: asset.mimeType });
+              setCropModalVisible(true);
             } catch(e:any){ Alert.alert('Upload gagal', e.message || 'Error'); }
             finally { setUploading(false); }
           }} />
@@ -177,9 +277,8 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
               });
               if(result.canceled) return;
               const asset = result.assets[0];
-              const uploaded = await handleUploadAsset(token, asset.uri, asset.fileName, asset.mimeType);
-              setReferensiGambarUrls(prev => [...prev, uploaded.url]);
-              setLocalImageName(asset.fileName || 'design.jpg');
+              setPendingAsset({ uri: asset.uri, width: asset.width || 0, height: asset.height || 0, fileName: asset.fileName, mimeType: asset.mimeType });
+              setCropModalVisible(true);
             } catch(e:any){ Alert.alert('Upload gagal', e.message || 'Error'); }
             finally { setUploading(false); }
           }} />
@@ -250,7 +349,51 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
         <Button title={mutation.isPending ? 'Menyimpan...' : 'Simpan'} disabled={disabled} onPress={() => mutation.mutate()} />
       </View>
       <View style={{ height: Platform.OS==='web' ? 40 : 120 }} />
-    </ScrollView>
+  </ScrollView>
+  <Modal visible={cropModalVisible} transparent animationType='fade' onRequestClose={()=>{ setCropModalVisible(false); setPendingAsset(null); }}>
+    <View style={styles.cropOverlay}>
+      <View style={styles.cropContainer}>
+        <Text style={styles.cropTitle}>Crop Gambar (geser & resize)</Text>
+        {pendingAsset && (
+          <View style={{ width: displayWidth, alignSelf:'center' }}>
+            <Image
+              source={{ uri: pendingAsset.uri }}
+              style={{ width: displayWidth, height: displayHeight, backgroundColor:'#111', borderRadius:8 }}
+              resizeMode='contain'
+              onLayout={(e)=>{
+                // Adjust displayHeight to keep aspect ratio on first layout
+                if (pendingAsset) {
+                  const W = pendingAsset.width || 1; const H = pendingAsset.height || 1;
+                  const newH = Math.min(420, Math.round(displayWidth * H / W));
+                  if (newH !== displayHeight) setDisplayHeight(newH);
+                  // Reset rect to fit square inside
+                  setRect(r=>({ ...r, w: Math.min(newH, displayWidth)-40, h: Math.min(newH, displayWidth)-40, x:20, y:20 }));
+                }
+              }}
+            />
+            {/* Selection overlay */}
+            <View style={{ position:'absolute', left:0, top:0, width: displayWidth, height: displayHeight }} pointerEvents='box-none'>
+              <View
+                {...movePan.panHandlers}
+                style={{ position:'absolute', left: rect.x, top: rect.y, width: rect.w, height: rect.h, borderWidth:2, borderColor:'#fff', backgroundColor:'rgba(255,255,255,0.12)' }}
+              >
+                {/* Corner handles */}
+                <View {...tlPan.panHandlers} style={[styles.handle, { left:-10, top:-10 }]} />
+                <View {...trPan.panHandlers} style={[styles.handle, { right:-10, top:-10 }]} />
+                <View {...blPan.panHandlers} style={[styles.handle, { left:-10, bottom:-10 }]} />
+                <View {...brPan.panHandlers} style={[styles.handle, { right:-10, bottom:-10 }]} />
+              </View>
+            </View>
+          </View>
+        )}
+        <View style={styles.cropActions}>
+          <Button title='Batal' color='#b33' onPress={()=>{ setCropModalVisible(false); setPendingAsset(null); }} />
+          <Button title='Upload' onPress={performCrop} />
+        </View>
+      </View>
+    </View>
+  </Modal>
+  </>
   );
 };
 
@@ -287,6 +430,18 @@ const styles = StyleSheet.create({
   stoneItemActive: { backgroundColor:'#222' },
   stoneItemText: { fontSize:13, color:'#333' },
   stoneItemTextActive: { color:'#fff', fontWeight:'600' },
+  // Cropping styles
+  cropOverlay: { flex:1, backgroundColor:'rgba(0,0,0,0.55)', justifyContent:'center', padding:24 },
+  cropContainer: { backgroundColor:'#fff', borderRadius:14, padding:16 },
+  cropTitle: { fontSize:18, fontWeight:'600', marginBottom:12 },
+  cropPreview: { width:'100%', height:260, backgroundColor:'#111', borderRadius:8, marginBottom:12 },
+  ratioRow: { flexDirection:'row', flexWrap:'wrap', gap:8, marginBottom:14 },
+  ratioBtn: { paddingVertical:6, paddingHorizontal:12, borderRadius:20, borderWidth:1, borderColor:'#999', marginRight:8, marginBottom:8 },
+  ratioBtnActive: { backgroundColor:'#222', borderColor:'#222' },
+  ratioText: { color:'#222', fontSize:12 },
+  ratioTextActive: { color:'#fff', fontWeight:'600' },
+  cropActions: { flexDirection:'row', justifyContent:'space-between' },
+  handle: { position:'absolute', width:18, height:18, backgroundColor:'#fff', borderRadius:9, borderWidth:2, borderColor:'#222' },
 });
 
 async function compressImage(uri: string) {
@@ -302,30 +457,20 @@ async function compressImage(uri: string) {
   } catch { return uri; }
 }
 
-async function uploadAsset(token: string, uri?: string, name?: string | null, mimeType?: string | null) {
+async function uploadAsset(token: string, asset: { uri: string; fileName?: string | null; mimeType?: string | null }) {
   if(!token) throw new Error('Token hilang');
-  if(!uri) throw new Error('URI kosong');
-  // Fallback if mimeType not provided by picker (older android)
-  const safeMime = mimeType && mimeType.includes('/') ? mimeType : 'image/jpeg';
-  const finalUri = await compressImage(uri);
+  if(!asset?.uri) throw new Error('URI kosong');
+  const safeMime = asset.mimeType && asset.mimeType.includes('/') ? asset.mimeType : 'image/jpeg';
+  const finalUri = await compressImage(asset.uri);
   const form = new FormData();
-  const ensuredName = name && /\./.test(name) ? name : `design_${Date.now()}.jpg`;
+  const ensuredName = asset.fileName && /\./.test(asset.fileName) ? asset.fileName : `design_${Date.now()}.jpg`;
   form.append('file', { uri: finalUri, name: ensuredName, type: safeMime } as any);
-  const endpoint = `${API_URL.replace(/\/$/, '')}/files/upload`; // API_URL already includes /api
-  // Debug: console.log('Uploading to', endpoint, finalUri, ensuredName, safeMime);
-  const uploadRes = await fetch(endpoint, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: form as any,
-  });
+  const endpoint = `${API_URL.replace(/\/$/, '')}/files/upload`;
+  const uploadRes = await fetch(endpoint, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form as any });
   if(!uploadRes.ok){ const t = await uploadRes.text(); throw new Error(t); }
   return uploadRes.json();
 }
 
-// Helper to integrate upload result into component state (called inside handlers)
-async function handleUploadAsset(token: string, uri?: string, name?: string | null, mimeType?: string | null) {
-  const uploaded = await uploadAsset(token, uri, name, mimeType);
-  // This function will be re-bound in component scope via closure; using global mutable vars is avoided.
-  // Implementation placeholder; real assignment occurs inline where called (state setters in scope).
-  return uploaded;
+async function handleUploadAsset(token: string, uri: string, fileName?: string | null, mimeType?: string | null) {
+  return uploadAsset(token, { uri, fileName, mimeType });
 }
