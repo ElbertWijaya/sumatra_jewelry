@@ -3,6 +3,8 @@ import { View, Text, TextInput, Button, ScrollView, StyleSheet, Alert, Touchable
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system';
+// Pastikan menambahkan dependency: expo install expo-camera (untuk modal kamera lanjutan)
+import { Camera, CameraType, useCameraPermissions } from 'expo-camera';
 import { api, API_URL } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -36,15 +38,21 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   const [referensiGambarUrls, setReferensiGambarUrls] = useState<string[]>([]); // multi image only (relative paths from server)
   const [uploading, setUploading] = useState(false);
   const [localImageName, setLocalImageName] = useState<string | null>(null);
-  // Cropping modal state (free-form)
+  // Free-form crop modal state
   const [pendingAsset, setPendingAsset] = useState<{ uri: string; width: number; height: number; fileName?: string | null; mimeType?: string | null } | null>(null);
   const [cropModalVisible, setCropModalVisible] = useState(false);
+  // Advanced camera modal
+  const [showCamera, setShowCamera] = useState(false);
+  // Gunakan any agar tidak error: 'Camera' refers to a value but is being used as a type
+  // (Alternatif lebih ketat jika tipe tersedia: useRef<InstanceType<typeof Camera> | null>(null))
+  const cameraRef = useRef<any>(null);
+  const [cameraType, setCameraType] = useState<any>('back');
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const windowW = Dimensions.get('window').width;
-  const cropPadding = 24; // horizontal padding inside modal container
+  const cropPadding = 24;
   const displayWidth = windowW - cropPadding * 2;
   const [displayHeight, setDisplayHeight] = useState(260);
-  // Selection rect in display coordinates
-  const [rect, setRect] = useState({ x: 20, y: 20, w: 200, h: 200 });
+  const [rect, setRect] = useState({ x: 20, y: 20, w: 180, h: 180 });
   const dragType = useRef<'move' | 'tl' | 'tr' | 'bl' | 'br' | null>(null);
   const startRef = useRef({ startX:0, startY:0, origRect: rect });
 
@@ -71,16 +79,11 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       const dy = g.moveY - startRef.current.startY;
       let newRect = { ...startRef.current.origRect };
       switch (dragType.current) {
-        case 'move':
-          newRect.x += dx; newRect.y += dy; break;
-        case 'tl':
-          newRect.x += dx; newRect.y += dy; newRect.w -= dx; newRect.h -= dy; break;
-        case 'tr':
-          newRect.y += dy; newRect.w += dx; newRect.h -= dy; break;
-        case 'bl':
-          newRect.x += dx; newRect.w -= dx; newRect.h += dy; break;
-        case 'br':
-          newRect.w += dx; newRect.h += dy; break;
+        case 'move': newRect.x += dx; newRect.y += dy; break;
+        case 'tl': newRect.x += dx; newRect.y += dy; newRect.w -= dx; newRect.h -= dy; break;
+        case 'tr': newRect.y += dy; newRect.w += dx; newRect.h -= dy; break;
+        case 'bl': newRect.x += dx; newRect.w -= dx; newRect.h += dy; break;
+        case 'br': newRect.w += dx; newRect.h += dy; break;
       }
       setRect(clampRect(newRect));
     },
@@ -143,6 +146,35 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
 
   const disabled = !customerName || !jenisBarang || !jenisEmas || !warnaEmas || mutation.isPending || uploading;
 
+  // Alias agar kompatibel dengan variasi ekspor expo-camera (Camera / CameraView)
+  const CameraAny: any = (Camera as any)?.Camera || (Camera as any)?.CameraView || Camera;
+
+  // --- Orientation Normalization Helper ---
+  const normalizeOrientation = async (asset: { uri: string; width?: number; height?: number; exif?: any; fileName?: string | null; mimeType?: string | null }) => {
+    const orientation = asset?.exif?.Orientation || asset?.exif?.orientation;
+    const rotateMap: Record<number, number> = { 3: 180, 6: 90, 8: 270 };
+    let rotated = asset;
+    if (orientation && rotateMap[orientation]) {
+      try {
+        const result = await ImageManipulator.manipulateAsync(
+          asset.uri,
+          [{ rotate: rotateMap[orientation] }],
+          { compress: 1, format: ImageManipulator.SaveFormat.JPEG }
+        );
+        rotated = { ...asset, uri: result.uri, width: result.width, height: result.height };
+      } catch {}
+    } else {
+      // do a no-op to ensure orientation baked in on some Android devices
+      try {
+        const noop = await ImageManipulator.manipulateAsync(asset.uri, [], { compress: 1, format: ImageManipulator.SaveFormat.JPEG });
+        rotated = { ...asset, uri: noop.uri, width: noop.width, height: noop.height };
+      } catch {}
+    }
+    // Ensure width/height set
+    if (!rotated.width || !rotated.height) rotated = { ...rotated, width: asset.width || 1, height: asset.height || 1 };
+    return rotated;
+  };
+
   // Convert relative /uploads path to absolute for Image component
   const toDisplayUrl = (p: string) => {
     if (!p) return p;
@@ -151,38 +183,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
     return p.startsWith('/uploads') ? base + p : p;
   };
 
-  const performCrop = async () => {
-    if (!pendingAsset) return;
-    try {
-      setUploading(true);
-      // Map display rect to original coordinates
-      const scaleX = pendingAsset.width / displayWidth;
-      const scaleY = pendingAsset.height / displayHeight;
-      const originX = Math.max(0, Math.round(rect.x * scaleX));
-      const originY = Math.max(0, Math.round(rect.y * scaleY));
-      const cropW = Math.min(pendingAsset.width - originX, Math.round(rect.w * scaleX));
-      const cropH = Math.min(pendingAsset.height - originY, Math.round(rect.h * scaleY));
-      let workingUri = pendingAsset.uri;
-      // Only crop if rect not covering whole image
-      if (!(originX === 0 && originY === 0 && cropW === pendingAsset.width && cropH === pendingAsset.height)) {
-        const cropped = await ImageManipulator.manipulateAsync(
-          workingUri,
-          [{ crop: { originX, originY, width: cropW, height: cropH } }],
-          { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG }
-        );
-        workingUri = cropped.uri;
-      }
-      const uploaded = await handleUploadAsset(token || '', workingUri, pendingAsset.fileName, pendingAsset.mimeType);
-      setReferensiGambarUrls(prev => [...prev, uploaded.url]);
-      setLocalImageName(pendingAsset.fileName || 'design.jpg');
-      setCropModalVisible(false);
-      setPendingAsset(null);
-    } catch (e: any) {
-      Alert.alert('Crop/Upload gagal', e.message || 'Error');
-    } finally {
-      setUploading(false);
-    }
-  };
+  // No custom crop function now (native editor handles it)
 
   const updateStone = (idx: number, patch: Partial<StoneFormItem>) => {
     setStones(prev => prev.map((s,i)=> i===idx ? { ...s, ...patch } : s));
@@ -231,7 +232,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       <FormSection title='Referensi Gambar'>
   <View style={{ marginBottom:12 }}>
         <Text style={styles.label}>Referensi Gambar</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom:8 }}>
+  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom:8 }}>
           {referensiGambarUrls.filter(Boolean).map((url, i) => {
             const display = toDisplayUrl(url);
             return (
@@ -246,6 +247,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
             );
           })}
         </ScrollView>
+    {/* Aspect selection removed: always free-form crop */}
         <View style={{ flexDirection:'row', gap:8, flexWrap:'wrap' }}>
           <Button title={uploading ? 'Mengupload...' : 'Pilih dari Galeri'} onPress={async ()=>{
             if(uploading) return;
@@ -254,33 +256,37 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
               setUploading(true);
               const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
               if(!perm.granted){ Alert.alert('Izin ditolak'); return; }
-              // NOTE: Removed mediaTypes & allowsMultipleSelection due to version mismatch causing cast error (expects array)
-              const result = await ImagePicker.launchImageLibraryAsync({
-                quality: 0.85,
-              });
+              const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.85, exif: true });
               if(result.canceled) return;
-              const asset = result.assets[0];
-              setPendingAsset({ uri: asset.uri, width: asset.width || 0, height: asset.height || 0, fileName: asset.fileName, mimeType: asset.mimeType });
-              setCropModalVisible(true);
+              let asset = await normalizeOrientation(result.assets[0]);
+              setPendingAsset({ uri: asset.uri, width: asset.width || 1, height: asset.height || 1, fileName: asset.fileName, mimeType: asset.mimeType });
+      setCropModalVisible(true);
             } catch(e:any){ Alert.alert('Upload gagal', e.message || 'Error'); }
             finally { setUploading(false); }
           }} />
-      <Button title='Kamera' onPress={async ()=>{
+      <Button title='Kamera (Sederhana)' onPress={async ()=>{
             if(uploading) return;
             if(!token){ Alert.alert('Tidak ada token','Silakan login ulang.'); return; }
             try {
               setUploading(true);
               const perm = await ImagePicker.requestCameraPermissionsAsync();
               if(!perm.granted){ Alert.alert('Izin kamera ditolak'); return; }
-              const result = await ImagePicker.launchCameraAsync({
-                quality: 0.85,
-              });
+              const result = await ImagePicker.launchCameraAsync({ quality: 0.85, exif: true });
               if(result.canceled) return;
-              const asset = result.assets[0];
-              setPendingAsset({ uri: asset.uri, width: asset.width || 0, height: asset.height || 0, fileName: asset.fileName, mimeType: asset.mimeType });
-              setCropModalVisible(true);
+              let asset = await normalizeOrientation(result.assets[0]);
+              setPendingAsset({ uri: asset.uri, width: asset.width || 1, height: asset.height || 1, fileName: asset.fileName, mimeType: asset.mimeType });
+      setCropModalVisible(true);
             } catch(e:any){ Alert.alert('Upload gagal', e.message || 'Error'); }
             finally { setUploading(false); }
+          }} />
+      <Button title='Kamera (Lanjutan)' onPress={async ()=>{
+            try {
+              if (!cameraPermission || !cameraPermission.granted) {
+                const perm = await requestCameraPermission();
+                if (!perm.granted) { Alert.alert('Izin kamera ditolak'); return; }
+              }
+              setShowCamera(true);
+            } catch(e:any){ Alert.alert('Gagal buka kamera', e.message || 'Error'); }
           }} />
           {referensiGambarUrls.length ? <Button title='Reset Semua' color='#b22' onPress={()=>{ setReferensiGambarUrls([]); setLocalImageName(null); }} /> : null}
         </View>
@@ -351,7 +357,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       <View style={{ height: Platform.OS==='web' ? 40 : 120 }} />
   </ScrollView>
   <Modal visible={cropModalVisible} transparent animationType='fade' onRequestClose={()=>{ setCropModalVisible(false); setPendingAsset(null); }}>
-    <View style={styles.cropOverlay}>
+    <View style={styles.cropOverlay}> 
       <View style={styles.cropContainer}>
         <Text style={styles.cropTitle}>Crop Gambar (geser & resize)</Text>
         {pendingAsset && (
@@ -360,24 +366,17 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
               source={{ uri: pendingAsset.uri }}
               style={{ width: displayWidth, height: displayHeight, backgroundColor:'#111', borderRadius:8 }}
               resizeMode='contain'
-              onLayout={(e)=>{
-                // Adjust displayHeight to keep aspect ratio on first layout
+              onLayout={()=>{
                 if (pendingAsset) {
                   const W = pendingAsset.width || 1; const H = pendingAsset.height || 1;
                   const newH = Math.min(420, Math.round(displayWidth * H / W));
                   if (newH !== displayHeight) setDisplayHeight(newH);
-                  // Reset rect to fit square inside
                   setRect(r=>({ ...r, w: Math.min(newH, displayWidth)-40, h: Math.min(newH, displayWidth)-40, x:20, y:20 }));
                 }
               }}
             />
-            {/* Selection overlay */}
             <View style={{ position:'absolute', left:0, top:0, width: displayWidth, height: displayHeight }} pointerEvents='box-none'>
-              <View
-                {...movePan.panHandlers}
-                style={{ position:'absolute', left: rect.x, top: rect.y, width: rect.w, height: rect.h, borderWidth:2, borderColor:'#fff', backgroundColor:'rgba(255,255,255,0.12)' }}
-              >
-                {/* Corner handles */}
+              <View {...movePan.panHandlers} style={{ position:'absolute', left: rect.x, top: rect.y, width: rect.w, height: rect.h, borderWidth:2, borderColor:'#fff', backgroundColor:'rgba(255,255,255,0.15)' }}>
                 <View {...tlPan.panHandlers} style={[styles.handle, { left:-10, top:-10 }]} />
                 <View {...trPan.panHandlers} style={[styles.handle, { right:-10, top:-10 }]} />
                 <View {...blPan.panHandlers} style={[styles.handle, { left:-10, bottom:-10 }]} />
@@ -388,7 +387,71 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
         )}
         <View style={styles.cropActions}>
           <Button title='Batal' color='#b33' onPress={()=>{ setCropModalVisible(false); setPendingAsset(null); }} />
-          <Button title='Upload' onPress={performCrop} />
+          <Button title='Simpan Crop' onPress={async ()=>{
+            if(!pendingAsset) return;
+            try {
+              setUploading(true);
+              const scaleX = pendingAsset.width / displayWidth;
+              const scaleY = pendingAsset.height / displayHeight;
+              const originX = Math.max(0, Math.round(rect.x * scaleX));
+              const originY = Math.max(0, Math.round(rect.y * scaleY));
+              const cropW = Math.min(pendingAsset.width - originX, Math.round(rect.w * scaleX));
+              const cropH = Math.min(pendingAsset.height - originY, Math.round(rect.h * scaleY));
+              let workingUri = pendingAsset.uri;
+              if (!(originX === 0 && originY === 0 && cropW === pendingAsset.width && cropH === pendingAsset.height)) {
+                const cropped = await ImageManipulator.manipulateAsync(
+                  workingUri,
+                  [{ crop: { originX, originY, width: cropW, height: cropH } }],
+                  { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG }
+                );
+                workingUri = cropped.uri;
+              }
+              const uploaded = await handleUploadAsset(token || '', workingUri, pendingAsset.fileName, pendingAsset.mimeType);
+              setReferensiGambarUrls(prev => [...prev, uploaded.url]);
+              setLocalImageName(pendingAsset.fileName || 'design.jpg');
+              setCropModalVisible(false); setPendingAsset(null);
+            } catch(e:any){ Alert.alert('Crop/Upload gagal', e.message || 'Error'); }
+            finally { setUploading(false); }
+          }} />
+        </View>
+      </View>
+    </View>
+  </Modal>
+  {/* Advanced Camera Modal */}
+  <Modal visible={showCamera} animationType='slide' onRequestClose={()=>setShowCamera(false)}>
+    <View style={{ flex:1, backgroundColor:'#000' }}>
+      <View style={{ flex:1 }}>
+  <CameraAny
+          ref={(r: any)=> { cameraRef.current = r; }}
+          style={{ flex:1 }}
+          type={cameraType}
+          ratio="16:9"
+          onCameraReady={()=>{ /* ready */ }}
+  />
+        <View style={{ position:'absolute', top:40, left:20 }}>
+          <TouchableOpacity onPress={()=>setShowCamera(false)} style={{ backgroundColor:'rgba(0,0,0,0.5)', padding:10, borderRadius:30 }}>
+            <Text style={{ color:'#fff' }}>Tutup</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{ position:'absolute', bottom:40, width:'100%', flexDirection:'row', justifyContent:'space-around', alignItems:'center' }}>
+          <TouchableOpacity onPress={()=> setCameraType((p:any)=> p === 'back' ? 'front' : 'back')} style={{ backgroundColor:'rgba(255,255,255,0.2)', padding:14, borderRadius:40 }}>
+            <Text style={{ color:'#fff' }}>Flip</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={async ()=>{
+            if(!cameraRef.current) return;
+            try {
+              setUploading(true);
+              const photo = await cameraRef.current.takePictureAsync({ quality:1, exif:true, skipProcessing:false });
+              const normalized = await normalizeOrientation(photo as any);
+              setPendingAsset({ uri: normalized.uri, width: normalized.width || 1, height: normalized.height || 1, fileName: 'camera.jpg', mimeType: 'image/jpeg' });
+              setShowCamera(false);
+              setCropModalVisible(true);
+            } catch(e:any){ Alert.alert('Gagal ambil foto', e.message || 'Error'); }
+            finally { setUploading(false); }
+          }} style={{ width:80, height:80, borderRadius:40, backgroundColor:'#fff', justifyContent:'center', alignItems:'center' }}>
+            <Text style={{ fontWeight:'600' }}>Foto</Text>
+          </TouchableOpacity>
+          <View style={{ width:80 }} />
         </View>
       </View>
     </View>
