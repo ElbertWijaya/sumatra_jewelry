@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { API_URL } from '../api/client';
 
 export const LoginScreen: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
   const { login } = useAuth();
@@ -8,6 +9,7 @@ export const LoginScreen: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
   const [password, setPassword] = useState('Admin123!');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // API base override UI removed (now fixed base)
 
   const submit = async () => {
     setLoading(true); setError(null);
@@ -25,6 +27,8 @@ export const LoginScreen: React.FC<{ onSuccess?: () => void }> = ({ onSuccess })
       <TextInput style={styles.input} value={email} onChangeText={setEmail} autoCapitalize='none' placeholder='Email' />
       <TextInput style={styles.input} value={password} onChangeText={setPassword} placeholder='Password' secureTextEntry />
       {error && <Text style={styles.error}>{error}</Text>}
+      <View style={{ height:12 }} />
+  <View style={{ height:18 }} />
       <Button title={loading ? '...' : 'Login'} onPress={submit} />
     </View>
   );
@@ -35,4 +39,5 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: '600', marginBottom: 16 },
   input: { borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 6, marginBottom: 12 },
   error: { color: 'red', marginBottom: 12 },
+  // baseLabel removed
 });

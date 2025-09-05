@@ -68,8 +68,8 @@ async function bootstrap() {
     app.useGlobalPipes(new common_1.ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
     app.enableCors({ origin: '*', credentials: true });
     const port = process.env.PORT || 3000;
-    await app.listen(port);
-    console.log(`API running on http://localhost:${port}`);
+    await app.listen(port, '0.0.0.0');
+    console.log(`API running on http://0.0.0.0:${port} (LAN access: http://<IP_LAN>:${port}/api )`);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map

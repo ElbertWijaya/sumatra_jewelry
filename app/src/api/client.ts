@@ -1,22 +1,81 @@
 import { Platform } from 'react-native';
+import * as Device from 'expo-device';
 
-const RAW_BASE = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
-// Android emulator tidak bisa akses host via 'localhost', harus 10.0.2.2
-export const API_URL = (Platform.OS === 'android' && RAW_BASE.includes('localhost'))
-  ? RAW_BASE.replace('localhost', '10.0.2.2')
-  : RAW_BASE;
+// Otomatis tentukan BASE sesuai permintaan:
+// - Emulator Android: 10.0.2.2:3000/api
+// - Device fisik Android / iOS: 192.168.100.45:3000/api
+// - iOS simulator & web fallback: gunakan localhost atau env jika ada
+// Lingkungan masih bisa di-override via EXPO_PUBLIC_API_URL bila disediakan.
+
+const LAN_BASE = 'http://192.168.100.45:3000/api';
+const ANDROID_EMULATOR_BASE = 'http://10.0.2.2:3000/api';
+
+function computeAutoBase() {
+  const envOverride = process.env.EXPO_PUBLIC_API_URL;
+  if (envOverride) return normalizeBase(envOverride);
+  if (Platform.OS === 'android') {
+    return Device.isDevice ? LAN_BASE : ANDROID_EMULATOR_BASE;
+  }
+  if (Platform.OS === 'ios') {
+    return Device.isDevice ? LAN_BASE : 'http://localhost:3000/api';
+  }
+  return LAN_BASE; // default untuk platform lain (web, dll)
+}
+
+function normalizeBase(raw: string) {
+  let b = raw.trim();
+  if (!/^https?:\/\//i.test(b)) b = 'http://' + b;
+  b = b.replace(/\/$/, '');
+  if (!b.endsWith('/api')) b += '/api';
+  return b;
+}
+
+export const API_URL = computeAutoBase();
+
+// Dynamic override masih disediakan jika nanti diperlukan (misal debug):
+let dynamicBase: string | null = null;
+export function setApiBase(url: string) {
+  if (!url) return;
+  dynamicBase = normalizeBase(url);
+  console.log('[API] Dynamic Base set ->', dynamicBase);
+}
+export function getApiBase() { return dynamicBase || API_URL; }
+
+let loggedBase = false;
+if (!loggedBase) {
+  // Satu kali log untuk debugging di device fisik
+  console.log('[API] Base URL (initial):', API_URL);
+  loggedBase = true;
+}
 
 async function request(path: string, options: RequestInit = {}) {
-  let url = `${API_URL}${path}`;
-  const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-    ...options,
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || res.statusText);
+  const base = getApiBase();
+  const url = `${base}${path}`;
+  const controller = new AbortController();
+  const TIMEOUT_MS = 12000;
+  const t = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+      signal: controller.signal,
+      ...options,
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || res.statusText);
+    }
+    return res.json();
+  } catch (e: any) {
+    if (e.name === 'AbortError') {
+  throw new Error(`Tidak bisa terhubung ke server (${base}). Pastikan device & server 1 jaringan, server listen 0.0.0.0, firewall open.`);
+    }
+    if (e.message && (e.message.includes('Network request failed') || e.message.includes('Failed to fetch'))) {
+  throw new Error(`Gagal konek ke API (${base}). Periksa koneksi LAN & IP server.`);
+    }
+    throw e;
+  } finally {
+    clearTimeout(t);
   }
-  return res.json();
 }
 
 export const api = {
