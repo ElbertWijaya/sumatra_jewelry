@@ -7,7 +7,7 @@ import * as Device from 'expo-device';
 // - iOS simulator & web fallback: gunakan localhost atau env jika ada
 // Lingkungan masih bisa di-override via EXPO_PUBLIC_API_URL bila disediakan.
 
-const LAN_BASE = 'http://192.168.100.45:3000/api';
+const LAN_BASE = 'http://192.168.110.63:3000/api';
 const ANDROID_EMULATOR_BASE = 'http://10.0.2.2:3000/api';
 
 function computeAutoBase() {
