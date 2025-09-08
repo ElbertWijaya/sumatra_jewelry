@@ -30,5 +30,4 @@ export declare class StoneDto {
 }
 export declare class UpdateOrderStatusDto {
     status: OrderStatusEnum;
-    beratAkhir?: number;
 }

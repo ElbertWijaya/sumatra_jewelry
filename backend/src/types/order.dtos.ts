@@ -11,12 +11,12 @@ export interface RequestUser {
 }
 
 export class CreateOrderDto {
-  @IsString() customerName!: string; // temporarily remove IsNotEmpty for debugging
+  @IsString() @IsNotEmpty() customerName!: string;
   @IsOptional() @IsString() customerAddress?: string;
   @IsOptional() @IsString() customerPhone?: string;
-  @IsString() jenisBarang!: string; // debug: removed IsNotEmpty
-  @IsString() jenisEmas!: string; // debug
-  @IsString() warnaEmas!: string; // debug
+  @IsString() @IsNotEmpty() jenisBarang!: string;
+  @IsString() @IsNotEmpty() jenisEmas!: string;
+  @IsString() @IsNotEmpty() warnaEmas!: string;
   // Removed per new spec: kadar, beratTarget, ongkos
   @IsOptional() @IsNumber() @Min(0) dp?: number;
   @IsOptional() @IsDateString() promisedReadyDate?: string; // Tanggal Perkiraan Siap
@@ -38,5 +38,4 @@ export class StoneDto {
 
 export class UpdateOrderStatusDto {
   @IsIn(ORDER_STATUS_VALUES) status!: OrderStatusEnum;
-  @IsOptional() @IsNumber() beratAkhir?: number;
 }

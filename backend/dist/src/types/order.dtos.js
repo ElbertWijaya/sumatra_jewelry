@@ -18,6 +18,7 @@ class CreateOrderDto {
 exports.CreateOrderDto = CreateOrderDto;
 __decorate([
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateOrderDto.prototype, "customerName", void 0);
 __decorate([
@@ -32,14 +33,17 @@ __decorate([
 ], CreateOrderDto.prototype, "customerPhone", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateOrderDto.prototype, "jenisBarang", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateOrderDto.prototype, "jenisEmas", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateOrderDto.prototype, "warnaEmas", void 0);
 __decorate([
@@ -122,9 +126,4 @@ __decorate([
     (0, class_validator_1.IsIn)(exports.ORDER_STATUS_VALUES),
     __metadata("design:type", String)
 ], UpdateOrderStatusDto.prototype, "status", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsNumber)(),
-    __metadata("design:type", Number)
-], UpdateOrderStatusDto.prototype, "beratAkhir", void 0);
 //# sourceMappingURL=order.dtos.js.map

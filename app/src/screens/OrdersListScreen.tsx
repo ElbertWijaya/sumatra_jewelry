@@ -25,6 +25,9 @@ export const OrdersListScreen: React.FC = () => {
           <View style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' }}>
             <Text style={{ fontWeight: '600' }}>{item.code || '(pending code)'}</Text>
             <Text>{item.customerName} • {item.jenisBarang || item.jenis} • {item.status}</Text>
+            { (item.stoneCount != null || item.totalBerat != null) && (
+              <Text style={{ color:'#666', fontSize:12 }}>Batu: {item.stoneCount ?? 0}{item.totalBerat ? ` • Total ${Number(item.totalBerat)} gr` : ''}</Text>
+            )}
           </View>
         )}
       />

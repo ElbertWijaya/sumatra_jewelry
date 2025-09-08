@@ -13,41 +13,50 @@ exports.OrdersService = void 0;
 const common_1 = require("@nestjs/common");
 const dayjs = require("dayjs");
 const prisma_service_1 = require("../prisma/prisma.service");
+const client_1 = require("@prisma/client");
 let OrdersService = class OrdersService {
     constructor(prisma) {
         this.prisma = prisma;
     }
     async create(dto, userId) {
-        const order = await this.prisma.order.create({
-            data: {
-                customerName: dto.customerName,
-                customerAddress: dto.customerAddress,
-                customerPhone: dto.customerPhone,
-                jenisBarang: dto.jenisBarang,
-                jenisEmas: dto.jenisEmas,
-                warnaEmas: dto.warnaEmas,
-                hargaEmasPerGram: dto.hargaEmasPerGram,
-                hargaPerkiraan: dto.hargaPerkiraan,
-                hargaAkhir: dto.hargaAkhir,
-                dp: dto.dp || 0,
-                ...(dto.promisedReadyDate ? { promisedReadyDate: new Date(dto.promisedReadyDate) } : {}),
-                tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : undefined,
-                tanggalAmbil: dto.tanggalAmbil ? new Date(dto.tanggalAmbil) : undefined,
-                catatan: dto.catatan,
-                ...(dto.referensiGambarUrls ? { referensiGambarUrls: dto.referensiGambarUrls } : {}),
-                status: 'DRAFT',
-                createdById: userId,
-                updatedById: userId,
-            },
-        });
-        if (dto.stones && dto.stones.length) {
-            await this.prisma.orderStone.createMany({
-                data: dto.stones.map(s => ({ orderId: order.id, bentuk: s.bentuk, jumlah: s.jumlah, berat: s.berat }))
+        const created = await this.prisma.$transaction(async (tx) => {
+            const order = await tx.order.create({
+                data: {
+                    customerName: dto.customerName,
+                    customerAddress: dto.customerAddress,
+                    customerPhone: dto.customerPhone,
+                    jenisBarang: dto.jenisBarang,
+                    jenisEmas: dto.jenisEmas,
+                    warnaEmas: dto.warnaEmas,
+                    hargaEmasPerGram: dto.hargaEmasPerGram,
+                    hargaPerkiraan: dto.hargaPerkiraan,
+                    hargaAkhir: dto.hargaAkhir,
+                    dp: dto.dp != null ? dto.dp : null,
+                    ...(dto.promisedReadyDate ? { promisedReadyDate: new Date(dto.promisedReadyDate) } : {}),
+                    tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : undefined,
+                    tanggalAmbil: dto.tanggalAmbil ? new Date(dto.tanggalAmbil) : undefined,
+                    catatan: dto.catatan,
+                    ...(dto.referensiGambarUrls ? { referensiGambarUrls: dto.referensiGambarUrls } : {}),
+                    status: 'DRAFT',
+                    createdById: userId,
+                    updatedById: userId,
+                },
             });
-        }
-        const code = `TM-${dayjs(order.createdAt).format('YYYYMM')}-${String(order.id).padStart(4, '0')}`;
-        await this.prisma.order.update({ where: { id: order.id }, data: { code } });
-        return this.findById(order.id);
+            let stoneCount = 0;
+            let totalBerat = null;
+            if (dto.stones && dto.stones.length) {
+                await tx.orderStone.createMany({
+                    data: dto.stones.map(s => ({ orderId: order.id, bentuk: s.bentuk, jumlah: s.jumlah, berat: s.berat }))
+                });
+                stoneCount = dto.stones.length;
+                const sum = dto.stones.reduce((acc, s) => acc + (s.berat ? Number(s.berat) : 0), 0);
+                totalBerat = new client_1.Prisma.Decimal(sum.toFixed(2));
+            }
+            const code = `TM-${dayjs(order.createdAt).format('YYYYMM')}-${String(order.id).padStart(4, '0')}`;
+            const updated = await tx.order.update({ where: { id: order.id }, data: { code, stoneCount, totalBerat: totalBerat } });
+            return updated;
+        });
+        return this.findById(created.id);
     }
     async findAll(params) {
         return this.prisma.order.findMany({
@@ -75,14 +84,10 @@ let OrdersService = class OrdersService {
         if (!allowed[order.status].includes(dto.status)) {
             throw new common_1.BadRequestException('Transition status tidak valid');
         }
-        if (dto.status === 'SIAP' && dto.beratAkhir == null) {
-            throw new common_1.BadRequestException('Berat akhir wajib saat set SIAP');
-        }
         const updated = await this.prisma.order.update({
             where: { id },
             data: {
                 status: dto.status,
-                beratAkhir: dto.beratAkhir ?? order.beratAkhir,
                 updatedById: userId,
             },
         });

@@ -51,6 +51,22 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   // (Cropping logic removed per new requirement: now only preview zoom after upload)
   const [catatan, setCatatan] = useState('');
   const [stones, setStones] = useState<StoneFormItem[]>([]);
+  // --- Currency helpers (IDR formatting) ---
+  const formatIDR = (raw: string) => {
+    const digits = (raw || '').replace(/\D/g, '');
+    if (!digits) return '';
+    const withDots = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return `Rp ${withDots}`;
+  };
+  const parseIDR = (formatted: string): number | undefined => {
+    if (!formatted) return undefined;
+    const digits = formatted.replace(/\D/g, '');
+    if (!digits) return undefined;
+    return Number(digits);
+  };
+  const makeCurrencyHandler = (setter: (v: string)=>void) => (text: string) => {
+    setter(formatIDR(text));
+  };
   // Expanded selectors (single-line then expand on press)
   const [expandedField, setExpandedField] = useState<null | 'jenisBarang' | 'jenisEmas' | 'warnaEmas'>(null); // retained for compatibility if needed later
   const [expandedStoneIndex, setExpandedStoneIndex] = useState<number | null>(null);
@@ -66,10 +82,10 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       warnaEmas,
   // removed: kadar, beratTarget
   // ongkos removed
-      dp: dp ? Number(dp) : undefined,
-      hargaEmasPerGram: hargaEmasPerGram ? Number(hargaEmasPerGram) : undefined,
-      hargaPerkiraan: hargaPerkiraan ? Number(hargaPerkiraan) : undefined,
-      hargaAkhir: hargaAkhir ? Number(hargaAkhir) : undefined,
+  dp: parseIDR(dp),
+  hargaEmasPerGram: parseIDR(hargaEmasPerGram),
+  hargaPerkiraan: parseIDR(hargaPerkiraan),
+  hargaAkhir: parseIDR(hargaAkhir),
   promisedReadyDate: promisedReadyDate || undefined,
       tanggalSelesai: tanggalSelesai || undefined,
       tanggalAmbil: tanggalAmbil || undefined,
@@ -265,10 +281,10 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       </FormSection>
 
   <FormSection title='Pembayaran'>
-        <Field label='Harga Emas per Gram' value={hargaEmasPerGram} onChangeText={setHargaEmasPerGram} keyboardType='numeric' />
-        <Field label='Harga Perkiraan' value={hargaPerkiraan} onChangeText={setHargaPerkiraan} keyboardType='numeric' />
-        <Field label='DP' value={dp} onChangeText={setDp} keyboardType='numeric' />
-        <Field label='Harga Akhir' value={hargaAkhir} onChangeText={setHargaAkhir} keyboardType='numeric' />
+  <Field label='Harga Emas per Gram' value={hargaEmasPerGram} onChangeText={makeCurrencyHandler(setHargaEmasPerGram)} keyboardType='numeric' />
+  <Field label='Harga Perkiraan' value={hargaPerkiraan} onChangeText={makeCurrencyHandler(setHargaPerkiraan)} keyboardType='numeric' />
+  <Field label='DP' value={dp} onChangeText={makeCurrencyHandler(setDp)} keyboardType='numeric' />
+  <Field label='Harga Akhir' value={hargaAkhir} onChangeText={makeCurrencyHandler(setHargaAkhir)} keyboardType='numeric' />
   {/* Ongkos removed */}
       </FormSection>
 
