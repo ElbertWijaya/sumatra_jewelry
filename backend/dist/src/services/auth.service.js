@@ -63,7 +63,7 @@ let AuthService = class AuthService {
     async register(data) {
         const hash = await argon2.hash(data.password);
         const user = await this.prisma.appUser.create({
-            data: { email: data.email, password: hash, fullName: data.fullName, role: data.role, jobRole: data.jobRole },
+            data: { email: data.email, password: hash, fullName: data.fullName, jobRole: data.jobRole },
         });
         return { id: user.id, email: user.email };
     }

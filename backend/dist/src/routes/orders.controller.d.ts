@@ -13,12 +13,12 @@ export declare class OrdersController {
             berat: import("@prisma/client/runtime/library").Decimal | null;
         }[];
     } & {
+        id: number;
+        createdAt: Date;
         customerName: string;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        id: number;
-        createdAt: Date;
         updatedAt: Date;
         code: string | null;
         customerAddress: string | null;
@@ -49,12 +49,12 @@ export declare class OrdersController {
             berat: import("@prisma/client/runtime/library").Decimal | null;
         }[];
     } & {
+        id: number;
+        createdAt: Date;
         customerName: string;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        id: number;
-        createdAt: Date;
         updatedAt: Date;
         code: string | null;
         customerAddress: string | null;
@@ -85,12 +85,12 @@ export declare class OrdersController {
             berat: import("@prisma/client/runtime/library").Decimal | null;
         }[];
     } & {
+        id: number;
+        createdAt: Date;
         customerName: string;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        id: number;
-        createdAt: Date;
         updatedAt: Date;
         code: string | null;
         customerAddress: string | null;
@@ -113,12 +113,12 @@ export declare class OrdersController {
     }>;
     history(id: number): Promise<any>;
     updateStatus(id: number, dto: UpdateOrderStatusDto, user: RequestUser): Promise<{
+        id: number;
+        createdAt: Date;
         customerName: string;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        id: number;
-        createdAt: Date;
         updatedAt: Date;
         code: string | null;
         customerAddress: string | null;

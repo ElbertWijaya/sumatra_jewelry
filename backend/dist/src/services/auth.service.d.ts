@@ -8,7 +8,6 @@ export declare class AuthService {
         id: string;
         email: string;
         fullName: string;
-        role: import(".prisma/client").$Enums.Role;
         jobRole: import(".prisma/client").$Enums.TaskJobRole | null;
         password: string;
         createdAt: Date;
@@ -27,7 +26,6 @@ export declare class AuthService {
         password: string;
         fullName: string;
         jobRole?: string | null;
-        role?: 'admin' | 'owner' | 'kasir' | 'pengrajin';
     }): Promise<{
         id: any;
         email: any;

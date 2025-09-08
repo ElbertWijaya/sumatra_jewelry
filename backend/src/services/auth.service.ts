@@ -44,10 +44,10 @@ export class AuthService {
     };
   }
 
-  async register(data: { email: string; password: string; fullName: string; jobRole?: string | null; role?: 'admin' | 'owner' | 'kasir' | 'pengrajin' }) {
+  async register(data: { email: string; password: string; fullName: string; jobRole?: string | null }) {
     const hash = await argon2.hash(data.password);
     const user = await (this.prisma as any).appUser.create({
-      data: { email: data.email, password: hash, fullName: data.fullName, role: (data as any).role, jobRole: (data as any).jobRole },
+      data: { email: data.email, password: hash, fullName: data.fullName, jobRole: (data as any).jobRole },
     });
     return { id: user.id, email: user.email };
   }

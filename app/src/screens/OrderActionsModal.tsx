@@ -61,8 +61,8 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
 
   const renderAssign = () => (
     <View>
-  <InlineSelect label="Role Pekerjaan" value={role} options={ROLE_OPTIONS as any} onChange={(r)=> { setRole(r); setSelectedStages([]); }} />
-  <InlineSelect label="Pilih Orang" value={selectedUserId} options={users.map(u=>`${u.id} • ${u.fullName}`)} onChange={(v)=> setSelectedUserId(v.split(' • ')[0])} />
+  <InlineSelect label="Role Pekerjaan" value={role} options={(ROLE_OPTIONS as any)} onChange={(r)=> { setRole(r); setSelectedStages([]); }} />
+  <InlineSelect label="Pilih Orang" value={selectedUserId} options={users.map(u=>({ label: u.fullName, value: u.id }))} onChange={(v)=> setSelectedUserId(v)} />
       <Text style={styles.section}>Sub-tasks</Text>
       {(ROLE_TEMPLATES[role] || []).map((st) => {
         const active = selectedStages.includes(st);

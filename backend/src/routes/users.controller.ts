@@ -11,9 +11,8 @@ export class UsersController {
 
   @Get()
   @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
-  async list(@Query('role') role?: string, @Query('jobRole') jobRole?: string) {
+  async list(@Query('jobRole') jobRole?: string) {
     const where: any = {};
-  if (role) where.role = role; // legacy support; to be removed later
     if (jobRole) where.jobRole = jobRole;
     return (this.prisma as any).appUser.findMany({ where: Object.keys(where).length ? where : undefined, select: { id: true, fullName: true, email: true, jobRole: true } });
   }

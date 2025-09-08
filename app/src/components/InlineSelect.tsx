@@ -1,27 +1,32 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 
-interface Props { label: string; value: string; options: string[]; onChange(v:string): void; maxHeight?: number }
+type Option = { label: string; value: string } | string;
+interface Props { label: string; value: string; options: Option[]; onChange(v:string): void; maxHeight?: number }
 
 export const InlineSelect: React.FC<Props> = ({ label, value, options, onChange, maxHeight = 220 }) => {
   const [open, setOpen] = React.useState(false);
+  const normalized = React.useMemo(() => (
+    (options || []).map((opt) => typeof opt === 'string' ? { label: opt, value: opt } : opt)
+  ), [options]);
+  const selectedLabel = React.useMemo(() => normalized.find(o => o.value === value)?.label || '', [normalized, value]);
   return (
     <View style={styles.wrapper}>
       <TouchableOpacity style={styles.header} onPress={()=> setOpen(o=>!o)} activeOpacity={0.7}>
         <Text style={styles.label}>{label}</Text>
         <View style={styles.valueWrap}>
-          <Text style={styles.value}>{value || 'Pilih'}</Text>
+          <Text style={styles.value}>{selectedLabel || 'Pilih'}</Text>
           <Text style={styles.arrow}>{open ? '▲' : '▼'}</Text>
         </View>
       </TouchableOpacity>
       {open && (
         <View style={styles.dropdown}>
           <ScrollView style={{ maxHeight }} nestedScrollEnabled>
-            {options.map(opt => {
-              const active = value === opt;
+            {normalized.map(opt => {
+              const active = value === opt.value;
               return (
-                <TouchableOpacity key={opt} style={[styles.item, active && styles.itemActive]} onPress={()=>{ onChange(opt); setOpen(false); }}>
-                  <Text style={[styles.itemText, active && styles.itemTextActive]}>{opt}</Text>
+                <TouchableOpacity key={opt.value} style={[styles.item, active && styles.itemActive]} onPress={()=>{ onChange(opt.value); setOpen(false); }}>
+                  <Text style={[styles.itemText, active && styles.itemTextActive]}>{opt.label}</Text>
                 </TouchableOpacity>
               );
             })}

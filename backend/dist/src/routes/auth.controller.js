@@ -42,7 +42,6 @@ __decorate([
 ], RegisterDto.prototype, "fullName", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsIn)(['ADMINISTRATOR', 'SALES', 'DESIGNER', 'CASTER', 'CARVER', 'DIAMOND_SETTER', 'FINISHER', 'INVENTORY']),
     __metadata("design:type", String)
 ], RegisterDto.prototype, "jobRole", void 0);
 let AuthController = class AuthController {

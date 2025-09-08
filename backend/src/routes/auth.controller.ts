@@ -12,7 +12,7 @@ class RegisterDto {
   @IsEmail() email!: string;
   @MinLength(6) password!: string;
   @IsNotEmpty() fullName!: string;
-  @IsOptional() @IsIn(['ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY']) jobRole?: string;
+  @IsOptional() jobRole?: string; // Updated to only accept jobRole
 }
 
 @Controller('auth')

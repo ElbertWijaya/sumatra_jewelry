@@ -14,12 +14,12 @@ export declare class OrdersService {
             berat: Prisma.Decimal | null;
         }[];
     } & {
+        id: number;
+        createdAt: Date;
         customerName: string;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        id: number;
-        createdAt: Date;
         updatedAt: Date;
         code: string | null;
         customerAddress: string | null;
@@ -52,12 +52,12 @@ export declare class OrdersService {
             berat: Prisma.Decimal | null;
         }[];
     } & {
+        id: number;
+        createdAt: Date;
         customerName: string;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        id: number;
-        createdAt: Date;
         updatedAt: Date;
         code: string | null;
         customerAddress: string | null;
@@ -88,12 +88,12 @@ export declare class OrdersService {
             berat: Prisma.Decimal | null;
         }[];
     } & {
+        id: number;
+        createdAt: Date;
         customerName: string;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        id: number;
-        createdAt: Date;
         updatedAt: Date;
         code: string | null;
         customerAddress: string | null;
@@ -115,12 +115,12 @@ export declare class OrdersService {
         updatedById: string | null;
     }>;
     updateStatus(id: number, dto: UpdateOrderStatusDto, userId: string): Promise<{
+        id: number;
+        createdAt: Date;
         customerName: string;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        id: number;
-        createdAt: Date;
         updatedAt: Date;
         code: string | null;
         customerAddress: string | null;

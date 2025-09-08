@@ -9,7 +9,7 @@ async function main() {
     if (!exists) {
         const hash = await argon2.hash('Admin123!');
         await prisma.appUser.create({
-            data: { email: adminEmail, fullName: 'Aceng', role: client_1.Role.admin, jobRole: 'ADMINISTRATOR', password: hash },
+            data: { email: adminEmail, fullName: 'Aceng', jobRole: 'ADMINISTRATOR', password: hash },
         });
         console.log('Seeded admin user: admin@tokomas.local / Admin123! (Aceng)');
     }
@@ -23,19 +23,19 @@ async function main() {
         }
     }
     const usersToSeed = [
-        { email: 'sales@tokomas.local', fullName: 'Yanti', role: client_1.Role.kasir, jobRole: 'SALES' },
-        { email: 'designer@tokomas.local', fullName: 'Elbert Wijaya', role: client_1.Role.pengrajin, jobRole: 'DESIGNER' },
-        { email: 'carver@tokomas.local', fullName: 'Acai', role: client_1.Role.pengrajin, jobRole: 'CARVER' },
-        { email: 'caster@tokomas.local', fullName: 'Hanpin', role: client_1.Role.pengrajin, jobRole: 'CASTER' },
-        { email: 'diamond@tokomas.local', fullName: 'Yanti Atas', role: client_1.Role.pengrajin, jobRole: 'DIAMOND_SETTER' },
-        { email: 'finisher@tokomas.local', fullName: 'Ayu', role: client_1.Role.pengrajin, jobRole: 'FINISHER' },
-        { email: 'inventory@tokomas.local', fullName: 'Suk Mai D', role: client_1.Role.kasir, jobRole: 'INVENTORY' },
+        { email: 'sales@tokomas.local', fullName: 'Yanti', jobRole: 'SALES' },
+        { email: 'designer@tokomas.local', fullName: 'Elbert Wijaya', jobRole: 'DESIGNER' },
+        { email: 'carver@tokomas.local', fullName: 'Acai', jobRole: 'CARVER' },
+        { email: 'caster@tokomas.local', fullName: 'Hanpin', jobRole: 'CASTER' },
+        { email: 'diamond@tokomas.local', fullName: 'Yanti Atas', jobRole: 'DIAMOND_SETTER' },
+        { email: 'finisher@tokomas.local', fullName: 'Ayu', jobRole: 'FINISHER' },
+        { email: 'inventory@tokomas.local', fullName: 'Suk Mai D', jobRole: 'INVENTORY' },
     ];
     for (const u of usersToSeed) {
         const existU = await prisma.appUser.findUnique({ where: { email: u.email } });
         if (!existU) {
             const hash = await argon2.hash('Password123!');
-            await prisma.appUser.create({ data: { email: u.email, fullName: u.fullName, role: u.role, jobRole: u.jobRole, password: hash } });
+            await prisma.appUser.create({ data: { email: u.email, fullName: u.fullName, jobRole: u.jobRole, password: hash } });
             console.log(`Seeded user: ${u.email} / Password123!`);
         }
         else {

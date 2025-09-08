@@ -11,7 +11,6 @@ model AppUser {
   id        String   @id @default(uuid())
   email     String   @unique
   fullName  String
-  role      Role
   jobRole   TaskJobRole? @map("job_role")
   password  String
   createdAt DateTime @default(now())
@@ -119,12 +118,6 @@ enum TaskJobRole {
   INVENTORY
 }
 
-enum Role {
-  admin
-  kasir
-  owner
-  pengrajin
-}
 
 enum OrderStatus {
   DRAFT
