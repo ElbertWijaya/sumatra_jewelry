@@ -6,7 +6,7 @@ export type OrderStatusEnum = typeof ORDER_STATUS_VALUES[number];
 
 export interface RequestUser {
   userId: string;
-  role: string;
+  jobRole?: string | null;
   email: string;
 }
 

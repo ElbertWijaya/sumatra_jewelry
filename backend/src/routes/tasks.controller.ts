@@ -13,50 +13,50 @@ export class TasksController {
   constructor(private tasks: TasksService) {}
 
   @Get()
-  @Roles('admin','kasir','owner','pengrajin')
+  @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
   list() { return this.tasks.listActive(); }
 
   @Post()
-  @Roles('admin','kasir','owner')
+  @Roles('ADMINISTRATOR','SALES')
   create(@Body() dto: CreateTaskDto) { return this.tasks.create(dto); }
 
   @Patch(':id')
-  @Roles('admin','kasir','owner')
+  @Roles('ADMINISTRATOR','SALES')
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateTaskDto) { return this.tasks.update(id, dto); }
 
   @Delete(':id')
-  @Roles('admin','kasir','owner')
+  @Roles('ADMINISTRATOR','SALES')
   remove(@Param('id', ParseIntPipe) id: number) { return this.tasks.remove(id); }
 
   @Post(':id/assign')
-  @Roles('admin','kasir','owner')
+  @Roles('ADMINISTRATOR','SALES')
   assign(@Param('id', ParseIntPipe) id: number, @Body() dto: AssignTaskDto) { return this.tasks.assign(id, dto.assignedToId); }
 
   @Post('assign-bulk')
-  @Roles('admin','kasir','owner')
+  @Roles('ADMINISTRATOR','SALES')
   assignBulk(@Body() dto: AssignBulkDto) {
     return this.tasks.assignBulk({ orderId: dto.orderId, role: dto.role as any, userId: dto.userId, subtasks: dto.subtasks });
   }
 
   @Post(':id/request-done')
-  @Roles('admin','kasir','owner','pengrajin')
+  @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
   requestDone(@Param('id', ParseIntPipe) id: number, @Body() dto: RequestDoneDto, @CurrentUser() user: RequestUser) {
     return this.tasks.requestDone(id, user.userId, dto.notes);
   }
 
   @Post(':id/validate')
-  @Roles('admin','owner')
+  @Roles('ADMINISTRATOR')
   validate(@Param('id', ParseIntPipe) id: number, @Body() dto: ValidateTaskDto, @CurrentUser() user: RequestUser) {
     return this.tasks.validateDone(id, user.userId, dto.notes);
   }
 
   @Get('awaiting-validation')
-  @Roles('admin','owner','kasir')
+  @Roles('ADMINISTRATOR','SALES')
   awaitingValidation(@Query('orderId', ParseIntPipe) orderId: number) {
     return this.tasks.listAwaitingValidationByOrder(orderId);
   }
 
   @Post('backfill')
-  @Roles('admin','owner')
+  @Roles('ADMINISTRATOR')
   backfill() { return this.tasks.backfillActive(); }
 }

@@ -109,6 +109,8 @@ enum TaskStatus {
 }
 
 enum TaskJobRole {
+  ADMINISTRATOR
+  SALES
   DESIGNER
   CASTER
   CARVER

@@ -26,7 +26,6 @@ __decorate([
     (0, class_validator_1.MinLength)(6),
     __metadata("design:type", String)
 ], LoginDto.prototype, "password", void 0);
-const ROLES = ['admin', 'owner', 'kasir', 'pengrajin'];
 class RegisterDto {
 }
 __decorate([
@@ -42,9 +41,10 @@ __decorate([
     __metadata("design:type", String)
 ], RegisterDto.prototype, "fullName", void 0);
 __decorate([
-    (0, class_validator_1.IsIn)(ROLES),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsIn)(['ADMINISTRATOR', 'SALES', 'DESIGNER', 'CASTER', 'CARVER', 'DIAMOND_SETTER', 'FINISHER', 'INVENTORY']),
     __metadata("design:type", String)
-], RegisterDto.prototype, "role", void 0);
+], RegisterDto.prototype, "jobRole", void 0);
 let AuthController = class AuthController {
     constructor(auth) {
         this.auth = auth;

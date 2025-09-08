@@ -19,16 +19,17 @@ export declare class AuthService {
             id: string;
             email: string;
             fullName: string;
-            role: import(".prisma/client").$Enums.Role;
+            jobRole: any;
         };
     }>;
     register(data: {
         email: string;
         password: string;
         fullName: string;
-        role: 'admin' | 'owner' | 'kasir' | 'pengrajin';
+        jobRole?: string | null;
+        role?: 'admin' | 'owner' | 'kasir' | 'pengrajin';
     }): Promise<{
-        id: string;
-        email: string;
+        id: any;
+        email: any;
     }>;
 }

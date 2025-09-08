@@ -46,14 +46,14 @@ let TasksController = class TasksController {
 exports.TasksController = TasksController;
 __decorate([
     (0, common_1.Get)(),
-    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner', 'pengrajin'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES', 'DESIGNER', 'CASTER', 'CARVER', 'DIAMOND_SETTER', 'FINISHER', 'INVENTORY'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], TasksController.prototype, "list", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [task_dtos_1.CreateTaskDto]),
@@ -61,7 +61,7 @@ __decorate([
 ], TasksController.prototype, "create", null);
 __decorate([
     (0, common_1.Patch)(':id'),
-    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -70,7 +70,7 @@ __decorate([
 ], TasksController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
-    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
@@ -78,7 +78,7 @@ __decorate([
 ], TasksController.prototype, "remove", null);
 __decorate([
     (0, common_1.Post)(':id/assign'),
-    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -87,7 +87,7 @@ __decorate([
 ], TasksController.prototype, "assign", null);
 __decorate([
     (0, common_1.Post)('assign-bulk'),
-    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [task_dtos_1.AssignBulkDto]),
@@ -95,7 +95,7 @@ __decorate([
 ], TasksController.prototype, "assignBulk", null);
 __decorate([
     (0, common_1.Post)(':id/request-done'),
-    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner', 'pengrajin'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES', 'DESIGNER', 'CASTER', 'CARVER', 'DIAMOND_SETTER', 'FINISHER', 'INVENTORY'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, current_user_decorator_1.CurrentUser)()),
@@ -105,7 +105,7 @@ __decorate([
 ], TasksController.prototype, "requestDone", null);
 __decorate([
     (0, common_1.Post)(':id/validate'),
-    (0, roles_decorator_1.Roles)('admin', 'owner'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, current_user_decorator_1.CurrentUser)()),
@@ -115,7 +115,7 @@ __decorate([
 ], TasksController.prototype, "validate", null);
 __decorate([
     (0, common_1.Get)('awaiting-validation'),
-    (0, roles_decorator_1.Roles)('admin', 'owner', 'kasir'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES'),
     __param(0, (0, common_1.Query)('orderId', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
@@ -123,7 +123,7 @@ __decorate([
 ], TasksController.prototype, "awaitingValidation", null);
 __decorate([
     (0, common_1.Post)('backfill'),
-    (0, roles_decorator_1.Roles)('admin', 'owner'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)

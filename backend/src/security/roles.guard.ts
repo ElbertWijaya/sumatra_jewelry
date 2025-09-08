@@ -13,8 +13,10 @@ export class RolesGuard implements CanActivate {
     ]);
     if (!required || required.length === 0) return true;
     const req = ctx.switchToHttp().getRequest();
-    const user = req.user;
+  const user = req.user;
     if (!user) return false;
-    return required.includes(user.role);
+  // Use jobRole (new unified role) if present; fallback to legacy role for backward compatibility
+  const effectiveRole = (user as any).jobRole || (user as any).role;
+  return required.includes(effectiveRole);
   }
 }

@@ -28,7 +28,8 @@ let RolesGuard = class RolesGuard {
         const user = req.user;
         if (!user)
             return false;
-        return required.includes(user.role);
+        const effectiveRole = user.jobRole || user.role;
+        return required.includes(effectiveRole);
     }
 };
 exports.RolesGuard = RolesGuard;

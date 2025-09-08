@@ -52,18 +52,18 @@ let AuthService = class AuthService {
     }
     async login(email, password) {
         const user = await this.validateUser(email, password);
-        const payload = { sub: user.id, role: user.role, email: user.email };
+        const payload = { sub: user.id, jobRole: user.jobRole ?? null, email: user.email };
         const accessToken = await this.jwt.signAsync(payload);
-        console.log('[LOGIN] user:', user.email, 'role:', user.role, 'token:', accessToken);
+        console.log('[LOGIN] user:', user.email, 'jobRole:', user.jobRole, 'token:', accessToken);
         return {
             accessToken,
-            user: { id: user.id, email: user.email, fullName: user.fullName, role: user.role },
+            user: { id: user.id, email: user.email, fullName: user.fullName, jobRole: user.jobRole ?? null },
         };
     }
     async register(data) {
         const hash = await argon2.hash(data.password);
         const user = await this.prisma.appUser.create({
-            data: { email: data.email, password: hash, fullName: data.fullName, role: data.role },
+            data: { email: data.email, password: hash, fullName: data.fullName, role: data.role, jobRole: data.jobRole },
         });
         return { id: user.id, email: user.email };
     }

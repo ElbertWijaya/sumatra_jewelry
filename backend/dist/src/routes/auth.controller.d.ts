@@ -3,13 +3,11 @@ declare class LoginDto {
     email: string;
     password: string;
 }
-declare const ROLES: readonly ["admin", "owner", "kasir", "pengrajin"];
-type RoleUnion = typeof ROLES[number];
 declare class RegisterDto {
     email: string;
     password: string;
     fullName: string;
-    role: RoleUnion;
+    jobRole?: string;
 }
 export declare class AuthController {
     private auth;
@@ -20,12 +18,12 @@ export declare class AuthController {
             id: string;
             email: string;
             fullName: string;
-            role: import(".prisma/client").$Enums.Role;
+            jobRole: any;
         };
     }>;
     register(dto: RegisterDto): Promise<{
-        id: string;
-        email: string;
+        id: any;
+        email: any;
     }>;
 }
 export {};

@@ -109,15 +109,15 @@ export class OrdersService {
   async history(id: number) {
     // Ensure order exists (throws if not)
     await this.findById(id);
-    const records = await this.prisma.orderHistory.findMany({
+    const records = await (this.prisma as any).orderHistory.findMany({
       where: { orderId: id },
-      include: { user: { select: { id: true, fullName: true, role: true } } },
+      include: { user: { select: { id: true, fullName: true, jobRole: true } } },
       orderBy: { changedAt: 'asc' }
     });
-    return records.map(r => ({
+  return records.map((r: any) => ({
       id: r.id,
       changedAt: r.changedAt,
-      by: r.user ? { id: r.user.id, fullName: r.user.fullName, role: r.user.role } : null,
+  by: r.user ? { id: r.user.id, fullName: r.user.fullName, jobRole: (r.user as any).jobRole ?? null } : null,
       summary: r.changeSummary,
       diff: r.diff
     }));

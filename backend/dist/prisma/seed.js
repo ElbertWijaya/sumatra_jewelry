@@ -9,21 +9,27 @@ async function main() {
     if (!exists) {
         const hash = await argon2.hash('Admin123!');
         await prisma.appUser.create({
-            data: { email: adminEmail, fullName: 'Admin', role: client_1.Role.admin, password: hash },
+            data: { email: adminEmail, fullName: 'Aceng', role: client_1.Role.admin, password: hash },
         });
-        console.log('Seeded admin user: admin@tokomas.local / Admin123!');
+        console.log('Seeded admin user: admin@tokomas.local / Admin123! (Aceng)');
     }
     else {
-        console.log('Admin user already exists.');
+        if (exists.fullName !== 'Aceng') {
+            await prisma.appUser.update({ where: { email: adminEmail }, data: { fullName: 'Aceng' } });
+            console.log('Updated admin fullName to Aceng');
+        }
+        else {
+            console.log('Admin user already exists.');
+        }
     }
     const usersToSeed = [
-        { email: 'sales@tokomas.local', fullName: 'Sales', role: client_1.Role.kasir },
-        { email: 'designer@tokomas.local', fullName: 'Designer', role: client_1.Role.pengrajin, jobRole: 'DESIGNER' },
-        { email: 'carver@tokomas.local', fullName: 'Carver', role: client_1.Role.pengrajin, jobRole: 'CARVER' },
-        { email: 'caster@tokomas.local', fullName: 'Caster', role: client_1.Role.pengrajin, jobRole: 'CASTER' },
-        { email: 'diamond@tokomas.local', fullName: 'Diamond Setter', role: client_1.Role.pengrajin, jobRole: 'DIAMOND_SETTER' },
-        { email: 'finisher@tokomas.local', fullName: 'Finisher', role: client_1.Role.pengrajin, jobRole: 'FINISHER' },
-        { email: 'inventory@tokomas.local', fullName: 'Inventory', role: client_1.Role.kasir, jobRole: 'INVENTORY' },
+        { email: 'sales@tokomas.local', fullName: 'Yanti', role: client_1.Role.kasir },
+        { email: 'designer@tokomas.local', fullName: 'Elbert Wijaya', role: client_1.Role.pengrajin, jobRole: 'DESIGNER' },
+        { email: 'carver@tokomas.local', fullName: 'Acai', role: client_1.Role.pengrajin, jobRole: 'CARVER' },
+        { email: 'caster@tokomas.local', fullName: 'Hanpin', role: client_1.Role.pengrajin, jobRole: 'CASTER' },
+        { email: 'diamond@tokomas.local', fullName: 'Yanti Atas', role: client_1.Role.pengrajin, jobRole: 'DIAMOND_SETTER' },
+        { email: 'finisher@tokomas.local', fullName: 'Ayu', role: client_1.Role.pengrajin, jobRole: 'FINISHER' },
+        { email: 'inventory@tokomas.local', fullName: 'Suk Mai D', role: client_1.Role.kasir, jobRole: 'INVENTORY' },
     ];
     for (const u of usersToSeed) {
         const existU = await prisma.appUser.findUnique({ where: { email: u.email } });
@@ -36,6 +42,10 @@ async function main() {
             if (u.jobRole && existU.jobRole !== u.jobRole) {
                 await prisma.appUser.update({ where: { email: u.email }, data: { jobRole: u.jobRole } });
                 console.log(`Updated jobRole for ${u.email} -> ${u.jobRole}`);
+            }
+            if (existU.fullName !== u.fullName) {
+                await prisma.appUser.update({ where: { email: u.email }, data: { fullName: u.fullName } });
+                console.log(`Updated fullName for ${u.email} -> ${u.fullName}`);
             }
         }
     }

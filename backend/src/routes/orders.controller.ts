@@ -13,7 +13,7 @@ export class OrdersController {
   constructor(private orders: OrdersService) {}
 
   @Post()
-  @Roles('admin','kasir','owner')
+  @Roles('ADMINISTRATOR','SALES')
   create(@Body() dto: CreateOrderDto, @CurrentUser() user: RequestUser) {
     // Debug log (sementara)
     console.log('[CreateOrder] dto keys:', Object.keys(dto || {}));
@@ -51,7 +51,7 @@ export class OrdersController {
   }
 
   @Get()
-  @Roles('admin','kasir','owner','pengrajin')
+  @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
   findAll(@Query('status') status?: OrderStatusEnum) {
     if (status && !ORDER_STATUS_VALUES.includes(status)) {
       throw new BadRequestException('Status invalid');
@@ -60,19 +60,19 @@ export class OrdersController {
   }
 
   @Get(':id')
-  @Roles('admin','kasir','owner','pengrajin')
+  @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.orders.findById(id);
   }
 
   @Get(':id/history')
-  @Roles('admin','kasir','owner','pengrajin')
+  @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
   history(@Param('id', ParseIntPipe) id: number) {
     return this.orders.history(id);
   }
 
   @Put(':id/status')
-  @Roles('admin','kasir','owner')
+  @Roles('ADMINISTRATOR','SALES')
   updateStatus(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateOrderStatusDto, @CurrentUser() user: RequestUser) {
     return this.orders.updateStatus(id, dto, user.userId);
   }

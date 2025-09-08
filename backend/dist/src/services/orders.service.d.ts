@@ -14,16 +14,16 @@ export declare class OrdersService {
             berat: Prisma.Decimal | null;
         }[];
     } & {
+        customerName: string;
+        jenisBarang: string;
+        jenisEmas: string;
+        warnaEmas: string;
         id: number;
         createdAt: Date;
         updatedAt: Date;
         code: string | null;
-        customerName: string;
         customerAddress: string | null;
         customerPhone: string | null;
-        jenisBarang: string;
-        jenisEmas: string;
-        warnaEmas: string;
         hargaEmasPerGram: Prisma.Decimal | null;
         hargaPerkiraan: Prisma.Decimal | null;
         hargaAkhir: Prisma.Decimal | null;
@@ -52,16 +52,16 @@ export declare class OrdersService {
             berat: Prisma.Decimal | null;
         }[];
     } & {
+        customerName: string;
+        jenisBarang: string;
+        jenisEmas: string;
+        warnaEmas: string;
         id: number;
         createdAt: Date;
         updatedAt: Date;
         code: string | null;
-        customerName: string;
         customerAddress: string | null;
         customerPhone: string | null;
-        jenisBarang: string;
-        jenisEmas: string;
-        warnaEmas: string;
         hargaEmasPerGram: Prisma.Decimal | null;
         hargaPerkiraan: Prisma.Decimal | null;
         hargaAkhir: Prisma.Decimal | null;
@@ -88,16 +88,16 @@ export declare class OrdersService {
             berat: Prisma.Decimal | null;
         }[];
     } & {
+        customerName: string;
+        jenisBarang: string;
+        jenisEmas: string;
+        warnaEmas: string;
         id: number;
         createdAt: Date;
         updatedAt: Date;
         code: string | null;
-        customerName: string;
         customerAddress: string | null;
         customerPhone: string | null;
-        jenisBarang: string;
-        jenisEmas: string;
-        warnaEmas: string;
         hargaEmasPerGram: Prisma.Decimal | null;
         hargaPerkiraan: Prisma.Decimal | null;
         hargaAkhir: Prisma.Decimal | null;
@@ -115,16 +115,16 @@ export declare class OrdersService {
         updatedById: string | null;
     }>;
     updateStatus(id: number, dto: UpdateOrderStatusDto, userId: string): Promise<{
+        customerName: string;
+        jenisBarang: string;
+        jenisEmas: string;
+        warnaEmas: string;
         id: number;
         createdAt: Date;
         updatedAt: Date;
         code: string | null;
-        customerName: string;
         customerAddress: string | null;
         customerPhone: string | null;
-        jenisBarang: string;
-        jenisEmas: string;
-        warnaEmas: string;
         hargaEmasPerGram: Prisma.Decimal | null;
         hargaPerkiraan: Prisma.Decimal | null;
         hargaAkhir: Prisma.Decimal | null;
@@ -141,15 +141,5 @@ export declare class OrdersService {
         createdById: string | null;
         updatedById: string | null;
     }>;
-    history(id: number): Promise<{
-        id: number;
-        changedAt: Date;
-        by: {
-            id: string;
-            fullName: string;
-            role: import(".prisma/client").$Enums.Role;
-        } | null;
-        summary: string | null;
-        diff: Prisma.JsonValue;
-    }[]>;
+    history(id: number): Promise<any>;
 }

@@ -23,7 +23,7 @@ export default function TasksScreen() {
 	const [actionsOpen, setActionsOpen] = useState(false);
 	const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
 
-	const canValidate = user?.role === 'admin' || user?.role === 'owner';
+		const canValidate = user?.jobRole === 'ADMINISTRATOR';
 
 	const load = useCallback(async () => {
 		if (!token) return; setLoading(true);

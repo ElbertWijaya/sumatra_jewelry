@@ -2,7 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import { Strategy } from 'passport-jwt';
 interface JwtPayload {
     sub: string;
-    role: string;
+    jobRole?: string | null;
     email: string;
     iat?: number;
     exp?: number;
@@ -12,7 +12,7 @@ export declare class JwtStrategy extends JwtStrategy_base {
     constructor(config: ConfigService);
     validate(payload: JwtPayload): Promise<{
         userId: string;
-        role: string;
+        jobRole: string | null;
         email: string;
     }>;
 }

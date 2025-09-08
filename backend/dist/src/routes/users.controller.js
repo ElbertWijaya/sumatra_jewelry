@@ -28,13 +28,13 @@ let UsersController = class UsersController {
             where.role = role;
         if (jobRole)
             where.jobRole = jobRole;
-        return this.prisma.appUser.findMany({ where: Object.keys(where).length ? where : undefined, select: { id: true, fullName: true, email: true, role: true } });
+        return this.prisma.appUser.findMany({ where: Object.keys(where).length ? where : undefined, select: { id: true, fullName: true, email: true, jobRole: true } });
     }
 };
 exports.UsersController = UsersController;
 __decorate([
     (0, common_1.Get)(),
-    (0, roles_decorator_1.Roles)('admin', 'owner', 'kasir', 'pengrajin'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES', 'DESIGNER', 'CASTER', 'CARVER', 'DIAMOND_SETTER', 'FINISHER', 'INVENTORY'),
     __param(0, (0, common_1.Query)('role')),
     __param(1, (0, common_1.Query)('jobRole')),
     __metadata("design:type", Function),

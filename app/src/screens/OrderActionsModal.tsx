@@ -43,7 +43,7 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
 
   const toggleStage = (stage: string) => setSelectedStages(s => s.includes(stage) ? s.filter(x=>x!==stage) : [...s, stage]);
 
-  const canValidate = user?.role === 'admin' || user?.role === 'owner' || user?.role === 'kasir';
+  const canValidate = user?.jobRole === 'ADMINISTRATOR' || user?.jobRole === 'SALES';
 
   const doAssignBulk = async () => {
     if (!token || !order) return;

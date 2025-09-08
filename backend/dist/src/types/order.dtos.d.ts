@@ -2,7 +2,7 @@ export declare const ORDER_STATUS_VALUES: readonly ["DRAFT", "DITERIMA", "DALAM_
 export type OrderStatusEnum = typeof ORDER_STATUS_VALUES[number];
 export interface RequestUser {
     userId: string;
-    role: string;
+    jobRole?: string | null;
     email: string;
 }
 export declare class CreateOrderDto {
