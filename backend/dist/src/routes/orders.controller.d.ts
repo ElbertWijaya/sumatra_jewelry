@@ -5,24 +5,25 @@ export declare class OrdersController {
     constructor(orders: OrdersService);
     create(dto: CreateOrderDto, user: RequestUser): Promise<{
         stones: {
+            orderId: number;
             id: number;
             createdAt: Date;
-            orderId: number;
             bentuk: string;
             jumlah: number;
             berat: import("@prisma/client/runtime/library").Decimal | null;
         }[];
     } & {
+        status: import(".prisma/client").$Enums.OrderStatus;
         id: number;
         createdAt: Date;
+        updatedAt: Date;
+        code: string | null;
         customerName: string;
+        customerAddress: string | null;
+        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        updatedAt: Date;
-        code: string | null;
-        customerAddress: string | null;
-        customerPhone: string | null;
         hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;
         hargaPerkiraan: import("@prisma/client/runtime/library").Decimal | null;
         hargaAkhir: import("@prisma/client/runtime/library").Decimal | null;
@@ -35,30 +36,30 @@ export declare class OrdersController {
         referensiGambarUrls: import("@prisma/client/runtime/library").JsonValue | null;
         stoneCount: number;
         totalBerat: import("@prisma/client/runtime/library").Decimal | null;
-        status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;
         updatedById: string | null;
     }>;
     findAll(status?: OrderStatusEnum): Promise<({
         stones: {
+            orderId: number;
             id: number;
             createdAt: Date;
-            orderId: number;
             bentuk: string;
             jumlah: number;
             berat: import("@prisma/client/runtime/library").Decimal | null;
         }[];
     } & {
+        status: import(".prisma/client").$Enums.OrderStatus;
         id: number;
         createdAt: Date;
+        updatedAt: Date;
+        code: string | null;
         customerName: string;
+        customerAddress: string | null;
+        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        updatedAt: Date;
-        code: string | null;
-        customerAddress: string | null;
-        customerPhone: string | null;
         hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;
         hargaPerkiraan: import("@prisma/client/runtime/library").Decimal | null;
         hargaAkhir: import("@prisma/client/runtime/library").Decimal | null;
@@ -71,30 +72,30 @@ export declare class OrdersController {
         referensiGambarUrls: import("@prisma/client/runtime/library").JsonValue | null;
         stoneCount: number;
         totalBerat: import("@prisma/client/runtime/library").Decimal | null;
-        status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;
         updatedById: string | null;
     })[]>;
     findOne(id: number): Promise<{
         stones: {
+            orderId: number;
             id: number;
             createdAt: Date;
-            orderId: number;
             bentuk: string;
             jumlah: number;
             berat: import("@prisma/client/runtime/library").Decimal | null;
         }[];
     } & {
+        status: import(".prisma/client").$Enums.OrderStatus;
         id: number;
         createdAt: Date;
+        updatedAt: Date;
+        code: string | null;
         customerName: string;
+        customerAddress: string | null;
+        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        updatedAt: Date;
-        code: string | null;
-        customerAddress: string | null;
-        customerPhone: string | null;
         hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;
         hargaPerkiraan: import("@prisma/client/runtime/library").Decimal | null;
         hargaAkhir: import("@prisma/client/runtime/library").Decimal | null;
@@ -107,7 +108,6 @@ export declare class OrdersController {
         referensiGambarUrls: import("@prisma/client/runtime/library").JsonValue | null;
         stoneCount: number;
         totalBerat: import("@prisma/client/runtime/library").Decimal | null;
-        status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;
         updatedById: string | null;
     }>;
@@ -123,16 +123,17 @@ export declare class OrdersController {
         diff: import("@prisma/client/runtime/library").JsonValue;
     }[]>;
     updateStatus(id: number, dto: UpdateOrderStatusDto, user: RequestUser): Promise<{
+        status: import(".prisma/client").$Enums.OrderStatus;
         id: number;
         createdAt: Date;
+        updatedAt: Date;
+        code: string | null;
         customerName: string;
+        customerAddress: string | null;
+        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        updatedAt: Date;
-        code: string | null;
-        customerAddress: string | null;
-        customerPhone: string | null;
         hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;
         hargaPerkiraan: import("@prisma/client/runtime/library").Decimal | null;
         hargaAkhir: import("@prisma/client/runtime/library").Decimal | null;
@@ -145,7 +146,6 @@ export declare class OrdersController {
         referensiGambarUrls: import("@prisma/client/runtime/library").JsonValue | null;
         stoneCount: number;
         totalBerat: import("@prisma/client/runtime/library").Decimal | null;
-        status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;
         updatedById: string | null;
     }>;

@@ -12,6 +12,7 @@ model AppUser {
   email     String   @unique
   fullName  String
   role      Role
+  jobRole   TaskJobRole? @map("job_role")
   password  String
   createdAt DateTime @default(now())
   ordersCreated Order[] @relation("OrdersCreated")
@@ -86,6 +87,7 @@ model OrderTask {
   status        TaskStatus @default(OPEN) @map("status")
   assignedTo    AppUser?  @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
   assignedToId  String?   @map("assigned_to_id")
+  jobRole       TaskJobRole? @map("job_role")
   requestedDoneAt DateTime? @map("requested_done_at")
   validatedBy   AppUser?  @relation("TaskValidatedBy", fields: [validatedById], references: [id])
   validatedById String?   @map("validated_by_id")
@@ -104,6 +106,15 @@ enum TaskStatus {
   AWAITING_VALIDATION
   DONE
   CANCELLED
+}
+
+enum TaskJobRole {
+  DESIGNER
+  CASTER
+  CARVER
+  DIAMOND_SETTER
+  FINISHER
+  INVENTORY
 }
 
 enum Role {

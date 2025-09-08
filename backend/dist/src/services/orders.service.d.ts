@@ -6,24 +6,25 @@ export declare class OrdersService {
     constructor(prisma: PrismaService);
     create(dto: CreateOrderDto, userId: string): Promise<{
         stones: {
+            orderId: number;
             id: number;
             createdAt: Date;
-            orderId: number;
             bentuk: string;
             jumlah: number;
             berat: Prisma.Decimal | null;
         }[];
     } & {
+        status: import(".prisma/client").$Enums.OrderStatus;
         id: number;
         createdAt: Date;
+        updatedAt: Date;
+        code: string | null;
         customerName: string;
+        customerAddress: string | null;
+        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        updatedAt: Date;
-        code: string | null;
-        customerAddress: string | null;
-        customerPhone: string | null;
         hargaEmasPerGram: Prisma.Decimal | null;
         hargaPerkiraan: Prisma.Decimal | null;
         hargaAkhir: Prisma.Decimal | null;
@@ -36,7 +37,6 @@ export declare class OrdersService {
         referensiGambarUrls: Prisma.JsonValue | null;
         stoneCount: number;
         totalBerat: Prisma.Decimal | null;
-        status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;
         updatedById: string | null;
     }>;
@@ -44,24 +44,25 @@ export declare class OrdersService {
         status?: OrderStatusEnum;
     }): Promise<({
         stones: {
+            orderId: number;
             id: number;
             createdAt: Date;
-            orderId: number;
             bentuk: string;
             jumlah: number;
             berat: Prisma.Decimal | null;
         }[];
     } & {
+        status: import(".prisma/client").$Enums.OrderStatus;
         id: number;
         createdAt: Date;
+        updatedAt: Date;
+        code: string | null;
         customerName: string;
+        customerAddress: string | null;
+        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        updatedAt: Date;
-        code: string | null;
-        customerAddress: string | null;
-        customerPhone: string | null;
         hargaEmasPerGram: Prisma.Decimal | null;
         hargaPerkiraan: Prisma.Decimal | null;
         hargaAkhir: Prisma.Decimal | null;
@@ -74,30 +75,30 @@ export declare class OrdersService {
         referensiGambarUrls: Prisma.JsonValue | null;
         stoneCount: number;
         totalBerat: Prisma.Decimal | null;
-        status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;
         updatedById: string | null;
     })[]>;
     findById(id: number): Promise<{
         stones: {
+            orderId: number;
             id: number;
             createdAt: Date;
-            orderId: number;
             bentuk: string;
             jumlah: number;
             berat: Prisma.Decimal | null;
         }[];
     } & {
+        status: import(".prisma/client").$Enums.OrderStatus;
         id: number;
         createdAt: Date;
+        updatedAt: Date;
+        code: string | null;
         customerName: string;
+        customerAddress: string | null;
+        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        updatedAt: Date;
-        code: string | null;
-        customerAddress: string | null;
-        customerPhone: string | null;
         hargaEmasPerGram: Prisma.Decimal | null;
         hargaPerkiraan: Prisma.Decimal | null;
         hargaAkhir: Prisma.Decimal | null;
@@ -110,21 +111,21 @@ export declare class OrdersService {
         referensiGambarUrls: Prisma.JsonValue | null;
         stoneCount: number;
         totalBerat: Prisma.Decimal | null;
-        status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;
         updatedById: string | null;
     }>;
     updateStatus(id: number, dto: UpdateOrderStatusDto, userId: string): Promise<{
+        status: import(".prisma/client").$Enums.OrderStatus;
         id: number;
         createdAt: Date;
+        updatedAt: Date;
+        code: string | null;
         customerName: string;
+        customerAddress: string | null;
+        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        updatedAt: Date;
-        code: string | null;
-        customerAddress: string | null;
-        customerPhone: string | null;
         hargaEmasPerGram: Prisma.Decimal | null;
         hargaPerkiraan: Prisma.Decimal | null;
         hargaAkhir: Prisma.Decimal | null;
@@ -137,7 +138,6 @@ export declare class OrdersService {
         referensiGambarUrls: Prisma.JsonValue | null;
         stoneCount: number;
         totalBerat: Prisma.Decimal | null;
-        status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;
         updatedById: string | null;
     }>;

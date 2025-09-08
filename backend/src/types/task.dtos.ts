@@ -42,7 +42,7 @@ export class SubTaskInputDto {
 
 export class AssignBulkDto {
   @IsInt() orderId!: number;
-  @IsString() @IsNotEmpty() role!: 'pengrajin' | 'kasir' | 'owner' | 'admin';
+  @IsString() @IsNotEmpty() role!: 'DESIGNER'|'CASTER'|'CARVER'|'DIAMOND_SETTER'|'FINISHER'|'INVENTORY';
   @IsString() @IsNotEmpty() userId!: string;
   @IsArray() @ValidateNested({ each: true }) @Type(() => SubTaskInputDto)
   subtasks!: SubTaskInputDto[];

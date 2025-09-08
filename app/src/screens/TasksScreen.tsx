@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, Alert, TextInput, Modal, Button } from 'react-native';
+import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { OrderActionsModal } from './OrderActionsModal';
 
 type Task = {
 	id: number;
@@ -18,9 +19,9 @@ export default function TasksScreen() {
 	const { token, user } = useAuth();
 	const [data, setData] = useState<Task[]>([]);
 	const [loading, setLoading] = useState(false);
-	const [assignModal, setAssignModal] = useState<{ id: number; visible: boolean } | null>(null);
-	const [assignee, setAssignee] = useState('');
 	const [note, setNote] = useState('');
+	const [actionsOpen, setActionsOpen] = useState(false);
+	const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
 
 	const canValidate = user?.role === 'admin' || user?.role === 'owner';
 
@@ -42,12 +43,6 @@ export default function TasksScreen() {
 		]);
 	};
 
-	const doAssign = async () => {
-		if (!assignModal || !token) return;
-		if (!assignee.trim()) { Alert.alert('Assign', 'Masukkan User ID'); return; }
-		try { await api.tasks.assign(token, assignModal.id, assignee.trim()); setAssignModal(null); setAssignee(''); await load(); } catch (e:any) { Alert.alert('Gagal assign', e.message); }
-	};
-
 	const requestDone = async (id: number) => {
 		if (!token) return;
 		try { await api.tasks.requestDone(token, id, note.trim() || undefined); setNote(''); await load(); } catch (e:any) { Alert.alert('Gagal request selesai', e.message); }
@@ -60,7 +55,7 @@ export default function TasksScreen() {
 
 	const renderItem = ({ item }: { item: Task }) => {
 		return (
-			<View style={styles.card}>
+			<TouchableOpacity style={styles.card} activeOpacity={0.8} onPress={() => { setSelectedOrder(item.order || { id: item.orderId }); setActionsOpen(true); }}>
 				<View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
 					<Text style={styles.title}>Order #{item.orderId} • {item.stage || 'Tanpa Stage'}</Text>
 					<Text style={[styles.badge, statusColor(item.status)]}>{item.status}</Text>
@@ -73,12 +68,11 @@ export default function TasksScreen() {
 					{item.assignedTo ? <Text style={styles.subtle}>Ditugaskan: {item.assignedTo.fullName}</Text> : <Text style={styles.subtle}>Belum ditugaskan</Text>}
 				</View>
 				<View style={styles.actions}>
-					<TouchableOpacity style={styles.btn} onPress={() => setAssignModal({ id: item.id, visible: true })}><Text style={styles.btnText}>Assign</Text></TouchableOpacity>
 					<TouchableOpacity style={styles.btn} onPress={() => requestDone(item.id)}><Text style={styles.btnText}>Request Selesai</Text></TouchableOpacity>
 					{canValidate && <TouchableOpacity style={styles.btnPrimary} onPress={() => validateDone(item.id)}><Text style={styles.btnTextPrimary}>Validasi</Text></TouchableOpacity>}
 					<TouchableOpacity style={styles.btnDanger} onPress={() => confirmDelete(item.id)}><Text style={styles.btnTextDanger}>Hapus</Text></TouchableOpacity>
 				</View>
-			</View>
+			</TouchableOpacity>
 		);
 	};
 
@@ -93,19 +87,12 @@ export default function TasksScreen() {
 				ListEmptyComponent={!loading ? <Text style={{ textAlign: 'center', marginTop: 40 }}>Belum ada tasks aktif</Text> : null}
 			/>
 
-			<Modal visible={!!assignModal} animationType="slide" transparent onRequestClose={() => setAssignModal(null)}>
-				<View style={styles.modalBackdrop}>
-					<View style={styles.modalBody}>
-						<Text style={styles.modalTitle}>Assign Task</Text>
-						<TextInput placeholder="User ID" value={assignee} onChangeText={setAssignee} style={styles.input} autoCapitalize='none' />
-						<View style={{ height: 8 }} />
-						<View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
-							<Button title="Batal" onPress={() => setAssignModal(null)} />
-							<Button title="Assign" onPress={doAssign} />
-						</View>
-					</View>
-				</View>
-			</Modal>
+			<OrderActionsModal
+				visible={actionsOpen}
+				order={selectedOrder}
+				onClose={() => setActionsOpen(false)}
+				onChanged={() => { load(); }}
+			/>
 		</View>
 	);
 }
@@ -135,9 +122,6 @@ const styles = StyleSheet.create({
 	btnTextPrimary: { color: 'white' },
 	btnDanger: { paddingHorizontal: 10, paddingVertical: 8, backgroundColor: '#ef4444', borderRadius: 6 },
 	btnTextDanger: { color: 'white' },
-	modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 24 },
-	modalBody: { backgroundColor: 'white', padding: 16, borderRadius: 8 },
-	modalTitle: { fontSize: 18, fontWeight: '600', marginBottom: 12 },
 	input: { borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 6 },
 });
 

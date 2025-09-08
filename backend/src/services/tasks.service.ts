@@ -78,14 +78,13 @@ export class TasksService {
   return (this.prisma as any).orderTask.update({ where: { id }, data: { assignedToId, status: TaskStatus.ASSIGNED as any } });
   }
 
-  async assignBulk(params: { orderId: number; role: 'pengrajin'|'kasir'|'owner'|'admin'; userId: string; subtasks: { stage?: string; notes?: string }[] }) {
+  async assignBulk(params: { orderId: number; role: 'DESIGNER'|'CASTER'|'CARVER'|'DIAMOND_SETTER'|'FINISHER'|'INVENTORY'; userId: string; subtasks: { stage?: string; notes?: string }[] }) {
     const order = await this.prisma.order.findUnique({ where: { id: params.orderId } });
     if (!order) throw new NotFoundException('Order not found');
     if (!this.isOrderActive(order.status as any)) throw new BadRequestException('Order sudah nonaktif (history).');
 
     const user = await this.prisma.appUser.findUnique({ where: { id: params.userId } });
     if (!user) throw new NotFoundException('User not found');
-    if (user.role !== params.role) throw new BadRequestException('Role user tidak sesuai');
 
     // Create multiple tasks with given stages/notes, assigned to the selected user
     const creates = params.subtasks.map(st => (this.prisma as any).orderTask.create({
@@ -94,6 +93,7 @@ export class TasksService {
         stage: st.stage,
         notes: st.notes,
         assignedToId: params.userId,
+        jobRole: params.role as any,
         status: TaskStatus.ASSIGNED as any,
       },
     }));

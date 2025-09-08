@@ -6,23 +6,31 @@ import { InlineSelect } from '../components/InlineSelect';
 
 type Props = { visible: boolean; order: any | null; onClose(): void; onChanged?(): void };
 
-const ROLE_OPTIONS = ['pengrajin','kasir','owner','admin'] as const;
+const ROLE_TEMPLATES: Record<string, string[]> = {
+  DESIGNER: ['3D Design', 'Print Resin', 'Pengecekan'],
+  CASTER: ['Pasang Tiang', 'Cor', 'Kasih Ke Admin'],
+  CARVER: ['Reparasi', 'Cap', 'Kasih Ke Admin'],
+  DIAMOND_SETTER: ['Pasang Berlian', 'Kasih Ke Admin'],
+  FINISHER: ['Chrome Warna', 'Kasih Ke Admin'],
+  INVENTORY: ['Input Data Inventory'],
+};
+const ROLE_OPTIONS = Object.keys(ROLE_TEMPLATES) as (keyof typeof ROLE_TEMPLATES)[];
 
 export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, onChanged }) => {
   const { token, user } = useAuth();
   const [tab, setTab] = useState<'assign'|'validate'>('assign');
-  const [role, setRole] = useState<string>('pengrajin');
+  const [role, setRole] = useState<string>('');
   const [users, setUsers] = useState<any[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
-  const [subtasks, setSubtasks] = useState<{ stage?: string; notes?: string }[]>([{ stage: '', notes: '' }]);
+  const [selectedStages, setSelectedStages] = useState<string[]>([]);
   const [validations, setValidations] = useState<any[]>([]);
 
-  useEffect(() => { if (!visible) return; setTab('assign'); setRole('pengrajin'); setSubtasks([{ stage: '', notes: '' }]); setSelectedUserId(''); setUsers([]); setValidations([]); }, [visible]);
+  useEffect(() => { if (!visible) return; setTab('assign'); setRole(''); setSelectedStages([]); setSelectedUserId(''); setUsers([]); setValidations([]); }, [visible]);
 
-  useEffect(() => { // load users by role
+  useEffect(() => { // load users filtered by selected job role
     (async () => {
       if (!token || !visible) return;
-      try { const res = await api.users.list(token, role); setUsers(res); } catch (e: any) { /* ignore */ }
+      try { const res = await api.users.list(token, role ? { jobRole: role } : undefined); setUsers(res); } catch (e: any) { /* ignore */ }
     })();
   }, [role, token, visible]);
 
@@ -33,17 +41,16 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
     })();
   }, [token, visible, order]);
 
-  const addSubtask = () => setSubtasks(s => [...s, { stage: '', notes: '' }]);
-  const updateSubtask = (idx: number, patch: Partial<{ stage: string; notes: string }>) => setSubtasks(s => s.map((t,i)=> i===idx ? { ...t, ...patch } : t));
-  const removeSubtask = (idx: number) => setSubtasks(s => s.filter((_,i)=> i!==idx));
+  const toggleStage = (stage: string) => setSelectedStages(s => s.includes(stage) ? s.filter(x=>x!==stage) : [...s, stage]);
 
   const canValidate = user?.role === 'admin' || user?.role === 'owner' || user?.role === 'kasir';
 
   const doAssignBulk = async () => {
     if (!token || !order) return;
+    if (!role) { Alert.alert('Assign Tugas', 'Pilih Role Pekerjaan terlebih dahulu.'); return; }
     if (!selectedUserId) { Alert.alert('Assign Tugas', 'Pilih orang yang akan ditugaskan.'); return; }
-    const cleaned = subtasks.map(t => ({ stage: (t.stage||'').trim() || undefined, notes: (t.notes||'').trim() || undefined })).filter(t => t.stage || t.notes);
-    if (cleaned.length === 0) { Alert.alert('Assign Tugas', 'Minimal satu sub-task harus diisi.'); return; }
+    const cleaned = (ROLE_TEMPLATES[role] || []).filter(st => selectedStages.includes(st)).map(st => ({ stage: st }));
+    if (cleaned.length === 0) { Alert.alert('Assign Tugas', 'Pilih minimal satu sub-task.'); return; }
     try {
       await api.tasks.assignBulk(token, { orderId: order.id, role, userId: selectedUserId, subtasks: cleaned });
       Alert.alert('Assign', 'Tugas berhasil dibuat.');
@@ -54,19 +61,19 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
 
   const renderAssign = () => (
     <View>
-      <InlineSelect label="Role" value={role} options={ROLE_OPTIONS as any} onChange={setRole} />
-      <InlineSelect label="Pilih Orang" value={selectedUserId} options={users.map(u=>`${u.id} • ${u.fullName}`)} onChange={(v)=> setSelectedUserId(v.split(' • ')[0])} />
+  <InlineSelect label="Role Pekerjaan" value={role} options={ROLE_OPTIONS as any} onChange={(r)=> { setRole(r); setSelectedStages([]); }} />
+  <InlineSelect label="Pilih Orang" value={selectedUserId} options={users.map(u=>`${u.id} • ${u.fullName}`)} onChange={(v)=> setSelectedUserId(v.split(' • ')[0])} />
       <Text style={styles.section}>Sub-tasks</Text>
-      {subtasks.map((t, idx) => (
-        <View key={idx} style={styles.subtaskRow}>
-          <TextInput placeholder="Stage" value={t.stage} onChangeText={(v)=>updateSubtask(idx,{stage:v})} style={styles.input} />
-          <TextInput placeholder="Catatan (opsional)" value={t.notes} onChangeText={(v)=>updateSubtask(idx,{notes:v})} style={[styles.input,{flex:2}]} />
-          <TouchableOpacity onPress={()=> removeSubtask(idx)} style={styles.removeBtn}><Text style={{ color:'#c00' }}>Hapus</Text></TouchableOpacity>
-        </View>
-      ))}
-      <TouchableOpacity onPress={addSubtask} style={styles.addBtn}><Text style={{ color:'#1976d2' }}>+ Tambah Sub-task</Text></TouchableOpacity>
+      {(ROLE_TEMPLATES[role] || []).map((st) => {
+        const active = selectedStages.includes(st);
+        return (
+          <TouchableOpacity key={st} onPress={()=> toggleStage(st)} style={[styles.stageItem, active && styles.stageItemActive]}> 
+            <Text style={[styles.stageText, active && styles.stageTextActive]}>{st}</Text>
+          </TouchableOpacity>
+        );
+      })}
       <View style={{ height: 12 }} />
-      <TouchableOpacity onPress={doAssignBulk} style={styles.primary}><Text style={styles.primaryText}>Simpan & Assign</Text></TouchableOpacity>
+  <TouchableOpacity onPress={doAssignBulk} style={styles.primary}><Text style={styles.primaryText}>Simpan & Assign</Text></TouchableOpacity>
     </View>
   );
 
@@ -129,4 +136,8 @@ const styles = StyleSheet.create({
   primary: { backgroundColor:'#1976d2', paddingVertical: 12, borderRadius: 8, alignItems:'center' },
   primaryText: { color:'white', fontWeight:'700' },
   valCard: { padding: 12, borderWidth:1, borderColor:'#eee', borderRadius:8, marginBottom: 8, backgroundColor:'#fff' },
+  stageItem: { paddingVertical:10, paddingHorizontal:12, borderWidth:1, borderColor:'#ddd', borderRadius:8, marginBottom:8, backgroundColor:'#fff' },
+  stageItemActive: { backgroundColor:'#e3f2fd', borderColor:'#90caf9' },
+  stageText: { color:'#111' },
+  stageTextActive: { color:'#0b5394', fontWeight:'700' },
 });

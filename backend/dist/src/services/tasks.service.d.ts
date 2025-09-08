@@ -26,7 +26,7 @@ export declare class TasksService {
     assign(id: number, assignedToId: string): Promise<any>;
     assignBulk(params: {
         orderId: number;
-        role: 'pengrajin' | 'kasir' | 'owner' | 'admin';
+        role: 'DESIGNER' | 'CASTER' | 'CARVER' | 'DIAMOND_SETTER' | 'FINISHER' | 'INVENTORY';
         userId: string;
         subtasks: {
             stage?: string;

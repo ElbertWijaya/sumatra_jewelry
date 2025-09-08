@@ -96,6 +96,12 @@ export const api = {
     validate: (token: string, id: number, notes?: string) => request(`/tasks/${id}/validate`, { method: 'POST', body: JSON.stringify({ notes }), headers: { Authorization: `Bearer ${token}` } }),
   },
   users: {
-    list: (token: string, role?: string) => request(`/users${role ? `?role=${encodeURIComponent(role)}` : ''}`, { headers: { Authorization: `Bearer ${token}` } }),
+    list: (token: string, opts?: { role?: string; jobRole?: string }) => {
+      const params: string[] = [];
+      if (opts?.role) params.push(`role=${encodeURIComponent(opts.role)}`);
+      if (opts?.jobRole) params.push(`jobRole=${encodeURIComponent(opts.jobRole)}`);
+      const q = params.length ? `?${params.join('&')}` : '';
+      return request(`/users${q}`, { headers: { Authorization: `Bearer ${token}` } });
+    },
   }
 };

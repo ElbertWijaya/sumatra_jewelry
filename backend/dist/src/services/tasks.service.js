@@ -98,14 +98,13 @@ let TasksService = class TasksService {
         const user = await this.prisma.appUser.findUnique({ where: { id: params.userId } });
         if (!user)
             throw new common_1.NotFoundException('User not found');
-        if (user.role !== params.role)
-            throw new common_1.BadRequestException('Role user tidak sesuai');
         const creates = params.subtasks.map(st => this.prisma.orderTask.create({
             data: {
                 orderId: params.orderId,
                 stage: st.stage,
                 notes: st.notes,
                 assignedToId: params.userId,
+                jobRole: params.role,
                 status: task_dtos_1.TaskStatus.ASSIGNED,
             },
         }));

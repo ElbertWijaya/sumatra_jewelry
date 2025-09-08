@@ -32,7 +32,7 @@ export declare class SubTaskInputDto {
 }
 export declare class AssignBulkDto {
     orderId: number;
-    role: 'pengrajin' | 'kasir' | 'owner' | 'admin';
+    role: 'DESIGNER' | 'CASTER' | 'CARVER' | 'DIAMOND_SETTER' | 'FINISHER' | 'INVENTORY';
     userId: string;
     subtasks: SubTaskInputDto[];
 }
