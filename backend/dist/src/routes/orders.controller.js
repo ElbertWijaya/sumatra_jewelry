@@ -72,15 +72,6 @@ let OrdersController = class OrdersController {
     updateStatus(id, dto, user) {
         return this.orders.updateStatus(id, dto, user.userId);
     }
-    assign(id, dto, user) {
-        return this.orders.assignTask(id, dto, user.userId);
-    }
-    requestHandover(id, dto, user) {
-        return this.orders.requestHandover(id, dto, user.userId);
-    }
-    validateHandover(id, user) {
-        return this.orders.validateHandover(id, user.userId);
-    }
 };
 exports.OrdersController = OrdersController;
 __decorate([
@@ -126,35 +117,6 @@ __decorate([
     __metadata("design:paramtypes", [Number, order_dtos_1.UpdateOrderStatusDto, Object]),
     __metadata("design:returntype", void 0)
 ], OrdersController.prototype, "updateStatus", null);
-__decorate([
-    (0, common_1.Put)(':id/assign'),
-    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner'),
-    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
-    __param(1, (0, common_1.Body)()),
-    __param(2, (0, current_user_decorator_1.CurrentUser)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, order_dtos_1.AssignOrderDto, Object]),
-    __metadata("design:returntype", void 0)
-], OrdersController.prototype, "assign", null);
-__decorate([
-    (0, common_1.Put)(':id/handover-request'),
-    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner', 'pengrajin'),
-    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
-    __param(1, (0, common_1.Body)()),
-    __param(2, (0, current_user_decorator_1.CurrentUser)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, order_dtos_1.RequestHandoverDto, Object]),
-    __metadata("design:returntype", void 0)
-], OrdersController.prototype, "requestHandover", null);
-__decorate([
-    (0, common_1.Put)(':id/handover-validate'),
-    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner'),
-    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
-    __param(1, (0, current_user_decorator_1.CurrentUser)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Object]),
-    __metadata("design:returntype", void 0)
-], OrdersController.prototype, "validateHandover", null);
 exports.OrdersController = OrdersController = __decorate([
     (0, common_1.Controller)('orders'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

@@ -1,6 +1,6 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateTaskDto, AssignTaskDto, SubmitTaskDto, ReviewTaskDto, TaskStatusEnum } from '../types/task.dtos';
+import { TaskStatus } from '../types/task.dtos';
 
 @Injectable()
 export class TasksService {
@@ -8,44 +8,45 @@ export class TasksService {
 
   listActive() {
     return this.prisma.orderTask.findMany({
-      where: { status: { in: ['OPEN','ASSIGNED','IN_PROGRESS','IN_REVIEW'] as any } },
-      include: { order: true, assignedTo: { select: { id: true, fullName: true, role: true } } },
+      where: { status: { not: 'DONE' } },
       orderBy: { createdAt: 'desc' },
+      include: { order: true, assignedTo: true, validatedBy: true },
     });
   }
 
-  async create(dto: CreateTaskDto) {
-    const exists = await this.prisma.order.findUnique({ where: { id: dto.orderId } });
-    if (!exists) throw new NotFoundException('Order tidak ditemukan');
-    return this.prisma.orderTask.create({ data: {
-      orderId: dto.orderId,
-      title: dto.title,
-      description: dto.description,
-      stage: dto.stage,
-      dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
-      status: 'OPEN' as any,
-    }});
+  async create(data: { orderId: number; stage?: string; notes?: string }) {
+    // ensure order exists
+    const order = await this.prisma.order.findUnique({ where: { id: data.orderId } });
+    if (!order) throw new NotFoundException('Order not found');
+    return this.prisma.orderTask.create({ data: { orderId: data.orderId, stage: data.stage, notes: data.notes, status: TaskStatus.OPEN as any } });
   }
 
-  async assign(id: number, body: AssignTaskDto) {
-    // validate user exists
-    const user = await this.prisma.appUser.findUnique({ where: { id: body.userId } });
-    if (!user) throw new NotFoundException('User tidak ditemukan');
-    return this.prisma.orderTask.update({ where: { id }, data: { assignedToId: body.userId, status: 'ASSIGNED' as any } });
+  async update(id: number, patch: { stage?: string; notes?: string; status?: TaskStatus; assignedToId?: string | null }) {
+    const exists = await this.prisma.orderTask.findUnique({ where: { id } });
+    if (!exists) throw new NotFoundException('Task not found');
+    return this.prisma.orderTask.update({ where: { id }, data: { ...patch } as any });
   }
 
-  async submit(id: number, userId: string, body: SubmitTaskDto) {
+  async remove(id: number) {
+    await this.prisma.orderTask.delete({ where: { id } });
+    return { success: true };
+  }
+
+  async assign(id: number, assignedToId: string) {
     const task = await this.prisma.orderTask.findUnique({ where: { id } });
-    if (!task) throw new NotFoundException('Task tidak ditemukan');
-    if (task.assignedToId && task.assignedToId !== userId) throw new BadRequestException('Bukan pemilik task');
-    return this.prisma.orderTask.update({ where: { id }, data: { status: 'IN_REVIEW' as any, lastSubmissionNote: body.note } });
+    if (!task) throw new NotFoundException('Task not found');
+    return this.prisma.orderTask.update({ where: { id }, data: { assignedToId, status: TaskStatus.ASSIGNED as any } });
   }
 
-  async review(id: number, reviewerId: string, body: ReviewTaskDto) {
-    if (!['APPROVED','REJECTED'].includes(body.decision)) throw new BadRequestException('Keputusan invalid');
-    const status = body.decision as any;
-    return this.prisma.orderTask.update({ where: { id }, data: { status, approvedById: status === 'APPROVED' ? reviewerId : null } });
+  async requestDone(id: number, notes?: string) {
+    const task = await this.prisma.orderTask.findUnique({ where: { id } });
+    if (!task) throw new NotFoundException('Task not found');
+    return this.prisma.orderTask.update({ where: { id }, data: { notes: notes ?? task.notes, requestedDoneAt: new Date(), status: TaskStatus.AWAITING_VALIDATION as any } });
   }
 
-  remove(id: number) { return this.prisma.orderTask.delete({ where: { id } }); }
+  async validateDone(id: number, validatorUserId: string, notes?: string) {
+    const task = await this.prisma.orderTask.findUnique({ where: { id } });
+    if (!task) throw new NotFoundException('Task not found');
+    return this.prisma.orderTask.update({ where: { id }, data: { validatedById: validatorUserId, validatedAt: new Date(), notes: notes ?? task.notes, status: TaskStatus.DONE as any } });
+  }
 }

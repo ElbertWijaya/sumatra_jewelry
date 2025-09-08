@@ -9,31 +9,24 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ReviewTaskDto = exports.SubmitTaskDto = exports.AssignTaskDto = exports.CreateTaskDto = exports.TaskStatusEnum = void 0;
+exports.ValidateTaskDto = exports.RequestDoneDto = exports.AssignTaskDto = exports.UpdateTaskDto = exports.CreateTaskDto = exports.TaskStatus = void 0;
 const class_validator_1 = require("class-validator");
-var TaskStatusEnum;
-(function (TaskStatusEnum) {
-    TaskStatusEnum["OPEN"] = "OPEN";
-    TaskStatusEnum["ASSIGNED"] = "ASSIGNED";
-    TaskStatusEnum["IN_PROGRESS"] = "IN_PROGRESS";
-    TaskStatusEnum["IN_REVIEW"] = "IN_REVIEW";
-    TaskStatusEnum["APPROVED"] = "APPROVED";
-    TaskStatusEnum["REJECTED"] = "REJECTED";
-    TaskStatusEnum["DONE"] = "DONE";
-})(TaskStatusEnum || (exports.TaskStatusEnum = TaskStatusEnum = {}));
+var TaskStatus;
+(function (TaskStatus) {
+    TaskStatus["OPEN"] = "OPEN";
+    TaskStatus["ASSIGNED"] = "ASSIGNED";
+    TaskStatus["IN_PROGRESS"] = "IN_PROGRESS";
+    TaskStatus["AWAITING_VALIDATION"] = "AWAITING_VALIDATION";
+    TaskStatus["DONE"] = "DONE";
+    TaskStatus["CANCELLED"] = "CANCELLED";
+})(TaskStatus || (exports.TaskStatus = TaskStatus = {}));
 class CreateTaskDto {
 }
 exports.CreateTaskDto = CreateTaskDto;
 __decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreateTaskDto.prototype, "title", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreateTaskDto.prototype, "description", void 0);
+    (0, class_validator_1.IsInt)(),
+    __metadata("design:type", Number)
+], CreateTaskDto.prototype, "orderId", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
@@ -41,9 +34,32 @@ __decorate([
 ], CreateTaskDto.prototype, "stage", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsDateString)(),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateTaskDto.prototype, "dueDate", void 0);
+], CreateTaskDto.prototype, "notes", void 0);
+class UpdateTaskDto {
+}
+exports.UpdateTaskDto = UpdateTaskDto;
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateTaskDto.prototype, "stage", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateTaskDto.prototype, "notes", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(TaskStatus),
+    __metadata("design:type", String)
+], UpdateTaskDto.prototype, "status", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", Object)
+], UpdateTaskDto.prototype, "assignedToId", void 0);
 class AssignTaskDto {
 }
 exports.AssignTaskDto = AssignTaskDto;
@@ -51,25 +67,21 @@ __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], AssignTaskDto.prototype, "userId", void 0);
-class SubmitTaskDto {
+], AssignTaskDto.prototype, "assignedToId", void 0);
+class RequestDoneDto {
 }
-exports.SubmitTaskDto = SubmitTaskDto;
+exports.RequestDoneDto = RequestDoneDto;
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], SubmitTaskDto.prototype, "note", void 0);
-class ReviewTaskDto {
+], RequestDoneDto.prototype, "notes", void 0);
+class ValidateTaskDto {
 }
-exports.ReviewTaskDto = ReviewTaskDto;
-__decorate([
-    (0, class_validator_1.IsEnum)(TaskStatusEnum),
-    __metadata("design:type", String)
-], ReviewTaskDto.prototype, "decision", void 0);
+exports.ValidateTaskDto = ValidateTaskDto;
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], ReviewTaskDto.prototype, "note", void 0);
+], ValidateTaskDto.prototype, "notes", void 0);
 //# sourceMappingURL=task.dtos.js.map

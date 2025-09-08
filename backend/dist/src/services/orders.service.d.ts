@@ -16,14 +16,14 @@ export declare class OrdersService {
     } & {
         id: number;
         createdAt: Date;
-        updatedAt: Date;
-        code: string | null;
         customerName: string;
-        customerAddress: string | null;
-        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
+        updatedAt: Date;
+        code: string | null;
+        customerAddress: string | null;
+        customerPhone: string | null;
         hargaEmasPerGram: Prisma.Decimal | null;
         hargaPerkiraan: Prisma.Decimal | null;
         hargaAkhir: Prisma.Decimal | null;
@@ -54,14 +54,14 @@ export declare class OrdersService {
     } & {
         id: number;
         createdAt: Date;
-        updatedAt: Date;
-        code: string | null;
         customerName: string;
-        customerAddress: string | null;
-        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
+        updatedAt: Date;
+        code: string | null;
+        customerAddress: string | null;
+        customerPhone: string | null;
         hargaEmasPerGram: Prisma.Decimal | null;
         hargaPerkiraan: Prisma.Decimal | null;
         hargaAkhir: Prisma.Decimal | null;
@@ -90,14 +90,14 @@ export declare class OrdersService {
     } & {
         id: number;
         createdAt: Date;
-        updatedAt: Date;
-        code: string | null;
         customerName: string;
-        customerAddress: string | null;
-        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
+        updatedAt: Date;
+        code: string | null;
+        customerAddress: string | null;
+        customerPhone: string | null;
         hargaEmasPerGram: Prisma.Decimal | null;
         hargaPerkiraan: Prisma.Decimal | null;
         hargaAkhir: Prisma.Decimal | null;
@@ -117,14 +117,14 @@ export declare class OrdersService {
     updateStatus(id: number, dto: UpdateOrderStatusDto, userId: string): Promise<{
         id: number;
         createdAt: Date;
-        updatedAt: Date;
-        code: string | null;
         customerName: string;
-        customerAddress: string | null;
-        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
+        updatedAt: Date;
+        code: string | null;
+        customerAddress: string | null;
+        customerPhone: string | null;
         hargaEmasPerGram: Prisma.Decimal | null;
         hargaPerkiraan: Prisma.Decimal | null;
         hargaAkhir: Prisma.Decimal | null;

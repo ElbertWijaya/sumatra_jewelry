@@ -1,26 +1,28 @@
-export declare enum TaskStatusEnum {
+export declare enum TaskStatus {
     OPEN = "OPEN",
     ASSIGNED = "ASSIGNED",
     IN_PROGRESS = "IN_PROGRESS",
-    IN_REVIEW = "IN_REVIEW",
-    APPROVED = "APPROVED",
-    REJECTED = "REJECTED",
-    DONE = "DONE"
+    AWAITING_VALIDATION = "AWAITING_VALIDATION",
+    DONE = "DONE",
+    CANCELLED = "CANCELLED"
 }
 export declare class CreateTaskDto {
     orderId: number;
-    title?: string;
-    description?: string;
     stage?: string;
-    dueDate?: string;
+    notes?: string;
+}
+export declare class UpdateTaskDto {
+    stage?: string;
+    notes?: string;
+    status?: TaskStatus;
+    assignedToId?: string | null;
 }
 export declare class AssignTaskDto {
-    userId: string;
+    assignedToId: string;
 }
-export declare class SubmitTaskDto {
-    note?: string;
+export declare class RequestDoneDto {
+    notes?: string;
 }
-export declare class ReviewTaskDto {
-    decision: TaskStatusEnum;
-    note?: string;
+export declare class ValidateTaskDto {
+    notes?: string;
 }

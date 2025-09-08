@@ -1,5 +1,5 @@
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateTaskDto, AssignTaskDto, SubmitTaskDto, ReviewTaskDto } from '../types/task.dtos';
+import { TaskStatus } from '../types/task.dtos';
 export declare class TasksService {
     private prisma;
     constructor(prisma: PrismaService);
@@ -7,14 +7,14 @@ export declare class TasksService {
         order: {
             id: number;
             createdAt: Date;
-            updatedAt: Date;
-            code: string | null;
             customerName: string;
-            customerAddress: string | null;
-            customerPhone: string | null;
             jenisBarang: string;
             jenisEmas: string;
             warnaEmas: string;
+            updatedAt: Date;
+            code: string | null;
+            customerAddress: string | null;
+            customerPhone: string | null;
             hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;
             hargaPerkiraan: import("@prisma/client/runtime/library").Decimal | null;
             hargaAkhir: import("@prisma/client/runtime/library").Decimal | null;
@@ -33,8 +33,19 @@ export declare class TasksService {
         };
         assignedTo: {
             id: string;
+            email: string;
             fullName: string;
             role: import(".prisma/client").$Enums.Role;
+            password: string;
+            createdAt: Date;
+        } | null;
+        validatedBy: {
+            id: string;
+            email: string;
+            fullName: string;
+            role: import(".prisma/client").$Enums.Role;
+            password: string;
+            createdAt: Date;
         } | null;
     } & {
         id: number;
@@ -42,82 +53,88 @@ export declare class TasksService {
         updatedAt: Date;
         status: import(".prisma/client").$Enums.TaskStatus;
         orderId: number;
-        title: string | null;
-        description: string | null;
         stage: string | null;
         assignedToId: string | null;
-        lastSubmissionNote: string | null;
-        approvedById: string | null;
-        dueDate: Date | null;
+        requestedDoneAt: Date | null;
+        validatedById: string | null;
+        validatedAt: Date | null;
+        notes: string | null;
     })[]>;
-    create(dto: CreateTaskDto): Promise<{
+    create(data: {
+        orderId: number;
+        stage?: string;
+        notes?: string;
+    }): Promise<{
         id: number;
         createdAt: Date;
         updatedAt: Date;
         status: import(".prisma/client").$Enums.TaskStatus;
         orderId: number;
-        title: string | null;
-        description: string | null;
         stage: string | null;
         assignedToId: string | null;
-        lastSubmissionNote: string | null;
-        approvedById: string | null;
-        dueDate: Date | null;
+        requestedDoneAt: Date | null;
+        validatedById: string | null;
+        validatedAt: Date | null;
+        notes: string | null;
     }>;
-    assign(id: number, body: AssignTaskDto): Promise<{
+    update(id: number, patch: {
+        stage?: string;
+        notes?: string;
+        status?: TaskStatus;
+        assignedToId?: string | null;
+    }): Promise<{
         id: number;
         createdAt: Date;
         updatedAt: Date;
         status: import(".prisma/client").$Enums.TaskStatus;
         orderId: number;
-        title: string | null;
-        description: string | null;
         stage: string | null;
         assignedToId: string | null;
-        lastSubmissionNote: string | null;
-        approvedById: string | null;
-        dueDate: Date | null;
+        requestedDoneAt: Date | null;
+        validatedById: string | null;
+        validatedAt: Date | null;
+        notes: string | null;
     }>;
-    submit(id: number, userId: string, body: SubmitTaskDto): Promise<{
-        id: number;
-        createdAt: Date;
-        updatedAt: Date;
-        status: import(".prisma/client").$Enums.TaskStatus;
-        orderId: number;
-        title: string | null;
-        description: string | null;
-        stage: string | null;
-        assignedToId: string | null;
-        lastSubmissionNote: string | null;
-        approvedById: string | null;
-        dueDate: Date | null;
+    remove(id: number): Promise<{
+        success: boolean;
     }>;
-    review(id: number, reviewerId: string, body: ReviewTaskDto): Promise<{
+    assign(id: number, assignedToId: string): Promise<{
         id: number;
         createdAt: Date;
         updatedAt: Date;
         status: import(".prisma/client").$Enums.TaskStatus;
         orderId: number;
-        title: string | null;
-        description: string | null;
         stage: string | null;
         assignedToId: string | null;
-        lastSubmissionNote: string | null;
-        approvedById: string | null;
-        dueDate: Date | null;
+        requestedDoneAt: Date | null;
+        validatedById: string | null;
+        validatedAt: Date | null;
+        notes: string | null;
     }>;
-    remove(id: number): import(".prisma/client").Prisma.Prisma__OrderTaskClient<{
+    requestDone(id: number, notes?: string): Promise<{
         id: number;
         createdAt: Date;
         updatedAt: Date;
         status: import(".prisma/client").$Enums.TaskStatus;
         orderId: number;
-        title: string | null;
-        description: string | null;
         stage: string | null;
         assignedToId: string | null;
-        lastSubmissionNote: string | null;
-        approvedById: string | null;
-        dueDate: Date | null;
-    }, never, import("@prisma/client/runtime/library").DefaultArgs>;
+        requestedDoneAt: Date | null;
+        validatedById: string | null;
+        validatedAt: Date | null;
+        notes: string | null;
+    }>;
+    validateDone(id: number, validatorUserId: string, notes?: string): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import(".prisma/client").$Enums.TaskStatus;
+        orderId: number;
+        stage: string | null;
+        assignedToId: string | null;
+        requestedDoneAt: Date | null;
+        validatedById: string | null;
+        validatedAt: Date | null;
+        notes: string | null;
+    }>;
 }

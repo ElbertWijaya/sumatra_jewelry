@@ -1,5 +1,6 @@
 import { TasksService } from '../services/tasks.service';
-import { AssignTaskDto, CreateTaskDto, ReviewTaskDto, SubmitTaskDto } from '../types/task.dtos';
+import { AssignTaskDto, CreateTaskDto, UpdateTaskDto, RequestDoneDto, ValidateTaskDto } from '../types/task.dtos';
+import { RequestUser } from '../types/order.dtos';
 export declare class TasksController {
     private tasks;
     constructor(tasks: TasksService);
@@ -7,14 +8,14 @@ export declare class TasksController {
         order: {
             id: number;
             createdAt: Date;
-            updatedAt: Date;
-            code: string | null;
             customerName: string;
-            customerAddress: string | null;
-            customerPhone: string | null;
             jenisBarang: string;
             jenisEmas: string;
             warnaEmas: string;
+            updatedAt: Date;
+            code: string | null;
+            customerAddress: string | null;
+            customerPhone: string | null;
             hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;
             hargaPerkiraan: import("@prisma/client/runtime/library").Decimal | null;
             hargaAkhir: import("@prisma/client/runtime/library").Decimal | null;
@@ -33,8 +34,19 @@ export declare class TasksController {
         };
         assignedTo: {
             id: string;
+            email: string;
             fullName: string;
             role: import(".prisma/client").$Enums.Role;
+            password: string;
+            createdAt: Date;
+        } | null;
+        validatedBy: {
+            id: string;
+            email: string;
+            fullName: string;
+            role: import(".prisma/client").$Enums.Role;
+            password: string;
+            createdAt: Date;
         } | null;
     } & {
         id: number;
@@ -42,13 +54,12 @@ export declare class TasksController {
         updatedAt: Date;
         status: import(".prisma/client").$Enums.TaskStatus;
         orderId: number;
-        title: string | null;
-        description: string | null;
         stage: string | null;
         assignedToId: string | null;
-        lastSubmissionNote: string | null;
-        approvedById: string | null;
-        dueDate: Date | null;
+        requestedDoneAt: Date | null;
+        validatedById: string | null;
+        validatedAt: Date | null;
+        notes: string | null;
     })[]>;
     create(dto: CreateTaskDto): Promise<{
         id: number;
@@ -56,68 +67,66 @@ export declare class TasksController {
         updatedAt: Date;
         status: import(".prisma/client").$Enums.TaskStatus;
         orderId: number;
-        title: string | null;
-        description: string | null;
         stage: string | null;
         assignedToId: string | null;
-        lastSubmissionNote: string | null;
-        approvedById: string | null;
-        dueDate: Date | null;
+        requestedDoneAt: Date | null;
+        validatedById: string | null;
+        validatedAt: Date | null;
+        notes: string | null;
     }>;
-    assign(id: number, body: AssignTaskDto): Promise<{
+    update(id: number, dto: UpdateTaskDto): Promise<{
         id: number;
         createdAt: Date;
         updatedAt: Date;
         status: import(".prisma/client").$Enums.TaskStatus;
         orderId: number;
-        title: string | null;
-        description: string | null;
         stage: string | null;
         assignedToId: string | null;
-        lastSubmissionNote: string | null;
-        approvedById: string | null;
-        dueDate: Date | null;
+        requestedDoneAt: Date | null;
+        validatedById: string | null;
+        validatedAt: Date | null;
+        notes: string | null;
     }>;
-    submit(id: number, body: SubmitTaskDto, user: any): Promise<{
+    remove(id: number): Promise<{
+        success: boolean;
+    }>;
+    assign(id: number, dto: AssignTaskDto): Promise<{
         id: number;
         createdAt: Date;
         updatedAt: Date;
         status: import(".prisma/client").$Enums.TaskStatus;
         orderId: number;
-        title: string | null;
-        description: string | null;
         stage: string | null;
         assignedToId: string | null;
-        lastSubmissionNote: string | null;
-        approvedById: string | null;
-        dueDate: Date | null;
+        requestedDoneAt: Date | null;
+        validatedById: string | null;
+        validatedAt: Date | null;
+        notes: string | null;
     }>;
-    review(id: number, body: ReviewTaskDto, user: any): Promise<{
+    requestDone(id: number, dto: RequestDoneDto): Promise<{
         id: number;
         createdAt: Date;
         updatedAt: Date;
         status: import(".prisma/client").$Enums.TaskStatus;
         orderId: number;
-        title: string | null;
-        description: string | null;
         stage: string | null;
         assignedToId: string | null;
-        lastSubmissionNote: string | null;
-        approvedById: string | null;
-        dueDate: Date | null;
+        requestedDoneAt: Date | null;
+        validatedById: string | null;
+        validatedAt: Date | null;
+        notes: string | null;
     }>;
-    remove(id: number): import(".prisma/client").Prisma.Prisma__OrderTaskClient<{
+    validate(id: number, dto: ValidateTaskDto, user: RequestUser): Promise<{
         id: number;
         createdAt: Date;
         updatedAt: Date;
         status: import(".prisma/client").$Enums.TaskStatus;
         orderId: number;
-        title: string | null;
-        description: string | null;
         stage: string | null;
         assignedToId: string | null;
-        lastSubmissionNote: string | null;
-        approvedById: string | null;
-        dueDate: Date | null;
-    }, never, import("@prisma/client/runtime/library").DefaultArgs>;
+        requestedDoneAt: Date | null;
+        validatedById: string | null;
+        validatedAt: Date | null;
+        notes: string | null;
+    }>;
 }

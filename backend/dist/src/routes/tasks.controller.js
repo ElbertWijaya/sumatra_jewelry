@@ -15,8 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TasksController = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_auth_guard_1 = require("../security/jwt-auth.guard");
-const roles_guard_1 = require("../security/roles.guard");
 const roles_decorator_1 = require("../security/roles.decorator");
+const roles_guard_1 = require("../security/roles.guard");
 const tasks_service_1 = require("../services/tasks.service");
 const task_dtos_1 = require("../types/task.dtos");
 const current_user_decorator_1 = require("../security/current-user.decorator");
@@ -26,10 +26,13 @@ let TasksController = class TasksController {
     }
     list() { return this.tasks.listActive(); }
     create(dto) { return this.tasks.create(dto); }
-    assign(id, body) { return this.tasks.assign(id, body); }
-    submit(id, body, user) { return this.tasks.submit(id, user.userId, body); }
-    review(id, body, user) { return this.tasks.review(id, user.userId, body); }
+    update(id, dto) { return this.tasks.update(id, dto); }
     remove(id) { return this.tasks.remove(id); }
+    assign(id, dto) { return this.tasks.assign(id, dto.assignedToId); }
+    requestDone(id, dto) { return this.tasks.requestDone(id, dto.notes); }
+    validate(id, dto, user) {
+        return this.tasks.validateDone(id, user.userId, dto.notes);
+    }
 };
 exports.TasksController = TasksController;
 __decorate([
@@ -48,34 +51,14 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], TasksController.prototype, "create", null);
 __decorate([
-    (0, common_1.Put)(':id/assign'),
+    (0, common_1.Patch)(':id'),
     (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, task_dtos_1.AssignTaskDto]),
+    __metadata("design:paramtypes", [Number, task_dtos_1.UpdateTaskDto]),
     __metadata("design:returntype", void 0)
-], TasksController.prototype, "assign", null);
-__decorate([
-    (0, common_1.Put)(':id/submit'),
-    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner', 'pengrajin'),
-    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
-    __param(1, (0, common_1.Body)()),
-    __param(2, (0, current_user_decorator_1.CurrentUser)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, task_dtos_1.SubmitTaskDto, Object]),
-    __metadata("design:returntype", void 0)
-], TasksController.prototype, "submit", null);
-__decorate([
-    (0, common_1.Put)(':id/review'),
-    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner'),
-    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
-    __param(1, (0, common_1.Body)()),
-    __param(2, (0, current_user_decorator_1.CurrentUser)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, task_dtos_1.ReviewTaskDto, Object]),
-    __metadata("design:returntype", void 0)
-], TasksController.prototype, "review", null);
+], TasksController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner'),
@@ -84,6 +67,34 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", void 0)
 ], TasksController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Post)(':id/assign'),
+    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, task_dtos_1.AssignTaskDto]),
+    __metadata("design:returntype", void 0)
+], TasksController.prototype, "assign", null);
+__decorate([
+    (0, common_1.Post)(':id/request-done'),
+    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner', 'pengrajin'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, task_dtos_1.RequestDoneDto]),
+    __metadata("design:returntype", void 0)
+], TasksController.prototype, "requestDone", null);
+__decorate([
+    (0, common_1.Post)(':id/validate'),
+    (0, roles_decorator_1.Roles)('admin', 'owner'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, task_dtos_1.ValidateTaskDto, Object]),
+    __metadata("design:returntype", void 0)
+], TasksController.prototype, "validate", null);
 exports.TasksController = TasksController = __decorate([
     (0, common_1.Controller)('tasks'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

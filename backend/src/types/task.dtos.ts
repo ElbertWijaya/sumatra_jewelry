@@ -1,26 +1,35 @@
-import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-export enum TaskStatusEnum {
-  OPEN='OPEN', ASSIGNED='ASSIGNED', IN_PROGRESS='IN_PROGRESS', IN_REVIEW='IN_REVIEW', APPROVED='APPROVED', REJECTED='REJECTED', DONE='DONE'
+export enum TaskStatus {
+  OPEN = 'OPEN',
+  ASSIGNED = 'ASSIGNED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  AWAITING_VALIDATION = 'AWAITING_VALIDATION',
+  DONE = 'DONE',
+  CANCELLED = 'CANCELLED',
 }
 
 export class CreateTaskDto {
-  orderId!: number;
-  @IsOptional() @IsString() title?: string;
-  @IsOptional() @IsString() description?: string;
+  @IsInt() orderId!: number;
   @IsOptional() @IsString() stage?: string;
-  @IsOptional() @IsDateString() dueDate?: string;
+  @IsOptional() @IsString() notes?: string;
+}
+
+export class UpdateTaskDto {
+  @IsOptional() @IsString() stage?: string;
+  @IsOptional() @IsString() notes?: string;
+  @IsOptional() @IsEnum(TaskStatus) status?: TaskStatus;
+  @IsOptional() @IsString() assignedToId?: string | null;
 }
 
 export class AssignTaskDto {
-  @IsString() @IsNotEmpty() userId!: string;
+  @IsString() @IsNotEmpty() assignedToId!: string;
 }
 
-export class SubmitTaskDto {
-  @IsOptional() @IsString() note?: string;
+export class RequestDoneDto {
+  @IsOptional() @IsString() notes?: string;
 }
 
-export class ReviewTaskDto {
-  @IsEnum(TaskStatusEnum) decision!: TaskStatusEnum; // APPROVED or REJECTED
-  @IsOptional() @IsString() note?: string;
+export class ValidateTaskDto {
+  @IsOptional() @IsString() notes?: string;
 }
