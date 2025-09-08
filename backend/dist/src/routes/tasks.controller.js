@@ -32,7 +32,9 @@ let TasksController = class TasksController {
     assignBulk(dto) {
         return this.tasks.assignBulk({ orderId: dto.orderId, role: dto.role, userId: dto.userId, subtasks: dto.subtasks });
     }
-    requestDone(id, dto) { return this.tasks.requestDone(id, dto.notes); }
+    requestDone(id, dto, user) {
+        return this.tasks.requestDone(id, user.userId, dto.notes);
+    }
     validate(id, dto, user) {
         return this.tasks.validateDone(id, user.userId, dto.notes);
     }
@@ -96,8 +98,9 @@ __decorate([
     (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner', 'pengrajin'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, task_dtos_1.RequestDoneDto]),
+    __metadata("design:paramtypes", [Number, task_dtos_1.RequestDoneDto, Object]),
     __metadata("design:returntype", void 0)
 ], TasksController.prototype, "requestDone", null);
 __decorate([

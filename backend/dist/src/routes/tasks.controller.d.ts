@@ -14,7 +14,7 @@ export declare class TasksController {
     assignBulk(dto: AssignBulkDto): Promise<{
         created: number;
     }>;
-    requestDone(id: number, dto: RequestDoneDto): Promise<any>;
+    requestDone(id: number, dto: RequestDoneDto, user: RequestUser): Promise<any>;
     validate(id: number, dto: ValidateTaskDto, user: RequestUser): Promise<any>;
     awaitingValidation(orderId: number): Promise<any>;
     backfill(): Promise<{

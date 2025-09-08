@@ -35,6 +35,6 @@ export declare class TasksService {
     }): Promise<{
         created: number;
     }>;
-    requestDone(id: number, notes?: string): Promise<any>;
+    requestDone(id: number, requesterUserId: string, notes?: string): Promise<any>;
     validateDone(id: number, validatorUserId: string, notes?: string): Promise<any>;
 }

@@ -112,12 +112,14 @@ let TasksService = class TasksService {
         await this.prisma.$transaction(creates);
         return { created: creates.length };
     }
-    async requestDone(id, notes) {
+    async requestDone(id, requesterUserId, notes) {
         const task = await this.prisma.orderTask.findUnique({ where: { id }, include: { order: true } });
         if (!task)
             throw new common_1.NotFoundException('Task not found');
         if (!this.isOrderActive(task.order?.status))
             throw new common_1.BadRequestException('Order sudah nonaktif (history).');
+        if (task.assignedToId && task.assignedToId !== requesterUserId)
+            throw new common_1.BadRequestException('Hanya yang ditugaskan yang bisa request selesai');
         return this.prisma.orderTask.update({ where: { id }, data: { notes: notes ?? task.notes, requestedDoneAt: new Date(), status: task_dtos_1.TaskStatus.AWAITING_VALIDATION } });
     }
     async validateDone(id, validatorUserId, notes) {

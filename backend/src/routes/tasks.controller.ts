@@ -40,7 +40,9 @@ export class TasksController {
 
   @Post(':id/request-done')
   @Roles('admin','kasir','owner','pengrajin')
-  requestDone(@Param('id', ParseIntPipe) id: number, @Body() dto: RequestDoneDto) { return this.tasks.requestDone(id, dto.notes); }
+  requestDone(@Param('id', ParseIntPipe) id: number, @Body() dto: RequestDoneDto, @CurrentUser() user: RequestUser) {
+    return this.tasks.requestDone(id, user.userId, dto.notes);
+  }
 
   @Post(':id/validate')
   @Roles('admin','owner')
