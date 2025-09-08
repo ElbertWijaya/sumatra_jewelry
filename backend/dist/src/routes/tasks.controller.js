@@ -105,7 +105,7 @@ __decorate([
 ], TasksController.prototype, "requestDone", null);
 __decorate([
     (0, common_1.Post)(':id/validate'),
-    (0, roles_decorator_1.Roles)('ADMINISTRATOR'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, current_user_decorator_1.CurrentUser)()),

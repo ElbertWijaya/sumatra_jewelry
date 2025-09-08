@@ -9,7 +9,7 @@ async function main() {
     if (!exists) {
         const hash = await argon2.hash('Admin123!');
         await prisma.appUser.create({
-            data: { email: adminEmail, fullName: 'Aceng', role: client_1.Role.admin, password: hash },
+            data: { email: adminEmail, fullName: 'Aceng', role: client_1.Role.admin, jobRole: 'ADMINISTRATOR', password: hash },
         });
         console.log('Seeded admin user: admin@tokomas.local / Admin123! (Aceng)');
     }
@@ -23,7 +23,7 @@ async function main() {
         }
     }
     const usersToSeed = [
-        { email: 'sales@tokomas.local', fullName: 'Yanti', role: client_1.Role.kasir },
+        { email: 'sales@tokomas.local', fullName: 'Yanti', role: client_1.Role.kasir, jobRole: 'SALES' },
         { email: 'designer@tokomas.local', fullName: 'Elbert Wijaya', role: client_1.Role.pengrajin, jobRole: 'DESIGNER' },
         { email: 'carver@tokomas.local', fullName: 'Acai', role: client_1.Role.pengrajin, jobRole: 'CARVER' },
         { email: 'caster@tokomas.local', fullName: 'Hanpin', role: client_1.Role.pengrajin, jobRole: 'CASTER' },

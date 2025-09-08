@@ -8,8 +8,8 @@ async function main() {
   const exists = await prisma.appUser.findUnique({ where: { email: adminEmail } });
   if (!exists) {
     const hash = await argon2.hash('Admin123!');
-    await prisma.appUser.create({
-      data: { email: adminEmail, fullName: 'Aceng', role: Role.admin, password: hash },
+    await (prisma as any).appUser.create({
+      data: { email: adminEmail, fullName: 'Aceng', role: Role.admin, jobRole: 'ADMINISTRATOR', password: hash },
     });
     console.log('Seeded admin user: admin@tokomas.local / Admin123! (Aceng)');
   } else {
@@ -22,9 +22,9 @@ async function main() {
   }
 
   // Sales (kasir) account
-  type JobRole = 'DESIGNER'|'CASTER'|'CARVER'|'DIAMOND_SETTER'|'FINISHER'|'INVENTORY';
+  type JobRole = 'ADMINISTRATOR'|'SALES'|'DESIGNER'|'CASTER'|'CARVER'|'DIAMOND_SETTER'|'FINISHER'|'INVENTORY';
   const usersToSeed: Array<{ email: string; fullName: string; role: Role; jobRole?: JobRole }> = [
-    { email: 'sales@tokomas.local', fullName: 'Yanti', role: Role.kasir },
+    { email: 'sales@tokomas.local', fullName: 'Yanti', role: Role.kasir, jobRole: 'SALES' },
     { email: 'designer@tokomas.local', fullName: 'Elbert Wijaya', role: Role.pengrajin, jobRole: 'DESIGNER' },
     { email: 'carver@tokomas.local', fullName: 'Acai', role: Role.pengrajin, jobRole: 'CARVER' },
     { email: 'caster@tokomas.local', fullName: 'Hanpin', role: Role.pengrajin, jobRole: 'CASTER' },
@@ -37,7 +37,7 @@ async function main() {
     const existU = await prisma.appUser.findUnique({ where: { email: u.email } });
     if (!existU) {
       const hash = await argon2.hash('Password123!');
-  await (prisma as any).appUser.create({ data: { email: u.email, fullName: u.fullName, role: u.role, jobRole: u.jobRole, password: hash } });
+      await (prisma as any).appUser.create({ data: { email: u.email, fullName: u.fullName, role: u.role, jobRole: u.jobRole, password: hash } });
       console.log(`Seeded user: ${u.email} / Password123!`);
     } else {
       // ensure jobRole up to date if missing
