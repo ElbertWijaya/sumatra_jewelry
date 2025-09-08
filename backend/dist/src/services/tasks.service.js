@@ -46,6 +46,16 @@ let TasksService = class TasksService {
             include: { order: true, assignedTo: true, validatedBy: true },
         });
     }
+    async listAwaitingValidationByOrder(orderId) {
+        const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+        if (!order)
+            throw new common_1.NotFoundException('Order not found');
+        return this.prisma.orderTask.findMany({
+            where: { orderId, status: task_dtos_1.TaskStatus.AWAITING_VALIDATION },
+            orderBy: { createdAt: 'desc' },
+            include: { assignedTo: true }
+        });
+    }
     async create(data) {
         const order = await this.prisma.order.findUnique({ where: { id: data.orderId } });
         if (!order)
@@ -78,6 +88,29 @@ let TasksService = class TasksService {
         if (!this.isOrderActive(task.order?.status))
             throw new common_1.BadRequestException('Order sudah nonaktif (history).');
         return this.prisma.orderTask.update({ where: { id }, data: { assignedToId, status: task_dtos_1.TaskStatus.ASSIGNED } });
+    }
+    async assignBulk(params) {
+        const order = await this.prisma.order.findUnique({ where: { id: params.orderId } });
+        if (!order)
+            throw new common_1.NotFoundException('Order not found');
+        if (!this.isOrderActive(order.status))
+            throw new common_1.BadRequestException('Order sudah nonaktif (history).');
+        const user = await this.prisma.appUser.findUnique({ where: { id: params.userId } });
+        if (!user)
+            throw new common_1.NotFoundException('User not found');
+        if (user.role !== params.role)
+            throw new common_1.BadRequestException('Role user tidak sesuai');
+        const creates = params.subtasks.map(st => this.prisma.orderTask.create({
+            data: {
+                orderId: params.orderId,
+                stage: st.stage,
+                notes: st.notes,
+                assignedToId: params.userId,
+                status: task_dtos_1.TaskStatus.ASSIGNED,
+            },
+        }));
+        await this.prisma.$transaction(creates);
+        return { created: creates.length };
     }
     async requestDone(id, notes) {
         const task = await this.prisma.orderTask.findUnique({ where: { id }, include: { order: true } });

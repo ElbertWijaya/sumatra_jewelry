@@ -86,11 +86,16 @@ export const api = {
   },
   tasks: {
     list: (token: string) => request('/tasks', { headers: { Authorization: `Bearer ${token}` } }),
+    awaitingValidation: (token: string, orderId: number) => request(`/tasks/awaiting-validation?orderId=${orderId}`, { headers: { Authorization: `Bearer ${token}` } }),
     create: (token: string, payload: { orderId: number; stage?: string; notes?: string }) => request('/tasks', { method: 'POST', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` } }),
     update: (token: string, id: number, patch: any) => request(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(patch), headers: { Authorization: `Bearer ${token}` } }),
     remove: (token: string, id: number) => request(`/tasks/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }),
     assign: (token: string, id: number, assignedToId: string) => request(`/tasks/${id}/assign`, { method: 'POST', body: JSON.stringify({ assignedToId }), headers: { Authorization: `Bearer ${token}` } }),
+    assignBulk: (token: string, payload: { orderId: number; role: string; userId: string; subtasks: { stage?: string; notes?: string }[] }) => request('/tasks/assign-bulk', { method: 'POST', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` } }),
     requestDone: (token: string, id: number, notes?: string) => request(`/tasks/${id}/request-done`, { method: 'POST', body: JSON.stringify({ notes }), headers: { Authorization: `Bearer ${token}` } }),
     validate: (token: string, id: number, notes?: string) => request(`/tasks/${id}/validate`, { method: 'POST', body: JSON.stringify({ notes }), headers: { Authorization: `Bearer ${token}` } }),
+  },
+  users: {
+    list: (token: string, role?: string) => request(`/users${role ? `?role=${encodeURIComponent(role)}` : ''}`, { headers: { Authorization: `Bearer ${token}` } }),
   }
 };

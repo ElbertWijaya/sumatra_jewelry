@@ -29,9 +29,15 @@ let TasksController = class TasksController {
     update(id, dto) { return this.tasks.update(id, dto); }
     remove(id) { return this.tasks.remove(id); }
     assign(id, dto) { return this.tasks.assign(id, dto.assignedToId); }
+    assignBulk(dto) {
+        return this.tasks.assignBulk({ orderId: dto.orderId, role: dto.role, userId: dto.userId, subtasks: dto.subtasks });
+    }
     requestDone(id, dto) { return this.tasks.requestDone(id, dto.notes); }
     validate(id, dto, user) {
         return this.tasks.validateDone(id, user.userId, dto.notes);
+    }
+    awaitingValidation(orderId) {
+        return this.tasks.listAwaitingValidationByOrder(orderId);
     }
     backfill() { return this.tasks.backfillActive(); }
 };
@@ -78,6 +84,14 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], TasksController.prototype, "assign", null);
 __decorate([
+    (0, common_1.Post)('assign-bulk'),
+    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [task_dtos_1.AssignBulkDto]),
+    __metadata("design:returntype", void 0)
+], TasksController.prototype, "assignBulk", null);
+__decorate([
     (0, common_1.Post)(':id/request-done'),
     (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner', 'pengrajin'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
@@ -96,6 +110,14 @@ __decorate([
     __metadata("design:paramtypes", [Number, task_dtos_1.ValidateTaskDto, Object]),
     __metadata("design:returntype", void 0)
 ], TasksController.prototype, "validate", null);
+__decorate([
+    (0, common_1.Get)('awaiting-validation'),
+    (0, roles_decorator_1.Roles)('admin', 'owner', 'kasir'),
+    __param(0, (0, common_1.Query)('orderId', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], TasksController.prototype, "awaitingValidation", null);
 __decorate([
     (0, common_1.Post)('backfill'),
     (0, roles_decorator_1.Roles)('admin', 'owner'),

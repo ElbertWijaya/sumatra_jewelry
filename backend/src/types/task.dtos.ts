@@ -1,4 +1,5 @@
-import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export enum TaskStatus {
   OPEN = 'OPEN',
@@ -32,4 +33,17 @@ export class RequestDoneDto {
 
 export class ValidateTaskDto {
   @IsOptional() @IsString() notes?: string;
+}
+
+export class SubTaskInputDto {
+  @IsOptional() @IsString() stage?: string;
+  @IsOptional() @IsString() notes?: string;
+}
+
+export class AssignBulkDto {
+  @IsInt() orderId!: number;
+  @IsString() @IsNotEmpty() role!: 'pengrajin' | 'kasir' | 'owner' | 'admin';
+  @IsString() @IsNotEmpty() userId!: string;
+  @IsArray() @ValidateNested({ each: true }) @Type(() => SubTaskInputDto)
+  subtasks!: SubTaskInputDto[];
 }

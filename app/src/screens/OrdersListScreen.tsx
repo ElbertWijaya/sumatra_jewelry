@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, FlatList, RefreshControl, Button, Modal } from 'react-native';
+import { View, Text, FlatList, RefreshControl, Button, Modal, TouchableOpacity } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client';
 import { CreateOrderScreen } from './CreateOrderScreen';
 import { useAuth } from '../context/AuthContext';
+import { OrderActionsModal } from './OrderActionsModal';
 
 export const OrdersListScreen: React.FC = () => {
   const { token } = useAuth();
@@ -13,6 +14,8 @@ export const OrdersListScreen: React.FC = () => {
     enabled: !!token,
   });
   const [open, setOpen] = React.useState(false);
+  const [selectedOrder, setSelectedOrder] = React.useState<any | null>(null);
+  const [actionsOpen, setActionsOpen] = React.useState(false);
   return (
     <View style={{ flex: 1, padding: 16 }}>
       <Button title='Order Baru' onPress={() => setOpen(true)} />
@@ -22,13 +25,13 @@ export const OrdersListScreen: React.FC = () => {
         keyExtractor={(item: any) => String(item.id)}
         refreshControl={<RefreshControl refreshing={isRefetching || isLoading} onRefresh={refetch} />}
         renderItem={({ item }) => (
-          <View style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' }}>
+          <TouchableOpacity onPress={() => { setSelectedOrder(item); setActionsOpen(true); }} style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' }}>
             <Text style={{ fontWeight: '600' }}>{item.code || '(pending code)'}</Text>
             <Text>{item.customerName} • {item.jenisBarang || item.jenis} • {item.status}</Text>
             { (item.stoneCount != null || item.totalBerat != null) && (
               <Text style={{ color:'#666', fontSize:12 }}>Batu: {item.stoneCount ?? 0}{item.totalBerat ? ` • Total ${Number(item.totalBerat)} gr` : ''}</Text>
             )}
-          </View>
+          </TouchableOpacity>
         )}
       />
       <Modal visible={open} animationType='slide'>
@@ -39,6 +42,13 @@ export const OrdersListScreen: React.FC = () => {
           <CreateOrderScreen onCreated={() => { setOpen(false); }} />
         </View>
       </Modal>
+
+      <OrderActionsModal
+        visible={actionsOpen}
+        order={selectedOrder}
+        onClose={() => setActionsOpen(false)}
+        onChanged={() => { refetch(); }}
+      />
     </View>
   );
 };

@@ -1,5 +1,5 @@
 import { TasksService } from '../services/tasks.service';
-import { AssignTaskDto, CreateTaskDto, UpdateTaskDto, RequestDoneDto, ValidateTaskDto } from '../types/task.dtos';
+import { AssignTaskDto, CreateTaskDto, UpdateTaskDto, RequestDoneDto, ValidateTaskDto, AssignBulkDto } from '../types/task.dtos';
 import { RequestUser } from '../types/order.dtos';
 export declare class TasksController {
     private tasks;
@@ -11,8 +11,12 @@ export declare class TasksController {
         success: boolean;
     }>;
     assign(id: number, dto: AssignTaskDto): Promise<any>;
+    assignBulk(dto: AssignBulkDto): Promise<{
+        created: number;
+    }>;
     requestDone(id: number, dto: RequestDoneDto): Promise<any>;
     validate(id: number, dto: ValidateTaskDto, user: RequestUser): Promise<any>;
+    awaitingValidation(orderId: number): Promise<any>;
     backfill(): Promise<{
         created: number;
     }>;

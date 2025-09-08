@@ -26,3 +26,13 @@ export declare class RequestDoneDto {
 export declare class ValidateTaskDto {
     notes?: string;
 }
+export declare class SubTaskInputDto {
+    stage?: string;
+    notes?: string;
+}
+export declare class AssignBulkDto {
+    orderId: number;
+    role: 'pengrajin' | 'kasir' | 'owner' | 'admin';
+    userId: string;
+    subtasks: SubTaskInputDto[];
+}

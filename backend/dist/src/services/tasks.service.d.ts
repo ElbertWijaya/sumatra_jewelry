@@ -8,6 +8,7 @@ export declare class TasksService {
         created: number;
     }>;
     listActive(): any;
+    listAwaitingValidationByOrder(orderId: number): Promise<any>;
     create(data: {
         orderId: number;
         stage?: string;
@@ -23,6 +24,17 @@ export declare class TasksService {
         success: boolean;
     }>;
     assign(id: number, assignedToId: string): Promise<any>;
+    assignBulk(params: {
+        orderId: number;
+        role: 'pengrajin' | 'kasir' | 'owner' | 'admin';
+        userId: string;
+        subtasks: {
+            stage?: string;
+            notes?: string;
+        }[];
+    }): Promise<{
+        created: number;
+    }>;
     requestDone(id: number, notes?: string): Promise<any>;
     validateDone(id: number, validatorUserId: string, notes?: string): Promise<any>;
 }

@@ -9,8 +9,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ValidateTaskDto = exports.RequestDoneDto = exports.AssignTaskDto = exports.UpdateTaskDto = exports.CreateTaskDto = exports.TaskStatus = void 0;
+exports.AssignBulkDto = exports.SubTaskInputDto = exports.ValidateTaskDto = exports.RequestDoneDto = exports.AssignTaskDto = exports.UpdateTaskDto = exports.CreateTaskDto = exports.TaskStatus = void 0;
 const class_validator_1 = require("class-validator");
+const class_transformer_1 = require("class-transformer");
 var TaskStatus;
 (function (TaskStatus) {
     TaskStatus["OPEN"] = "OPEN";
@@ -84,4 +85,40 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], ValidateTaskDto.prototype, "notes", void 0);
+class SubTaskInputDto {
+}
+exports.SubTaskInputDto = SubTaskInputDto;
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], SubTaskInputDto.prototype, "stage", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], SubTaskInputDto.prototype, "notes", void 0);
+class AssignBulkDto {
+}
+exports.AssignBulkDto = AssignBulkDto;
+__decorate([
+    (0, class_validator_1.IsInt)(),
+    __metadata("design:type", Number)
+], AssignBulkDto.prototype, "orderId", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], AssignBulkDto.prototype, "role", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], AssignBulkDto.prototype, "userId", void 0);
+__decorate([
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ValidateNested)({ each: true }),
+    (0, class_transformer_1.Type)(() => SubTaskInputDto),
+    __metadata("design:type", Array)
+], AssignBulkDto.prototype, "subtasks", void 0);
 //# sourceMappingURL=task.dtos.js.map
