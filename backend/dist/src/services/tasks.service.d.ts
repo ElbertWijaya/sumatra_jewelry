@@ -1,0 +1,123 @@
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateTaskDto, AssignTaskDto, SubmitTaskDto, ReviewTaskDto } from '../types/task.dtos';
+export declare class TasksService {
+    private prisma;
+    constructor(prisma: PrismaService);
+    listActive(): import(".prisma/client").Prisma.PrismaPromise<({
+        order: {
+            id: number;
+            createdAt: Date;
+            updatedAt: Date;
+            code: string | null;
+            customerName: string;
+            customerAddress: string | null;
+            customerPhone: string | null;
+            jenisBarang: string;
+            jenisEmas: string;
+            warnaEmas: string;
+            hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;
+            hargaPerkiraan: import("@prisma/client/runtime/library").Decimal | null;
+            hargaAkhir: import("@prisma/client/runtime/library").Decimal | null;
+            dp: import("@prisma/client/runtime/library").Decimal | null;
+            promisedReadyDate: Date | null;
+            tanggalSelesai: Date | null;
+            tanggalAmbil: Date | null;
+            catatan: string | null;
+            fotoDesainUrl: string | null;
+            referensiGambarUrls: import("@prisma/client/runtime/library").JsonValue | null;
+            stoneCount: number;
+            totalBerat: import("@prisma/client/runtime/library").Decimal | null;
+            status: import(".prisma/client").$Enums.OrderStatus;
+            createdById: string | null;
+            updatedById: string | null;
+        };
+        assignedTo: {
+            id: string;
+            fullName: string;
+            role: import(".prisma/client").$Enums.Role;
+        } | null;
+    } & {
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import(".prisma/client").$Enums.TaskStatus;
+        orderId: number;
+        title: string | null;
+        description: string | null;
+        stage: string | null;
+        assignedToId: string | null;
+        lastSubmissionNote: string | null;
+        approvedById: string | null;
+        dueDate: Date | null;
+    })[]>;
+    create(dto: CreateTaskDto): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import(".prisma/client").$Enums.TaskStatus;
+        orderId: number;
+        title: string | null;
+        description: string | null;
+        stage: string | null;
+        assignedToId: string | null;
+        lastSubmissionNote: string | null;
+        approvedById: string | null;
+        dueDate: Date | null;
+    }>;
+    assign(id: number, body: AssignTaskDto): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import(".prisma/client").$Enums.TaskStatus;
+        orderId: number;
+        title: string | null;
+        description: string | null;
+        stage: string | null;
+        assignedToId: string | null;
+        lastSubmissionNote: string | null;
+        approvedById: string | null;
+        dueDate: Date | null;
+    }>;
+    submit(id: number, userId: string, body: SubmitTaskDto): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import(".prisma/client").$Enums.TaskStatus;
+        orderId: number;
+        title: string | null;
+        description: string | null;
+        stage: string | null;
+        assignedToId: string | null;
+        lastSubmissionNote: string | null;
+        approvedById: string | null;
+        dueDate: Date | null;
+    }>;
+    review(id: number, reviewerId: string, body: ReviewTaskDto): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import(".prisma/client").$Enums.TaskStatus;
+        orderId: number;
+        title: string | null;
+        description: string | null;
+        stage: string | null;
+        assignedToId: string | null;
+        lastSubmissionNote: string | null;
+        approvedById: string | null;
+        dueDate: Date | null;
+    }>;
+    remove(id: number): import(".prisma/client").Prisma.Prisma__OrderTaskClient<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import(".prisma/client").$Enums.TaskStatus;
+        orderId: number;
+        title: string | null;
+        description: string | null;
+        stage: string | null;
+        assignedToId: string | null;
+        lastSubmissionNote: string | null;
+        approvedById: string | null;
+        dueDate: Date | null;
+    }, never, import("@prisma/client/runtime/library").DefaultArgs>;
+}

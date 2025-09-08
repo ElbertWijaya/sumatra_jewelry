@@ -31,3 +31,12 @@ export declare class StoneDto {
 export declare class UpdateOrderStatusDto {
     status: OrderStatusEnum;
 }
+export declare class AssignOrderDto {
+    userId: string;
+}
+export declare class RequestHandoverDto {
+    toUserId: string;
+}
+export declare class ValidateHandoverDto {
+    fromOrderStatus: string;
+}

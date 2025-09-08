@@ -1,0 +1,92 @@
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TasksController = void 0;
+const common_1 = require("@nestjs/common");
+const jwt_auth_guard_1 = require("../security/jwt-auth.guard");
+const roles_guard_1 = require("../security/roles.guard");
+const roles_decorator_1 = require("../security/roles.decorator");
+const tasks_service_1 = require("../services/tasks.service");
+const task_dtos_1 = require("../types/task.dtos");
+const current_user_decorator_1 = require("../security/current-user.decorator");
+let TasksController = class TasksController {
+    constructor(tasks) {
+        this.tasks = tasks;
+    }
+    list() { return this.tasks.listActive(); }
+    create(dto) { return this.tasks.create(dto); }
+    assign(id, body) { return this.tasks.assign(id, body); }
+    submit(id, body, user) { return this.tasks.submit(id, user.userId, body); }
+    review(id, body, user) { return this.tasks.review(id, user.userId, body); }
+    remove(id) { return this.tasks.remove(id); }
+};
+exports.TasksController = TasksController;
+__decorate([
+    (0, common_1.Get)(),
+    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner', 'pengrajin'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], TasksController.prototype, "list", null);
+__decorate([
+    (0, common_1.Post)(),
+    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [task_dtos_1.CreateTaskDto]),
+    __metadata("design:returntype", void 0)
+], TasksController.prototype, "create", null);
+__decorate([
+    (0, common_1.Put)(':id/assign'),
+    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, task_dtos_1.AssignTaskDto]),
+    __metadata("design:returntype", void 0)
+], TasksController.prototype, "assign", null);
+__decorate([
+    (0, common_1.Put)(':id/submit'),
+    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner', 'pengrajin'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, task_dtos_1.SubmitTaskDto, Object]),
+    __metadata("design:returntype", void 0)
+], TasksController.prototype, "submit", null);
+__decorate([
+    (0, common_1.Put)(':id/review'),
+    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, task_dtos_1.ReviewTaskDto, Object]),
+    __metadata("design:returntype", void 0)
+], TasksController.prototype, "review", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    (0, roles_decorator_1.Roles)('admin', 'kasir', 'owner'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], TasksController.prototype, "remove", null);
+exports.TasksController = TasksController = __decorate([
+    (0, common_1.Controller)('tasks'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    __metadata("design:paramtypes", [tasks_service_1.TasksService])
+], TasksController);
+//# sourceMappingURL=tasks.controller.js.map

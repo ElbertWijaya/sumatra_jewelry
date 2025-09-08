@@ -17,6 +17,9 @@ model AppUser {
   ordersCreated Order[] @relation("OrdersCreated")
   ordersUpdated Order[] @relation("OrdersUpdated")
   histories OrderHistory[]
+  // Back-relations for tasks
+  assignedTasks OrderTask[] @relation("TaskAssignedTo")
+  approvedTasks OrderTask[] @relation("TaskApprovedBy")
 }
 
 model Order {
@@ -49,6 +52,7 @@ model Order {
   updatedBy    AppUser? @relation("OrdersUpdated", fields: [updatedById], references: [id])
   histories    OrderHistory[]
   stones       OrderStone[]
+  tasks        OrderTask[]
 }
 
 model OrderStone {
@@ -89,6 +93,38 @@ enum OrderStatus {
   SIAP
   DIAMBIL
   BATAL
+}
+
+model OrderTask {
+  id           Int       @id @default(autoincrement())
+  order        Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId      Int
+  title        String?
+  description  String?
+  stage        String? // future: enum
+  status       TaskStatus @default(OPEN)
+  assignedTo   AppUser?  @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
+  assignedToId String?
+  lastSubmissionNote String?
+  approvedBy   AppUser?  @relation("TaskApprovedBy", fields: [approvedById], references: [id])
+  approvedById String?
+  dueDate      DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([orderId])
+  @@index([assignedToId])
+  @@index([status])
+}
+
+enum TaskStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  DONE
 }
 
 /// After migration, run a script to backfill the code field: TM-YYYYMM-XXXX

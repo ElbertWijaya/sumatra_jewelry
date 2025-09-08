@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateOrderStatusDto = exports.StoneDto = exports.CreateOrderDto = exports.ORDER_STATUS_VALUES = void 0;
+exports.ValidateHandoverDto = exports.RequestHandoverDto = exports.AssignOrderDto = exports.UpdateOrderStatusDto = exports.StoneDto = exports.CreateOrderDto = exports.ORDER_STATUS_VALUES = void 0;
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 exports.ORDER_STATUS_VALUES = ['DRAFT', 'DITERIMA', 'DALAM_PROSES', 'SIAP', 'DIAMBIL', 'BATAL'];
@@ -126,4 +126,28 @@ __decorate([
     (0, class_validator_1.IsIn)(exports.ORDER_STATUS_VALUES),
     __metadata("design:type", String)
 ], UpdateOrderStatusDto.prototype, "status", void 0);
+class AssignOrderDto {
+}
+exports.AssignOrderDto = AssignOrderDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], AssignOrderDto.prototype, "userId", void 0);
+class RequestHandoverDto {
+}
+exports.RequestHandoverDto = RequestHandoverDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], RequestHandoverDto.prototype, "toUserId", void 0);
+class ValidateHandoverDto {
+}
+exports.ValidateHandoverDto = ValidateHandoverDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], ValidateHandoverDto.prototype, "fromOrderStatus", void 0);
 //# sourceMappingURL=order.dtos.js.map

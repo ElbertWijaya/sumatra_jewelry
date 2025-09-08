@@ -6,22 +6,19 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AppModule = void 0;
+exports.TasksModule = void 0;
 const common_1 = require("@nestjs/common");
-const config_1 = require("@nestjs/config");
+const tasks_controller_1 = require("../routes/tasks.controller");
+const tasks_service_1 = require("../services/tasks.service");
 const prisma_module_1 = require("../prisma/prisma.module");
-const auth_module_1 = require("./auth.module");
-const orders_module_1 = require("./orders.module");
-const files_module_1 = require("./files.module");
-const tasks_module_1 = require("./tasks.module");
-let AppModule = class AppModule {
+let TasksModule = class TasksModule {
 };
-exports.AppModule = AppModule;
-exports.AppModule = AppModule = __decorate([
+exports.TasksModule = TasksModule;
+exports.TasksModule = TasksModule = __decorate([
     (0, common_1.Module)({
-        imports: [config_1.ConfigModule.forRoot({ isGlobal: true }), prisma_module_1.PrismaModule, auth_module_1.AuthModule, orders_module_1.OrdersModule, files_module_1.FilesModule, tasks_module_1.TasksModule],
-        controllers: [],
-        providers: [],
+        imports: [prisma_module_1.PrismaModule],
+        controllers: [tasks_controller_1.TasksController],
+        providers: [tasks_service_1.TasksService],
     })
-], AppModule);
-//# sourceMappingURL=app.module.js.map
+], TasksModule);
+//# sourceMappingURL=tasks.module.js.map
