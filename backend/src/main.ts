@@ -22,9 +22,13 @@ async function bootstrap() {
     const express = require('express');
     app.use(express.json({ limit: '2mb', type: ['application/json','application/*+json'] }));
     app.use(express.text({ type: 'text/plain', limit: '2mb' }));
-    // Convert text/plain JSON for orders only
+    // Convert text/plain JSON for orders and assign-bulk tasks
     app.use((req: any, _res: any, next: any) => {
-      if (req.method === 'POST' && req.url.startsWith('/api/orders') && typeof req.body === 'string') {
+      const needsParse = req.method === 'POST' && (
+        (req.url.startsWith('/api/orders')) ||
+        (req.url.startsWith('/api/tasks/assign-bulk'))
+      );
+      if (needsParse && typeof req.body === 'string') {
         const raw = req.body.trim();
         if ((raw.startsWith('{') && raw.endsWith('}')) || (raw.startsWith('[') && raw.endsWith(']'))) {
           try {
@@ -68,6 +72,24 @@ async function bootstrap() {
     }
     next();
   });
+  // Debug middleware: log assign-bulk payload before validation
+  app.use((req: any, _res: any, next: any) => {
+    if (req.method === 'POST' && req.url.startsWith('/api/tasks/assign-bulk')) {
+      try {
+        const b = req.body;
+        console.log('[ASSIGN-BULK] body keys:', b && Object.keys(b || {}));
+        console.log('[ASSIGN-BULK] typeofs:', {
+          orderId: typeof b?.orderId,
+          role: typeof b?.role,
+          userId: typeof b?.userId,
+          subtasks: Array.isArray(b?.subtasks) ? 'array' : typeof b?.subtasks,
+        });
+        // show a brief snapshot
+        try { console.log('[ASSIGN-BULK] body json (trunc 300):', JSON.stringify(b).slice(0,300)); } catch {}
+      } catch {}
+    }
+    next();
+  });
   // Ensure uploads dir exists & serve static
   const uploadsDir = join(process.cwd(), 'uploads');
   if (!existsSync(uploadsDir)) mkdirSync(uploadsDir);
@@ -75,7 +97,7 @@ async function bootstrap() {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const express = require('express');
   app.use('/uploads', express.static(uploadsDir));
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true, transformOptions: { enableImplicitConversion: true } }));
   app.enableCors({ origin: '*', credentials: true });
   const port = process.env.PORT || 3000;
   await app.listen(port, '0.0.0.0');

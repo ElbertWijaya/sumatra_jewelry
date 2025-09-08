@@ -2,24 +2,25 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 
 type Option = { label: string; value: string } | string;
-interface Props { label: string; value: string; options: Option[]; onChange(v:string): void; maxHeight?: number }
+interface Props { label: string; value: string; options: Option[]; onChange(v:string): void; maxHeight?: number; disabled?: boolean }
 
-export const InlineSelect: React.FC<Props> = ({ label, value, options, onChange, maxHeight = 220 }) => {
+export const InlineSelect: React.FC<Props> = ({ label, value, options, onChange, maxHeight = 220, disabled = false }) => {
   const [open, setOpen] = React.useState(false);
+  React.useEffect(() => { if (disabled && open) setOpen(false); }, [disabled, open]);
   const normalized = React.useMemo(() => (
     (options || []).map((opt) => typeof opt === 'string' ? { label: opt, value: opt } : opt)
   ), [options]);
   const selectedLabel = React.useMemo(() => normalized.find(o => o.value === value)?.label || '', [normalized, value]);
   return (
     <View style={styles.wrapper}>
-      <TouchableOpacity style={styles.header} onPress={()=> setOpen(o=>!o)} activeOpacity={0.7}>
+    <TouchableOpacity style={[styles.header, disabled && styles.headerDisabled]} onPress={()=> { if (!disabled) setOpen(o=>!o); }} activeOpacity={disabled ? 1 : 0.7} disabled={disabled}>
         <Text style={styles.label}>{label}</Text>
         <View style={styles.valueWrap}>
-          <Text style={styles.value}>{selectedLabel || 'Pilih'}</Text>
-          <Text style={styles.arrow}>{open ? '▲' : '▼'}</Text>
+      <Text style={[styles.value, disabled && styles.valueDisabled]}>{selectedLabel || 'Pilih'}</Text>
+      <Text style={[styles.arrow, disabled && styles.valueDisabled]}>{open ? '▲' : '▼'}</Text>
         </View>
       </TouchableOpacity>
-      {open && (
+    {open && !disabled && (
         <View style={styles.dropdown}>
           <ScrollView style={{ maxHeight }} nestedScrollEnabled>
             {normalized.map(opt => {
@@ -43,6 +44,8 @@ const styles = StyleSheet.create({
   label: { flex:1, fontSize:13, fontWeight:'600', color:'#444' },
   valueWrap: { flexDirection:'row', alignItems:'center' },
   value: { fontSize:13, color:'#222', marginRight:10, maxWidth:140, textAlign:'right' },
+  valueDisabled: { color:'#aaa' },
+  headerDisabled: { backgroundColor:'#f8f8f8', borderColor:'#eee' },
   arrow: { fontSize:12, color:'#666' },
   dropdown: { marginTop:6, borderWidth:1, borderColor:'#ddd', borderRadius:12, backgroundColor:'#fff', overflow:'hidden', shadowColor:'#000', shadowOpacity:0.05, shadowRadius:6, shadowOffset:{ width:0, height:2 }, elevation:2 },
   item: { paddingVertical:12, paddingHorizontal:16, borderBottomWidth:1, borderBottomColor:'#f0f0f0' },

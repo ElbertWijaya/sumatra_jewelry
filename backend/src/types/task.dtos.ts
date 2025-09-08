@@ -41,6 +41,7 @@ export class SubTaskInputDto {
 }
 
 export class AssignBulkDto {
+  @Type(() => Number)
   @IsInt() orderId!: number;
   @IsString() @IsNotEmpty() role!: 'DESIGNER'|'CASTER'|'CARVER'|'DIAMOND_SETTER'|'FINISHER'|'INVENTORY';
   @IsString() @IsNotEmpty() userId!: string;

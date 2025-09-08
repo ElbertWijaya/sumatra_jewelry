@@ -52,7 +52,13 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
     const cleaned = (ROLE_TEMPLATES[role] || []).filter(st => selectedStages.includes(st)).map(st => ({ stage: st }));
     if (cleaned.length === 0) { Alert.alert('Assign Tugas', 'Pilih minimal satu sub-task.'); return; }
     try {
-      await api.tasks.assignBulk(token, { orderId: order.id, role, userId: selectedUserId, subtasks: cleaned });
+      const payload = {
+        orderId: Number(order.id),
+        role: String(role),
+        userId: String(selectedUserId),
+        subtasks: Array.isArray(cleaned) ? cleaned : [],
+      };
+      await api.tasks.assignBulk(token, payload);
       Alert.alert('Assign', 'Tugas berhasil dibuat.');
       onChanged?.();
       onClose();
@@ -61,8 +67,8 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
 
   const renderAssign = () => (
     <View>
-  <InlineSelect label="Role Pekerjaan" value={role} options={(ROLE_OPTIONS as any)} onChange={(r)=> { setRole(r); setSelectedStages([]); }} />
-  <InlineSelect label="Pilih Orang" value={selectedUserId} options={users.map(u=>({ label: u.fullName, value: u.id }))} onChange={(v)=> setSelectedUserId(v)} />
+  <InlineSelect label="Role Pekerjaan" value={role} options={(ROLE_OPTIONS as any)} onChange={(r)=> { setRole(r); setSelectedStages([]); setSelectedUserId(''); }} />
+  <InlineSelect label="Pilih Orang" value={selectedUserId} options={users.filter(u => !role || u.jobRole === role).map(u=>({ label: u.fullName, value: u.id }))} onChange={(v)=> setSelectedUserId(v)} disabled={!role} />
       <Text style={styles.section}>Sub-tasks</Text>
       {(ROLE_TEMPLATES[role] || []).map((st) => {
         const active = selectedStages.includes(st);
