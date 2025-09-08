@@ -48,6 +48,13 @@ export class OrdersService {
 
       const code = `TM-${dayjs(order.createdAt).format('YYYYMM')}-${String(order.id).padStart(4, '0')}`;
       const updated = await tx.order.update({ where: { id: order.id }, data: { code, stoneCount, totalBerat: totalBerat as any } });
+
+      // Auto-create an OPEN task for this new order so it appears in Tasks
+      try {
+        await (tx as any).orderTask.create({ data: { orderId: order.id, stage: 'Awal', status: 'OPEN' } });
+      } catch (e) {
+        // ignore if any race/duplicate; tasks can be created manually later
+      }
       return updated;
     });
 

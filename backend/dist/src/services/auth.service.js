@@ -13,6 +13,7 @@ exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const argon2 = require("argon2");
+const bcrypt = require("bcrypt");
 const prisma_service_1 = require("../prisma/prisma.service");
 let AuthService = class AuthService {
     constructor(prisma, jwt) {
@@ -23,7 +24,28 @@ let AuthService = class AuthService {
         const user = await this.prisma.appUser.findUnique({ where: { email } });
         if (!user)
             throw new common_1.UnauthorizedException('Invalid credentials');
-        const match = await argon2.verify(user.password, password);
+        const hash = user.password || '';
+        let match = false;
+        try {
+            if (hash.startsWith('$2a$') || hash.startsWith('$2b$') || hash.startsWith('$2y$')) {
+                match = await bcrypt.compare(password, hash);
+            }
+            else {
+                match = await argon2.verify(hash, password);
+            }
+        }
+        catch {
+            try {
+                match = await bcrypt.compare(password, hash);
+            }
+            catch { }
+            if (!match) {
+                try {
+                    match = await argon2.verify(hash, password);
+                }
+                catch { }
+            }
+        }
         if (!match)
             throw new common_1.UnauthorizedException('Invalid credentials');
         return user;

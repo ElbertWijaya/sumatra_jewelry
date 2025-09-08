@@ -54,6 +54,11 @@ let OrdersService = class OrdersService {
             }
             const code = `TM-${dayjs(order.createdAt).format('YYYYMM')}-${String(order.id).padStart(4, '0')}`;
             const updated = await tx.order.update({ where: { id: order.id }, data: { code, stoneCount, totalBerat: totalBerat } });
+            try {
+                await tx.orderTask.create({ data: { orderId: order.id, stage: 'Awal', status: 'OPEN' } });
+            }
+            catch (e) {
+            }
             return updated;
         });
         return this.findById(created.id);

@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
+import * as bcrypt from 'bcrypt';
 
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -11,7 +12,22 @@ export class AuthService {
   async validateUser(email: string, password: string) {
     const user = await this.prisma.appUser.findUnique({ where: { email } });
     if (!user) throw new UnauthorizedException('Invalid credentials');
-    const match = await argon2.verify(user.password, password);
+    const hash = user.password || '';
+    let match = false;
+    // Detect hash type and verify accordingly; fallback attempts for safety
+    try {
+      if (hash.startsWith('$2a$') || hash.startsWith('$2b$') || hash.startsWith('$2y$')) {
+        match = await bcrypt.compare(password, hash);
+      } else {
+        match = await argon2.verify(hash, password);
+      }
+    } catch {
+      // Fallback: try the other algorithm in case detection failed
+      try { match = await bcrypt.compare(password, hash); } catch {}
+      if (!match) {
+        try { match = await argon2.verify(hash, password); } catch {}
+      }
+    }
     if (!match) throw new UnauthorizedException('Invalid credentials');
     return user;
   }

@@ -41,4 +41,8 @@ export class TasksController {
   validate(@Param('id', ParseIntPipe) id: number, @Body() dto: ValidateTaskDto, @CurrentUser() user: RequestUser) {
     return this.tasks.validateDone(id, user.userId, dto.notes);
   }
+
+  @Post('backfill')
+  @Roles('admin','owner')
+  backfill() { return this.tasks.backfillActive(); }
 }
