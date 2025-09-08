@@ -6,15 +6,14 @@ export declare class OrdersService {
     constructor(prisma: PrismaService);
     create(dto: CreateOrderDto, userId: string): Promise<{
         stones: {
-            orderId: number;
             id: number;
             createdAt: Date;
+            orderId: number;
             bentuk: string;
             jumlah: number;
             berat: Prisma.Decimal | null;
         }[];
     } & {
-        status: import(".prisma/client").$Enums.OrderStatus;
         id: number;
         createdAt: Date;
         updatedAt: Date;
@@ -37,6 +36,7 @@ export declare class OrdersService {
         referensiGambarUrls: Prisma.JsonValue | null;
         stoneCount: number;
         totalBerat: Prisma.Decimal | null;
+        status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;
         updatedById: string | null;
     }>;
@@ -44,15 +44,14 @@ export declare class OrdersService {
         status?: OrderStatusEnum;
     }): Promise<({
         stones: {
-            orderId: number;
             id: number;
             createdAt: Date;
+            orderId: number;
             bentuk: string;
             jumlah: number;
             berat: Prisma.Decimal | null;
         }[];
     } & {
-        status: import(".prisma/client").$Enums.OrderStatus;
         id: number;
         createdAt: Date;
         updatedAt: Date;
@@ -75,20 +74,20 @@ export declare class OrdersService {
         referensiGambarUrls: Prisma.JsonValue | null;
         stoneCount: number;
         totalBerat: Prisma.Decimal | null;
+        status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;
         updatedById: string | null;
     })[]>;
     findById(id: number): Promise<{
         stones: {
-            orderId: number;
             id: number;
             createdAt: Date;
+            orderId: number;
             bentuk: string;
             jumlah: number;
             berat: Prisma.Decimal | null;
         }[];
     } & {
-        status: import(".prisma/client").$Enums.OrderStatus;
         id: number;
         createdAt: Date;
         updatedAt: Date;
@@ -111,11 +110,11 @@ export declare class OrdersService {
         referensiGambarUrls: Prisma.JsonValue | null;
         stoneCount: number;
         totalBerat: Prisma.Decimal | null;
+        status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;
         updatedById: string | null;
     }>;
     updateStatus(id: number, dto: UpdateOrderStatusDto, userId: string): Promise<{
-        status: import(".prisma/client").$Enums.OrderStatus;
         id: number;
         createdAt: Date;
         updatedAt: Date;
@@ -138,6 +137,7 @@ export declare class OrdersService {
         referensiGambarUrls: Prisma.JsonValue | null;
         stoneCount: number;
         totalBerat: Prisma.Decimal | null;
+        status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;
         updatedById: string | null;
     }>;

@@ -28,7 +28,7 @@ let UsersController = class UsersController {
             where.role = role;
         if (jobRole)
             where.jobRole = jobRole;
-        return this.prisma.appUser.findMany({ where: Object.keys(where).length ? where : undefined, select: { id: true, fullName: true, email: true, role: true, jobRole: true } });
+        return this.prisma.appUser.findMany({ where: Object.keys(where).length ? where : undefined, select: { id: true, fullName: true, email: true, role: true } });
     }
 };
 exports.UsersController = UsersController;
