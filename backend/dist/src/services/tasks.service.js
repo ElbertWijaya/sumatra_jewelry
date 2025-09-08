@@ -20,6 +20,22 @@ let TasksService = class TasksService {
     isOrderActive(status) {
         return status === 'DRAFT' || status === 'DITERIMA' || status === 'DALAM_PROSES';
     }
+    async backfillActive() {
+        const activeStatuses = ['DRAFT', 'DITERIMA', 'DALAM_PROSES'];
+        const orders = await this.prisma.order.findMany({ where: { status: { in: activeStatuses } }, select: { id: true } });
+        if (!orders.length)
+            return { created: 0 };
+        const missing = [];
+        for (const o of orders) {
+            const c = await this.prisma.orderTask.count({ where: { orderId: o.id } });
+            if (c === 0)
+                missing.push(o.id);
+        }
+        if (!missing.length)
+            return { created: 0 };
+        await this.prisma.$transaction(missing.map(id => this.prisma.orderTask.create({ data: { orderId: id, stage: 'Awal', status: 'OPEN' } })));
+        return { created: missing.length };
+    }
     listActive() {
         return this.prisma.orderTask.findMany({
             where: {

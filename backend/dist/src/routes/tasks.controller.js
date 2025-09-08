@@ -33,6 +33,7 @@ let TasksController = class TasksController {
     validate(id, dto, user) {
         return this.tasks.validateDone(id, user.userId, dto.notes);
     }
+    backfill() { return this.tasks.backfillActive(); }
 };
 exports.TasksController = TasksController;
 __decorate([
@@ -95,6 +96,13 @@ __decorate([
     __metadata("design:paramtypes", [Number, task_dtos_1.ValidateTaskDto, Object]),
     __metadata("design:returntype", void 0)
 ], TasksController.prototype, "validate", null);
+__decorate([
+    (0, common_1.Post)('backfill'),
+    (0, roles_decorator_1.Roles)('admin', 'owner'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], TasksController.prototype, "backfill", null);
 exports.TasksController = TasksController = __decorate([
     (0, common_1.Controller)('tasks'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

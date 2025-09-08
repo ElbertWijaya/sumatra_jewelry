@@ -4,6 +4,9 @@ export declare class TasksService {
     private prisma;
     constructor(prisma: PrismaService);
     private isOrderActive;
+    backfillActive(): Promise<{
+        created: number;
+    }>;
     listActive(): any;
     create(data: {
         orderId: number;

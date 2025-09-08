@@ -13,4 +13,7 @@ export declare class TasksController {
     assign(id: number, dto: AssignTaskDto): Promise<any>;
     requestDone(id: number, dto: RequestDoneDto): Promise<any>;
     validate(id: number, dto: ValidateTaskDto, user: RequestUser): Promise<any>;
+    backfill(): Promise<{
+        created: number;
+    }>;
 }
