@@ -1,5 +1,5 @@
 import { OrdersService } from '../services/orders.service';
-import { CreateOrderDto, UpdateOrderStatusDto, RequestUser, OrderStatusEnum } from '../types/order.dtos';
+import { CreateOrderDto, UpdateOrderStatusDto, RequestUser, OrderStatusEnum, UpdateOrderDto } from '../types/order.dtos';
 export declare class OrdersController {
     private orders;
     constructor(orders: OrdersService);
@@ -15,14 +15,14 @@ export declare class OrdersController {
     } & {
         id: number;
         createdAt: Date;
+        updatedAt: Date;
+        code: string | null;
         customerName: string;
+        customerAddress: string | null;
+        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        updatedAt: Date;
-        code: string | null;
-        customerAddress: string | null;
-        customerPhone: string | null;
         hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;
         hargaPerkiraan: import("@prisma/client/runtime/library").Decimal | null;
         hargaAkhir: import("@prisma/client/runtime/library").Decimal | null;
@@ -51,14 +51,14 @@ export declare class OrdersController {
     } & {
         id: number;
         createdAt: Date;
+        updatedAt: Date;
+        code: string | null;
         customerName: string;
+        customerAddress: string | null;
+        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        updatedAt: Date;
-        code: string | null;
-        customerAddress: string | null;
-        customerPhone: string | null;
         hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;
         hargaPerkiraan: import("@prisma/client/runtime/library").Decimal | null;
         hargaAkhir: import("@prisma/client/runtime/library").Decimal | null;
@@ -87,14 +87,14 @@ export declare class OrdersController {
     } & {
         id: number;
         createdAt: Date;
+        updatedAt: Date;
+        code: string | null;
         customerName: string;
+        customerAddress: string | null;
+        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        updatedAt: Date;
-        code: string | null;
-        customerAddress: string | null;
-        customerPhone: string | null;
         hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;
         hargaPerkiraan: import("@prisma/client/runtime/library").Decimal | null;
         hargaAkhir: import("@prisma/client/runtime/library").Decimal | null;
@@ -115,14 +115,14 @@ export declare class OrdersController {
     updateStatus(id: number, dto: UpdateOrderStatusDto, user: RequestUser): Promise<{
         id: number;
         createdAt: Date;
+        updatedAt: Date;
+        code: string | null;
         customerName: string;
+        customerAddress: string | null;
+        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
-        updatedAt: Date;
-        code: string | null;
-        customerAddress: string | null;
-        customerPhone: string | null;
         hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;
         hargaPerkiraan: import("@prisma/client/runtime/library").Decimal | null;
         hargaAkhir: import("@prisma/client/runtime/library").Decimal | null;
@@ -138,5 +138,35 @@ export declare class OrdersController {
         status: import(".prisma/client").$Enums.OrderStatus;
         createdById: string | null;
         updatedById: string | null;
+    }>;
+    update(id: number, dto: UpdateOrderDto, user: RequestUser): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        code: string | null;
+        customerName: string;
+        customerAddress: string | null;
+        customerPhone: string | null;
+        jenisBarang: string;
+        jenisEmas: string;
+        warnaEmas: string;
+        hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;
+        hargaPerkiraan: import("@prisma/client/runtime/library").Decimal | null;
+        hargaAkhir: import("@prisma/client/runtime/library").Decimal | null;
+        dp: import("@prisma/client/runtime/library").Decimal | null;
+        promisedReadyDate: Date | null;
+        tanggalSelesai: Date | null;
+        tanggalAmbil: Date | null;
+        catatan: string | null;
+        fotoDesainUrl: string | null;
+        referensiGambarUrls: import("@prisma/client/runtime/library").JsonValue | null;
+        stoneCount: number;
+        totalBerat: import("@prisma/client/runtime/library").Decimal | null;
+        status: import(".prisma/client").$Enums.OrderStatus;
+        createdById: string | null;
+        updatedById: string | null;
+    }>;
+    remove(id: number, user: RequestUser): Promise<{
+        success: boolean;
     }>;
 }

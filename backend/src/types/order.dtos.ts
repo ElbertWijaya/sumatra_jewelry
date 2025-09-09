@@ -39,3 +39,21 @@ export class StoneDto {
 export class UpdateOrderStatusDto {
   @IsIn(ORDER_STATUS_VALUES) status!: OrderStatusEnum;
 }
+
+export class UpdateOrderDto {
+  @IsOptional() @IsString() customerName?: string;
+  @IsOptional() @IsString() customerAddress?: string;
+  @IsOptional() @IsString() customerPhone?: string;
+  @IsOptional() @IsString() jenisBarang?: string;
+  @IsOptional() @IsString() jenisEmas?: string;
+  @IsOptional() @IsString() warnaEmas?: string;
+  @IsOptional() @IsNumber() @Min(0) dp?: number;
+  @IsOptional() @IsNumber() hargaEmasPerGram?: number;
+  @IsOptional() @IsNumber() hargaPerkiraan?: number;
+  @IsOptional() @IsNumber() hargaAkhir?: number;
+  @IsOptional() @IsDateString() promisedReadyDate?: string;
+  @IsOptional() @IsDateString() tanggalSelesai?: string;
+  @IsOptional() @IsDateString() tanggalAmbil?: string;
+  @IsOptional() @IsString() catatan?: string;
+  @IsOptional() @IsArray() @IsString({ each: true }) referensiGambarUrls?: string[];
+}

@@ -1,11 +1,11 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Put, UseGuards, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Put, UseGuards, BadRequestException, Patch, Delete } from '@nestjs/common';
 
 import { CurrentUser } from '../security/current-user.decorator';
 import { JwtAuthGuard } from '../security/jwt-auth.guard';
 import { Roles } from '../security/roles.decorator';
 import { RolesGuard } from '../security/roles.guard';
 import { OrdersService } from '../services/orders.service';
-import { CreateOrderDto, UpdateOrderStatusDto, RequestUser, ORDER_STATUS_VALUES, OrderStatusEnum } from '../types/order.dtos';
+import { CreateOrderDto, UpdateOrderStatusDto, RequestUser, ORDER_STATUS_VALUES, OrderStatusEnum, UpdateOrderDto } from '../types/order.dtos';
 
 @Controller('orders')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -75,5 +75,17 @@ export class OrdersController {
   @Roles('ADMINISTRATOR','SALES')
   updateStatus(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateOrderStatusDto, @CurrentUser() user: RequestUser) {
     return this.orders.updateStatus(id, dto, user.userId);
+  }
+
+  @Patch(':id')
+  @Roles('ADMINISTRATOR','SALES')
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateOrderDto, @CurrentUser() user: RequestUser) {
+    return this.orders.update(id, dto, user.userId);
+  }
+
+  @Delete(':id')
+  @Roles('ADMINISTRATOR','SALES')
+  remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: RequestUser) {
+    return this.orders.remove(id, user.userId);
   }
 }

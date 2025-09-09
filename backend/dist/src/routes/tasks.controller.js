@@ -28,9 +28,11 @@ let TasksController = class TasksController {
     create(dto) { return this.tasks.create(dto); }
     update(id, dto) { return this.tasks.update(id, dto); }
     remove(id) { return this.tasks.remove(id); }
-    assign(id, dto) { return this.tasks.assign(id, dto.assignedToId); }
-    assignBulk(dto) {
-        return this.tasks.assignBulk({ orderId: dto.orderId, role: dto.role, userId: dto.userId, subtasks: dto.subtasks });
+    assign(id, dto, user) {
+        return this.tasks.assign(id, dto.assignedToId, user.userId);
+    }
+    assignBulk(dto, user) {
+        return this.tasks.assignBulk({ orderId: dto.orderId, role: dto.role, userId: dto.userId, subtasks: dto.subtasks, actorUserId: user.userId });
     }
     requestDone(id, dto, user) {
         return this.tasks.requestDone(id, user.userId, dto.notes);
@@ -81,16 +83,18 @@ __decorate([
     (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, task_dtos_1.AssignTaskDto]),
+    __metadata("design:paramtypes", [Number, task_dtos_1.AssignTaskDto, Object]),
     __metadata("design:returntype", void 0)
 ], TasksController.prototype, "assign", null);
 __decorate([
     (0, common_1.Post)('assign-bulk'),
     (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES'),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [task_dtos_1.AssignBulkDto]),
+    __metadata("design:paramtypes", [task_dtos_1.AssignBulkDto, Object]),
     __metadata("design:returntype", void 0)
 ], TasksController.prototype, "assignBulk", null);
 __decorate([

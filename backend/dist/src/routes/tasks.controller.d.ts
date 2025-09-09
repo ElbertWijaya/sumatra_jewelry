@@ -10,8 +10,8 @@ export declare class TasksController {
     remove(id: number): Promise<{
         success: boolean;
     }>;
-    assign(id: number, dto: AssignTaskDto): Promise<any>;
-    assignBulk(dto: AssignBulkDto): Promise<{
+    assign(id: number, dto: AssignTaskDto, user: RequestUser): Promise<any>;
+    assignBulk(dto: AssignBulkDto, user: RequestUser): Promise<{
         created: number;
     }>;
     requestDone(id: number, dto: RequestDoneDto, user: RequestUser): Promise<any>;

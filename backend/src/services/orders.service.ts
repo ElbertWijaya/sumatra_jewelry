@@ -3,7 +3,7 @@ import * as dayjs from 'dayjs';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
-import { CreateOrderDto, UpdateOrderStatusDto, OrderStatusEnum } from '../types/order.dtos';
+import { CreateOrderDto, UpdateOrderStatusDto, OrderStatusEnum, UpdateOrderDto } from '../types/order.dtos';
 
 @Injectable()
 export class OrdersService {
@@ -121,5 +121,57 @@ export class OrdersService {
       summary: r.changeSummary,
       diff: r.diff
     }));
+  }
+
+  async update(id: number, dto: UpdateOrderDto, userId: string) {
+    const order = await this.findById(id);
+    const updated = await this.prisma.order.update({
+      where: { id },
+      data: {
+        customerName: dto.customerName ?? order.customerName,
+        customerAddress: dto.customerAddress ?? order.customerAddress,
+        customerPhone: dto.customerPhone ?? order.customerPhone,
+        jenisBarang: dto.jenisBarang ?? order.jenisBarang,
+        jenisEmas: dto.jenisEmas ?? order.jenisEmas,
+        warnaEmas: dto.warnaEmas ?? order.warnaEmas,
+        dp: (dto.dp as any) ?? order.dp,
+        hargaEmasPerGram: (dto.hargaEmasPerGram as any) ?? order.hargaEmasPerGram,
+        hargaPerkiraan: (dto.hargaPerkiraan as any) ?? order.hargaPerkiraan,
+        hargaAkhir: (dto.hargaAkhir as any) ?? order.hargaAkhir,
+        promisedReadyDate: dto.promisedReadyDate ? new Date(dto.promisedReadyDate) : order.promisedReadyDate,
+        tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : order.tanggalSelesai,
+        tanggalAmbil: dto.tanggalAmbil ? new Date(dto.tanggalAmbil) : order.tanggalAmbil,
+        catatan: dto.catatan ?? order.catatan,
+        referensiGambarUrls: (dto.referensiGambarUrls as any) ?? order.referensiGambarUrls,
+        updatedById: userId,
+      },
+    });
+    await this.prisma.orderHistory.create({
+      data: {
+        orderId: id,
+        userId,
+        changeSummary: 'EDIT ORDER',
+        diff: dto as any,
+      },
+    });
+    return updated;
+  }
+
+  async remove(id: number, userId: string) {
+    // Soft delete not specified; prevent delete if not DRAFT? For now allow if not finished.
+    const order = await this.findById(id);
+    if (order.status === 'DIAMBIL' || order.status === 'BATAL') {
+      throw new BadRequestException('Tidak dapat menghapus order history/non-aktif');
+    }
+    await this.prisma.orderHistory.create({
+      data: {
+        orderId: id,
+        userId,
+        changeSummary: 'DELETE ORDER',
+        diff: { deleted: true },
+      },
+    });
+    await this.prisma.order.delete({ where: { id } });
+    return { success: true };
   }
 }

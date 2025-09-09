@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { api } from '../api/client';
+import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
+import { api, API_URL } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { OrderActionsModal } from './OrderActionsModal';
 
@@ -15,9 +15,17 @@ type Task = {
 	assignedTo?: { id: string; fullName: string } | null;
 };
 
+type OrderCard = {
+	orderId: number;
+	order?: any;
+	status: Task['status'];
+	counts: { open: number; assigned: number; inProgress: number; awaitingValidation: number };
+	assignees: string[]; // unique assignee names
+};
+
 export default function TasksScreen() {
 	const { token, user } = useAuth();
-	const [data, setData] = useState<Task[]>([]);
+	const [data, setData] = useState<OrderCard[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [note, setNote] = useState('');
 	const [actionsOpen, setActionsOpen] = useState(false);
@@ -28,49 +36,76 @@ export default function TasksScreen() {
 	const load = useCallback(async () => {
 		if (!token) return; setLoading(true);
 		try {
-			const res = await api.tasks.list(token);
-			setData(res);
+			const res: Task[] = await api.tasks.list(token);
+			// Group by orderId into a single card per order
+			const byOrder = new Map<number, Task[]>();
+			res.forEach(t => {
+				const arr = byOrder.get(t.orderId) || [];
+				arr.push(t);
+				byOrder.set(t.orderId, arr);
+			});
+			const cards: OrderCard[] = Array.from(byOrder.entries()).map(([orderId, tasks]) => {
+				const counts = {
+					open: tasks.filter(x=>x.status==='OPEN').length,
+					assigned: tasks.filter(x=>x.status==='ASSIGNED').length,
+					inProgress: tasks.filter(x=>x.status==='IN_PROGRESS').length,
+					awaitingValidation: tasks.filter(x=>x.status==='AWAITING_VALIDATION').length,
+				};
+				// derive aggregated status: show highest priority
+				let status: Task['status'] = 'OPEN';
+				if (counts.awaitingValidation > 0) status = 'AWAITING_VALIDATION';
+				else if (counts.inProgress > 0) status = 'IN_PROGRESS';
+				else if (counts.assigned > 0) status = 'ASSIGNED';
+				else status = 'OPEN';
+				const assignees = Array.from(new Set(
+					tasks
+						.filter(t => !!t.assignedTo?.fullName)
+						.map(t => String(t.assignedTo!.fullName))
+				));
+				return { orderId, order: tasks[0]?.order, status, counts, assignees };
+			});
+			setData(cards);
 		} catch (e: any) { Alert.alert('Gagal memuat tasks', e.message || String(e)); }
 		finally { setLoading(false); }
 	}, [token]);
 
 	useEffect(() => { load(); }, [load]);
 
-	const confirmDelete = (id: number) => {
-		Alert.alert('Hapus Task', 'Yakin hapus task ini?', [
-			{ text: 'Batal', style: 'cancel' },
-			{ text: 'Hapus', style: 'destructive', onPress: async () => { try { if (!token) return; await api.tasks.remove(token, id); await load(); } catch (e:any) { Alert.alert('Gagal hapus', e.message); } } }
-		]);
-	};
+	// Per-order view: actions dilakukan dari modal, jadi hapus aksi langsung di kartu
 
-	const requestDone = async (id: number) => {
-		if (!token) return;
-		try { await api.tasks.requestDone(token, id, note.trim() || undefined); setNote(''); await load(); } catch (e:any) { Alert.alert('Gagal request selesai', e.message); }
-	};
+	const renderItem = ({ item }: { item: OrderCard }) => {
+		let assignedSummary: string | undefined;
+		if (!item.assignees || item.assignees.length === 0) assignedSummary = 'Belum ditugaskan';
+		else if (item.assignees.length <= 2) assignedSummary = `Ditugaskan ke ${item.assignees.join(', ')}`;
+		else assignedSummary = `Ditugaskan ke ${item.assignees.slice(0,2).join(', ')} +${item.assignees.length-2} lainnya`;
 
-	const validateDone = async (id: number) => {
-		if (!token) return;
-		try { await api.tasks.validate(token, id, note.trim() || undefined); setNote(''); await load(); } catch (e:any) { Alert.alert('Gagal validasi', e.message); }
-	};
-
-	const renderItem = ({ item }: { item: Task }) => {
+		const toDisplayUrl = (p?: string) => {
+			if (!p) return undefined as any;
+			if (/^https?:\/\//i.test(p)) return p;
+			const base = API_URL.replace(/\/api\/?$/, '').replace(/\/$/, '');
+			return p.startsWith('/uploads') ? base + p : p;
+		};
+		const thumbSrc = Array.isArray(item.order?.referensiGambarUrls) && item.order.referensiGambarUrls[0] ? toDisplayUrl(item.order.referensiGambarUrls[0]) : undefined;
 		return (
 			<TouchableOpacity style={styles.card} activeOpacity={0.8} onPress={() => { setSelectedOrder(item.order || { id: item.orderId }); setActionsOpen(true); }}>
-				<View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-					<Text style={styles.title}>Order #{item.orderId} • {item.stage || 'Tanpa Stage'}</Text>
-					<Text style={[styles.badge, statusColor(item.status)]}>{item.status}</Text>
-				</View>
-				{item.order && (
-					<Text style={styles.subtle}>{item.order.customerName} • {item.order.jenisBarang} • {item.order.jenisEmas}</Text>
-				)}
-				{item.notes ? <Text style={styles.notes}>Catatan: {item.notes}</Text> : null}
-				<View style={styles.row}>
-					{item.assignedTo ? <Text style={styles.subtle}>Ditugaskan: {item.assignedTo.fullName}</Text> : <Text style={styles.subtle}>Belum ditugaskan</Text>}
-				</View>
-				<View style={styles.actions}>
-					<TouchableOpacity style={styles.btn} onPress={() => requestDone(item.id)}><Text style={styles.btnText}>Request Selesai</Text></TouchableOpacity>
-					{canValidate && <TouchableOpacity style={styles.btnPrimary} onPress={() => validateDone(item.id)}><Text style={styles.btnTextPrimary}>Validasi</Text></TouchableOpacity>}
-					<TouchableOpacity style={styles.btnDanger} onPress={() => confirmDelete(item.id)}><Text style={styles.btnTextDanger}>Hapus</Text></TouchableOpacity>
+				<View style={{ flexDirection: 'row' }}>
+					{thumbSrc ? (
+						<Image source={{ uri: thumbSrc }} style={styles.thumb} resizeMode="cover" />
+					) : (
+						<View style={[styles.thumb, { backgroundColor:'#eef1f4', alignItems:'center', justifyContent:'center' }]}>
+							<Text style={{ color:'#99a' }}>No Img</Text>
+						</View>
+					)}
+					<View style={{ flex:1, marginLeft: 12 }}>
+						<View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+							<Text style={styles.title}>Order #{item.orderId}</Text>
+							<Text style={[styles.badge, statusColor(item.status)]}>{item.status}</Text>
+						</View>
+						{item.order && (
+							<Text style={styles.subtle}>{item.order.customerName} • {item.order.jenisBarang} • {item.order.jenisEmas}</Text>
+						)}
+						{assignedSummary ? <Text style={styles.subtle}>{assignedSummary}</Text> : null}
+					</View>
 				</View>
 			</TouchableOpacity>
 		);
@@ -80,7 +115,7 @@ export default function TasksScreen() {
 		<View style={{ flex: 1 }}>
 			<FlatList
 				data={data}
-				keyExtractor={(it) => String(it.id)}
+				keyExtractor={(it) => String(it.orderId)}
 				renderItem={renderItem}
 				refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
 				contentContainerStyle={{ padding: 12 }}
@@ -110,18 +145,9 @@ function statusColor(s: Task['status']) {
 
 const styles = StyleSheet.create({
 	card: { backgroundColor: 'white', borderRadius: 10, padding: 12, marginBottom: 12, borderColor: '#eee', borderWidth: 1, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 4 },
+	thumb: { width: 64, height: 64, borderRadius: 8, backgroundColor: '#eee' },
 	title: { fontSize: 16, fontWeight: '600' },
 	badge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, overflow: 'hidden' },
 	subtle: { color: '#666', marginTop: 4 },
-	notes: { color: '#333', marginTop: 4 },
-	row: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
-	actions: { flexDirection: 'row', gap: 8, marginTop: 10, flexWrap: 'wrap' },
-	btn: { paddingHorizontal: 10, paddingVertical: 8, backgroundColor: '#f1f5f9', borderRadius: 6 },
-	btnText: { color: '#0f172a' },
-	btnPrimary: { paddingHorizontal: 10, paddingVertical: 8, backgroundColor: '#1976d2', borderRadius: 6 },
-	btnTextPrimary: { color: 'white' },
-	btnDanger: { paddingHorizontal: 10, paddingVertical: 8, backgroundColor: '#ef4444', borderRadius: 6 },
-	btnTextDanger: { color: 'white' },
-	input: { borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 6 },
 });
 

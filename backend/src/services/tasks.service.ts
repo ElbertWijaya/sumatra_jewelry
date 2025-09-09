@@ -71,14 +71,30 @@ export class TasksService {
     return { success: true };
   }
 
-  async assign(id: number, assignedToId: string) {
+  async assign(id: number, assignedToId: string, actorUserId?: string) {
   const task = await (this.prisma as any).orderTask.findUnique({ where: { id }, include: { order: true } });
     if (!task) throw new NotFoundException('Task not found');
   if (!this.isOrderActive(task.order?.status)) throw new BadRequestException('Order sudah nonaktif (history).');
-  return (this.prisma as any).orderTask.update({ where: { id }, data: { assignedToId, status: TaskStatus.ASSIGNED as any } });
+  // When assigning, ensure the parent order moves into processing if still draft/received
+  const ops: any[] = [];
+  if (task.order && (task.order.status === 'DRAFT' || task.order.status === 'DITERIMA')) {
+    ops.push(this.prisma.order.update({ where: { id: task.orderId }, data: { status: 'DALAM_PROSES' as any } }));
+  ops.push((this.prisma as any).orderHistory.create({
+      data: {
+        orderId: task.orderId,
+    userId: actorUserId ?? null,
+        changeSummary: `STATUS: ${task.order.status} -> DALAM_PROSES`,
+        diff: { from: task.order.status, to: 'DALAM_PROSES' },
+      },
+    }));
+  }
+  ops.push((this.prisma as any).orderTask.update({ where: { id }, data: { assignedToId, status: TaskStatus.ASSIGNED as any } }));
+  const txResult = await this.prisma.$transaction(ops);
+  // Return the task update result (last op)
+  return txResult[txResult.length - 1];
   }
 
-  async assignBulk(params: { orderId: number; role: 'DESIGNER'|'CASTER'|'CARVER'|'DIAMOND_SETTER'|'FINISHER'|'INVENTORY'; userId: string; subtasks: { stage?: string; notes?: string }[] }) {
+  async assignBulk(params: { orderId: number; role: 'DESIGNER'|'CASTER'|'CARVER'|'DIAMOND_SETTER'|'FINISHER'|'INVENTORY'; userId: string; subtasks: { stage?: string; notes?: string }[]; actorUserId?: string }) {
     const order = await this.prisma.order.findUnique({ where: { id: params.orderId } });
     if (!order) throw new NotFoundException('Order not found');
     if (!this.isOrderActive(order.status as any)) throw new BadRequestException('Order sudah nonaktif (history).');
@@ -97,7 +113,21 @@ export class TasksService {
         status: TaskStatus.ASSIGNED as any,
       },
     }));
-    await this.prisma.$transaction(creates);
+    // Also move order into processing if appropriate
+    const updates: any[] = [];
+    if (order.status === 'DRAFT' || order.status === 'DITERIMA') {
+      updates.push(this.prisma.order.update({ where: { id: params.orderId }, data: { status: 'DALAM_PROSES' as any } }));
+    updates.push((this.prisma as any).orderHistory.create({
+        data: {
+          orderId: params.orderId,
+      userId: params.actorUserId ?? null,
+          changeSummary: `STATUS: ${order.status} -> DALAM_PROSES`,
+          diff: { from: order.status, to: 'DALAM_PROSES' },
+        },
+      }));
+    }
+    updates.push(...creates);
+    await this.prisma.$transaction(updates);
     return { created: creates.length };
   }
 

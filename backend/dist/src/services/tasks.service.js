@@ -81,13 +81,27 @@ let TasksService = class TasksService {
         await this.prisma.orderTask.delete({ where: { id } });
         return { success: true };
     }
-    async assign(id, assignedToId) {
+    async assign(id, assignedToId, actorUserId) {
         const task = await this.prisma.orderTask.findUnique({ where: { id }, include: { order: true } });
         if (!task)
             throw new common_1.NotFoundException('Task not found');
         if (!this.isOrderActive(task.order?.status))
             throw new common_1.BadRequestException('Order sudah nonaktif (history).');
-        return this.prisma.orderTask.update({ where: { id }, data: { assignedToId, status: task_dtos_1.TaskStatus.ASSIGNED } });
+        const ops = [];
+        if (task.order && (task.order.status === 'DRAFT' || task.order.status === 'DITERIMA')) {
+            ops.push(this.prisma.order.update({ where: { id: task.orderId }, data: { status: 'DALAM_PROSES' } }));
+            ops.push(this.prisma.orderHistory.create({
+                data: {
+                    orderId: task.orderId,
+                    userId: actorUserId ?? null,
+                    changeSummary: `STATUS: ${task.order.status} -> DALAM_PROSES`,
+                    diff: { from: task.order.status, to: 'DALAM_PROSES' },
+                },
+            }));
+        }
+        ops.push(this.prisma.orderTask.update({ where: { id }, data: { assignedToId, status: task_dtos_1.TaskStatus.ASSIGNED } }));
+        const txResult = await this.prisma.$transaction(ops);
+        return txResult[txResult.length - 1];
     }
     async assignBulk(params) {
         const order = await this.prisma.order.findUnique({ where: { id: params.orderId } });
@@ -108,7 +122,20 @@ let TasksService = class TasksService {
                 status: task_dtos_1.TaskStatus.ASSIGNED,
             },
         }));
-        await this.prisma.$transaction(creates);
+        const updates = [];
+        if (order.status === 'DRAFT' || order.status === 'DITERIMA') {
+            updates.push(this.prisma.order.update({ where: { id: params.orderId }, data: { status: 'DALAM_PROSES' } }));
+            updates.push(this.prisma.orderHistory.create({
+                data: {
+                    orderId: params.orderId,
+                    userId: params.actorUserId ?? null,
+                    changeSummary: `STATUS: ${order.status} -> DALAM_PROSES`,
+                    diff: { from: order.status, to: 'DALAM_PROSES' },
+                },
+            }));
+        }
+        updates.push(...creates);
+        await this.prisma.$transaction(updates);
         return { created: creates.length };
     }
     async requestDone(id, requesterUserId, notes) {

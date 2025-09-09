@@ -30,12 +30,14 @@ export class TasksController {
 
   @Post(':id/assign')
   @Roles('ADMINISTRATOR','SALES')
-  assign(@Param('id', ParseIntPipe) id: number, @Body() dto: AssignTaskDto) { return this.tasks.assign(id, dto.assignedToId); }
+  assign(@Param('id', ParseIntPipe) id: number, @Body() dto: AssignTaskDto, @CurrentUser() user: RequestUser) {
+    return this.tasks.assign(id, dto.assignedToId, user.userId);
+  }
 
   @Post('assign-bulk')
   @Roles('ADMINISTRATOR','SALES')
-  assignBulk(@Body() dto: AssignBulkDto) {
-    return this.tasks.assignBulk({ orderId: dto.orderId, role: dto.role as any, userId: dto.userId, subtasks: dto.subtasks });
+  assignBulk(@Body() dto: AssignBulkDto, @CurrentUser() user: RequestUser) {
+    return this.tasks.assignBulk({ orderId: dto.orderId, role: dto.role as any, userId: dto.userId, subtasks: dto.subtasks, actorUserId: user.userId });
   }
 
   @Post(':id/request-done')

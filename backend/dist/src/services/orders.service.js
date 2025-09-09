@@ -121,6 +121,55 @@ let OrdersService = class OrdersService {
             diff: r.diff
         }));
     }
+    async update(id, dto, userId) {
+        const order = await this.findById(id);
+        const updated = await this.prisma.order.update({
+            where: { id },
+            data: {
+                customerName: dto.customerName ?? order.customerName,
+                customerAddress: dto.customerAddress ?? order.customerAddress,
+                customerPhone: dto.customerPhone ?? order.customerPhone,
+                jenisBarang: dto.jenisBarang ?? order.jenisBarang,
+                jenisEmas: dto.jenisEmas ?? order.jenisEmas,
+                warnaEmas: dto.warnaEmas ?? order.warnaEmas,
+                dp: dto.dp ?? order.dp,
+                hargaEmasPerGram: dto.hargaEmasPerGram ?? order.hargaEmasPerGram,
+                hargaPerkiraan: dto.hargaPerkiraan ?? order.hargaPerkiraan,
+                hargaAkhir: dto.hargaAkhir ?? order.hargaAkhir,
+                promisedReadyDate: dto.promisedReadyDate ? new Date(dto.promisedReadyDate) : order.promisedReadyDate,
+                tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : order.tanggalSelesai,
+                tanggalAmbil: dto.tanggalAmbil ? new Date(dto.tanggalAmbil) : order.tanggalAmbil,
+                catatan: dto.catatan ?? order.catatan,
+                referensiGambarUrls: dto.referensiGambarUrls ?? order.referensiGambarUrls,
+                updatedById: userId,
+            },
+        });
+        await this.prisma.orderHistory.create({
+            data: {
+                orderId: id,
+                userId,
+                changeSummary: 'EDIT ORDER',
+                diff: dto,
+            },
+        });
+        return updated;
+    }
+    async remove(id, userId) {
+        const order = await this.findById(id);
+        if (order.status === 'DIAMBIL' || order.status === 'BATAL') {
+            throw new common_1.BadRequestException('Tidak dapat menghapus order history/non-aktif');
+        }
+        await this.prisma.orderHistory.create({
+            data: {
+                orderId: id,
+                userId,
+                changeSummary: 'DELETE ORDER',
+                diff: { deleted: true },
+            },
+        });
+        await this.prisma.order.delete({ where: { id } });
+        return { success: true };
+    }
 };
 exports.OrdersService = OrdersService;
 exports.OrdersService = OrdersService = __decorate([

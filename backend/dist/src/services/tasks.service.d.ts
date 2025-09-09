@@ -23,7 +23,7 @@ export declare class TasksService {
     remove(id: number): Promise<{
         success: boolean;
     }>;
-    assign(id: number, assignedToId: string): Promise<any>;
+    assign(id: number, assignedToId: string, actorUserId?: string): Promise<any>;
     assignBulk(params: {
         orderId: number;
         role: 'DESIGNER' | 'CASTER' | 'CARVER' | 'DIAMOND_SETTER' | 'FINISHER' | 'INVENTORY';
@@ -32,6 +32,7 @@ export declare class TasksService {
             stage?: string;
             notes?: string;
         }[];
+        actorUserId?: string;
     }): Promise<{
         created: number;
     }>;

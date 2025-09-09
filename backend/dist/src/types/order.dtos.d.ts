@@ -31,3 +31,20 @@ export declare class StoneDto {
 export declare class UpdateOrderStatusDto {
     status: OrderStatusEnum;
 }
+export declare class UpdateOrderDto {
+    customerName?: string;
+    customerAddress?: string;
+    customerPhone?: string;
+    jenisBarang?: string;
+    jenisEmas?: string;
+    warnaEmas?: string;
+    dp?: number;
+    hargaEmasPerGram?: number;
+    hargaPerkiraan?: number;
+    hargaAkhir?: number;
+    promisedReadyDate?: string;
+    tanggalSelesai?: string;
+    tanggalAmbil?: string;
+    catatan?: string;
+    referensiGambarUrls?: string[];
+}
