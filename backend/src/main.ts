@@ -22,11 +22,11 @@ async function bootstrap() {
     const express = require('express');
     app.use(express.json({ limit: '2mb', type: ['application/json','application/*+json'] }));
     app.use(express.text({ type: 'text/plain', limit: '2mb' }));
-    // Convert text/plain JSON for orders and assign-bulk tasks
+    // Convert text/plain JSON for orders and assign-bulk tasks (including PATCH for orders)
     app.use((req: any, _res: any, next: any) => {
-      const needsParse = req.method === 'POST' && (
-        (req.url.startsWith('/api/orders')) ||
-        (req.url.startsWith('/api/tasks/assign-bulk'))
+      const needsParse = (
+        (req.method === 'POST' && (req.url.startsWith('/api/orders') || req.url.startsWith('/api/tasks/assign-bulk'))) ||
+        (req.method === 'PATCH' && req.url.startsWith('/api/orders/'))
       );
       if (needsParse && typeof req.body === 'string') {
         const raw = req.body.trim();

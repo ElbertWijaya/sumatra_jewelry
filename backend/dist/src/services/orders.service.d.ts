@@ -143,6 +143,15 @@ export declare class OrdersService {
     }>;
     history(id: number): Promise<any>;
     update(id: number, dto: UpdateOrderDto, userId: string): Promise<{
+        stones: {
+            id: number;
+            createdAt: Date;
+            orderId: number;
+            bentuk: string;
+            jumlah: number;
+            berat: Prisma.Decimal | null;
+        }[];
+    } & {
         id: number;
         createdAt: Date;
         updatedAt: Date;

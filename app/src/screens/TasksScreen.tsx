@@ -86,8 +86,8 @@ export default function TasksScreen() {
 			return p.startsWith('/uploads') ? base + p : p;
 		};
 		const thumbSrc = Array.isArray(item.order?.referensiGambarUrls) && item.order.referensiGambarUrls[0] ? toDisplayUrl(item.order.referensiGambarUrls[0]) : undefined;
-		return (
-			<TouchableOpacity style={styles.card} activeOpacity={0.8} onPress={() => { setSelectedOrder(item.order || { id: item.orderId }); setActionsOpen(true); }}>
+			return (
+				<TouchableOpacity style={styles.card} activeOpacity={0.8} onPress={() => { setSelectedOrder(item.order || { id: item.orderId }); setActionsOpen(true); }}>
 				<View style={{ flexDirection: 'row' }}>
 					{thumbSrc ? (
 						<Image source={{ uri: thumbSrc }} style={styles.thumb} resizeMode="cover" />
@@ -99,7 +99,9 @@ export default function TasksScreen() {
 					<View style={{ flex:1, marginLeft: 12 }}>
 						<View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
 							<Text style={styles.title}>Order #{item.orderId}</Text>
-							<Text style={[styles.badge, statusColor(item.status)]}>{item.status}</Text>
+							<View style={{ flexDirection:'row', alignItems:'center', gap:8 }}>
+								<Text style={[styles.badge, statusColor(item.status)]}>{item.status}</Text>
+							</View>
 						</View>
 						{item.order && (
 							<Text style={styles.subtle}>{item.order.customerName} • {item.order.jenisBarang} • {item.order.jenisEmas}</Text>
@@ -107,6 +109,7 @@ export default function TasksScreen() {
 						{assignedSummary ? <Text style={styles.subtle}>{assignedSummary}</Text> : null}
 					</View>
 				</View>
+				{/* No inline kebab; actions moved into modal */}
 			</TouchableOpacity>
 		);
 	};

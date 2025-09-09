@@ -3,6 +3,7 @@ import { View, Text, Modal, TouchableOpacity, StyleSheet, TextInput, FlatList, A
 import { useAuth } from '../context/AuthContext';
 import { api, API_URL } from '../api/client';
 import { InlineSelect } from '../components/InlineSelect';
+import { JENIS_BARANG_OPTIONS, JENIS_EMAS_OPTIONS, WARNA_EMAS_OPTIONS, BENTUK_BATU_OPTIONS } from '../constants/orderOptions';
 import ImagePreviewModal from '@/src/components/ImagePreviewModal';
 
 type Props = { visible: boolean; order: any | null; onClose(): void; onChanged?(): void };
@@ -27,8 +28,25 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
   const [validations, setValidations] = useState<any[]>([]);
   const [orderDetail, setOrderDetail] = useState<any | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [edit, setEdit] = useState(false);
+  const [fCustomerName, setFCustomerName] = useState('');
+  const [fCustomerPhone, setFCustomerPhone] = useState('');
+  const [fCustomerAddress, setFCustomerAddress] = useState('');
+  const [fCatatan, setFCatatan] = useState('');
+  const [fReady, setFReady] = useState('');
+  const [fSelesai, setFSelesai] = useState('');
+  const [fAmbil, setFAmbil] = useState('');
+  // extra editable fields
+  const [fJenisBarang, setFJenisBarang] = useState('');
+  const [fJenisEmas, setFJenisEmas] = useState('');
+  const [fWarnaEmas, setFWarnaEmas] = useState('');
+  const [fHargaPerGram, setFHargaPerGram] = useState('');
+  const [fDp, setFDp] = useState('');
+  const [fHargaPerkiraan, setFHargaPerkiraan] = useState('');
+  const [fHargaAkhir, setFHargaAkhir] = useState('');
+  const [fStones, setFStones] = useState<{ bentuk: string; jumlah: string; berat: string }[]>([]);
 
-  useEffect(() => { if (!visible) return; setTab('assign'); setRole(''); setSelectedStages([]); setSelectedUserId(''); setUsers([]); setValidations([]); setOrderDetail(null); }, [visible]);
+  useEffect(() => { if (!visible) return; setTab('assign'); setRole(''); setSelectedStages([]); setSelectedUserId(''); setUsers([]); setValidations([]); setOrderDetail(null); setEdit(false); }, [visible]);
 
   useEffect(() => { // load users filtered by selected job role
     (async () => {
@@ -50,6 +68,58 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
       try { const det = await api.orders.get(token, order.id); setOrderDetail(det); } catch {}
     })();
   }, [token, visible, order?.id]);
+
+  useEffect(() => { // hydrate edit fields
+    const det = orderDetail || order;
+    if (!det) return;
+    setFCustomerName(det.customerName || '');
+    setFCustomerPhone(det.customerPhone || '');
+    setFCustomerAddress(det.customerAddress || '');
+    setFCatatan(det.catatan || '');
+    setFReady(det.promisedReadyDate ? String(det.promisedReadyDate).slice(0,10) : '');
+    setFSelesai(det.tanggalSelesai ? String(det.tanggalSelesai).slice(0,10) : '');
+    setFAmbil(det.tanggalAmbil ? String(det.tanggalAmbil).slice(0,10) : '');
+  setFJenisBarang(det.jenisBarang || '');
+  setFJenisEmas(det.jenisEmas || '');
+  setFWarnaEmas(det.warnaEmas || '');
+  setFHargaPerGram(det.hargaEmasPerGram != null ? String(det.hargaEmasPerGram) : '');
+  setFDp(det.dp != null ? String(det.dp) : '');
+  setFHargaPerkiraan(det.hargaPerkiraan != null ? String(det.hargaPerkiraan) : '');
+  setFHargaAkhir(det.hargaAkhir != null ? String(det.hargaAkhir) : '');
+  const stones = Array.isArray(det.stones) ? det.stones : [];
+  setFStones(stones.map((s: any) => ({ bentuk: s.bentuk || '', jumlah: s.jumlah != null ? String(s.jumlah) : '', berat: s.berat != null ? String(s.berat) : '' })));
+  }, [orderDetail]);
+
+  const saveEdit = async () => {
+    if (!token || !order?.id) return;
+    const patch: any = {
+      customerName: fCustomerName || undefined,
+      customerPhone: fCustomerPhone || undefined,
+      customerAddress: fCustomerAddress || undefined,
+      catatan: fCatatan || undefined,
+  jenisBarang: fJenisBarang || undefined,
+  jenisEmas: fJenisEmas || undefined,
+  warnaEmas: fWarnaEmas || undefined,
+  hargaEmasPerGram: fHargaPerGram ? Number(fHargaPerGram) : undefined,
+  dp: fDp ? Number(fDp) : undefined,
+  hargaPerkiraan: fHargaPerkiraan ? Number(fHargaPerkiraan) : undefined,
+  hargaAkhir: fHargaAkhir ? Number(fHargaAkhir) : undefined,
+      promisedReadyDate: fReady || undefined,
+      tanggalSelesai: fSelesai || undefined,
+      tanggalAmbil: fAmbil || undefined,
+  stones: fStones.length ? fStones.filter(s => s.bentuk).map(s => ({ bentuk: s.bentuk, jumlah: Number(s.jumlah || '0'), berat: s.berat ? Number(s.berat) : undefined })) : undefined,
+    };
+    try {
+      await api.orders.update(token, order.id, patch);
+      const det = await api.orders.get(token, order.id);
+      setOrderDetail(det);
+      setEdit(false);
+      onChanged?.();
+      Alert.alert('Edit', 'Perubahan disimpan');
+    } catch (e:any) {
+      Alert.alert('Gagal simpan', e.message || String(e));
+    }
+  };
 
   const toggleStage = (stage: string) => setSelectedStages(s => s.includes(stage) ? s.filter(x=>x!==stage) : [...s, stage]);
 
@@ -98,31 +168,85 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
                   <Text style={[styles.badgeBase, badgeStyle]}>{String(det.status)}</Text>
                 ) : null}
               </View>
-              <Text style={styles.detailSubtitle}>{det.customerName || '-'}</Text>
+              <View style={{ flexDirection:'row', justifyContent:'space-between', alignItems:'center' }}>
+                {!edit ? (
+                  <Text style={styles.detailSubtitle}>{det.customerName || '-'}</Text>
+                ) : (
+                  <TextInput placeholder='Nama Customer' style={styles.input} value={fCustomerName} onChangeText={setFCustomerName} />
+                )}
+                {!edit ? (
+                  <TouchableOpacity onPress={()=> setEdit(true)} style={styles.editBtn}><Text style={styles.editBtnText}>Edit</Text></TouchableOpacity>
+                ) : null}
+              </View>
               {/* Info rows */}
               <View style={styles.rowGrid}>
-                <View style={styles.infoRow}><Text style={styles.infoLabel}>Telepon</Text><Text style={styles.infoValue}>{det.customerPhone || '-'}</Text></View>
-                <View style={styles.infoRow}><Text style={styles.infoLabel}>Jenis</Text><Text style={styles.infoValue}>{det.jenisBarang || '-'}</Text></View>
-                <View style={styles.infoRow}><Text style={styles.infoLabel}>Alamat</Text><Text style={styles.infoValue}>{det.customerAddress || '-'}</Text></View>
-                <View style={styles.infoRow}><Text style={styles.infoLabel}>Emas</Text><Text style={styles.infoValue}>{det.jenisEmas || '-'}</Text></View>
-                <View style={styles.infoRow}><Text style={styles.infoLabel}>Warna</Text><Text style={styles.infoValue}>{det.warnaEmas || '-'}</Text></View>
+                <View style={styles.infoRow}>
+                  {!edit ? (
+                    <>
+                      <Text style={styles.infoLabel}>Telepon</Text>
+                      <Text style={styles.infoValue}>{det.customerPhone || '-'}</Text>
+                    </>
+                  ) : (
+                    <TextInput placeholder='Telepon' style={styles.input} value={fCustomerPhone} onChangeText={setFCustomerPhone} keyboardType='phone-pad' />
+                  )}
+                </View>
+                <View style={styles.infoRow}>
+                  {!edit ? (
+                    <>
+                      <Text style={styles.infoLabel}>Jenis</Text>
+                      <Text style={styles.infoValue}>{det.jenisBarang || '-'}</Text>
+                    </>
+                  ) : (
+                    <InlineSelect label='Jenis Barang' value={fJenisBarang} options={JENIS_BARANG_OPTIONS} onChange={setFJenisBarang} />
+                  )}
+                </View>
+                <View style={styles.infoRow}>
+                  {!edit ? (
+                    <>
+                      <Text style={styles.infoLabel}>Alamat</Text>
+                      <Text style={styles.infoValue}>{det.customerAddress || '-'}</Text>
+                    </>
+                  ) : (
+                    <TextInput placeholder='Alamat' style={styles.input} value={fCustomerAddress} onChangeText={setFCustomerAddress} />
+                  )}
+                </View>
+                <View style={styles.infoRow}>
+                  {!edit ? (
+                    <>
+                      <Text style={styles.infoLabel}>Emas</Text>
+                      <Text style={styles.infoValue}>{det.jenisEmas || '-'}</Text>
+                    </>
+                  ) : (
+                    <InlineSelect label='Jenis Emas' value={fJenisEmas} options={JENIS_EMAS_OPTIONS} onChange={setFJenisEmas} />
+                  )}
+                </View>
+                <View style={styles.infoRow}>
+                  {!edit ? (
+                    <>
+                      <Text style={styles.infoLabel}>Warna</Text>
+                      <Text style={styles.infoValue}>{det.warnaEmas || '-'}</Text>
+                    </>
+                  ) : (
+                    <InlineSelect label='Warna Emas' value={fWarnaEmas} options={WARNA_EMAS_OPTIONS} onChange={setFWarnaEmas} />
+                  )}
+                </View>
               </View>
               <View style={styles.sectionDivider} />
               <Text style={styles.sectionTitle}>Pembayaran</Text>
               <View style={styles.rowGrid}>
-                <View style={styles.infoRow}><Text style={styles.infoLabel}>Harga/gr</Text><Text style={styles.infoValue}>{fmt(det.hargaEmasPerGram)}</Text></View>
-                <View style={styles.infoRow}><Text style={styles.infoLabel}>DP</Text><Text style={styles.infoValue}>{fmt(det.dp)}</Text></View>
-                <View style={styles.infoRow}><Text style={styles.infoLabel}>Perkiraan</Text><Text style={styles.infoValue}>{fmt(det.hargaPerkiraan)}</Text></View>
-                <View style={styles.infoRow}><Text style={styles.infoLabel}>Harga Akhir</Text><Text style={styles.infoValue}>{fmt(det.hargaAkhir)}</Text></View>
+                <View style={styles.infoRow}><Text style={styles.infoLabel}>Harga/gr</Text>{!edit ? <Text style={styles.infoValue}>{fmt(det.hargaEmasPerGram)}</Text> : <TextInput placeholder='Harga/gr' style={styles.input} value={fHargaPerGram} onChangeText={setFHargaPerGram} keyboardType='numeric' />}</View>
+                <View style={styles.infoRow}><Text style={styles.infoLabel}>DP</Text>{!edit ? <Text style={styles.infoValue}>{fmt(det.dp)}</Text> : <TextInput placeholder='DP' style={styles.input} value={fDp} onChangeText={setFDp} keyboardType='numeric' />}</View>
+                <View style={styles.infoRow}><Text style={styles.infoLabel}>Perkiraan</Text>{!edit ? <Text style={styles.infoValue}>{fmt(det.hargaPerkiraan)}</Text> : <TextInput placeholder='Perkiraan' style={styles.input} value={fHargaPerkiraan} onChangeText={setFHargaPerkiraan} keyboardType='numeric' />}</View>
+                <View style={styles.infoRow}><Text style={styles.infoLabel}>Harga Akhir</Text>{!edit ? <Text style={styles.infoValue}>{fmt(det.hargaAkhir)}</Text> : <TextInput placeholder='Harga Akhir' style={styles.input} value={fHargaAkhir} onChangeText={setFHargaAkhir} keyboardType='numeric' />}</View>
               </View>
               <View style={styles.sectionDivider} />
               <Text style={styles.sectionTitle}>Tanggal</Text>
               <View style={styles.rowGrid}>
-                <View style={styles.infoRow}><Text style={styles.infoLabel}>Perkiraan Siap</Text><Text style={styles.infoValue}>{formatDateOnly(det.promisedReadyDate)}</Text></View>
-                <View style={styles.infoRow}><Text style={styles.infoLabel}>Selesai</Text><Text style={styles.infoValue}>{formatDateOnly(det.tanggalSelesai)}</Text></View>
-                <View style={styles.infoRow}><Text style={styles.infoLabel}>Ambil</Text><Text style={styles.infoValue}>{formatDateOnly(det.tanggalAmbil)}</Text></View>
+                <View style={styles.infoRow}><Text style={styles.infoLabel}>Perkiraan Siap</Text>{!edit ? <Text style={styles.infoValue}>{formatDateOnly(det.promisedReadyDate)}</Text> : <TextInput placeholder='YYYY-MM-DD' style={styles.input} value={fReady} onChangeText={setFReady} />}</View>
+                <View style={styles.infoRow}><Text style={styles.infoLabel}>Selesai</Text>{!edit ? <Text style={styles.infoValue}>{formatDateOnly(det.tanggalSelesai)}</Text> : <TextInput placeholder='YYYY-MM-DD' style={styles.input} value={fSelesai} onChangeText={setFSelesai} />}</View>
+                <View style={styles.infoRow}><Text style={styles.infoLabel}>Ambil</Text>{!edit ? <Text style={styles.infoValue}>{formatDateOnly(det.tanggalAmbil)}</Text> : <TextInput placeholder='YYYY-MM-DD' style={styles.input} value={fAmbil} onChangeText={setFAmbil} />}</View>
               </View>
-              {det.stones?.length ? (
+              {(!edit && det.stones?.length) ? (
                 <>
                   <View style={styles.sectionDivider} />
                   <Text style={styles.sectionTitle}>Batu</Text>
@@ -131,6 +255,23 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
                       <View key={idx} style={styles.pill}><Text style={styles.pillText}>{`${s.bentuk || '-'}${s.jumlah ? ` x${s.jumlah}` : ''}${s.berat ? ` • ${s.berat} gr` : ''}`}</Text></View>
                     ))}
                   </View>
+                </>
+              ) : null}
+              {edit ? (
+                <>
+                  <View style={styles.sectionDivider} />
+                  <Text style={styles.sectionTitle}>Batu</Text>
+                  {fStones.map((s, idx) => (
+                    <View key={idx} style={{ marginBottom:10 }}>
+                      <InlineSelect label='Bentuk' value={s.bentuk} options={BENTUK_BATU_OPTIONS} onChange={(v)=> setFStones(arr => arr.map((x,i)=> i===idx?{...x,bentuk:v}:x))} />
+                      <View style={{ flexDirection:'row', alignItems:'center', gap:8 }}>
+                        <TextInput placeholder='Jumlah' style={[styles.input, { width:90 }]} value={s.jumlah} onChangeText={(v)=> setFStones(arr => arr.map((x,i)=> i===idx?{...x,jumlah:v}:x))} keyboardType='numeric' />
+                        <TextInput placeholder='Berat (gr)' style={[styles.input, { width:110 }]} value={s.berat} onChangeText={(v)=> setFStones(arr => arr.map((x,i)=> i===idx?{...x,berat:v}:x))} keyboardType='numeric' />
+                        <TouchableOpacity onPress={()=> setFStones(arr => arr.filter((_,i)=> i!==idx))} style={{ padding:8 }}><Text style={{ color:'#c00' }}>Hapus</Text></TouchableOpacity>
+                      </View>
+                    </View>
+                  ))}
+                  <TouchableOpacity onPress={()=> setFStones(arr => [...arr, { bentuk:'', jumlah:'', berat:'' }])}><Text style={{ color:'#1976d2' }}>+ Tambah Batu</Text></TouchableOpacity>
                 </>
               ) : null}
               {(() => { const imgs = (det?.referensiGambarUrls) as string[] | undefined; return Array.isArray(imgs) && imgs.length; })() ? (
@@ -146,11 +287,22 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
                   </ScrollView>
                 </>
               ) : null}
-              {det.catatan ? (
+              {(!edit && det.catatan) ? (
                 <>
                   <View style={styles.sectionDivider} />
                   <Text style={styles.sectionTitle}>Catatan</Text>
                   <Text style={styles.noteText}>{det.catatan}</Text>
+                </>
+              ) : null}
+              {edit ? (
+                <>
+                  <View style={styles.sectionDivider} />
+                  <Text style={styles.sectionTitle}>Catatan</Text>
+                  <TextInput placeholder='Catatan' style={[styles.input, { minHeight: 70 }]} value={fCatatan} onChangeText={setFCatatan} multiline />
+                  <View style={{ height: 10 }} />
+                  <TouchableOpacity onPress={saveEdit} style={styles.primary}><Text style={styles.primaryText}>Simpan Perubahan</Text></TouchableOpacity>
+                  <View style={{ height: 6 }} />
+                  <TouchableOpacity onPress={()=> setEdit(false)}><Text style={{ color:'#1976d2', textAlign:'center' }}>Batal</Text></TouchableOpacity>
                 </>
               ) : null}
             </>
@@ -205,7 +357,17 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose}><Text style={{ color:'#1976d2' }}>Tutup</Text></TouchableOpacity>
           <Text style={styles.title}>Order #{order?.code || order?.id}</Text>
-          <View style={{ width: 48 }} />
+          <TouchableOpacity onPress={() => {
+            if (!token || !order?.id) return;
+            Alert.alert('Hapus Order', 'Yakin hapus order ini?', [
+              { text:'Batal', style:'cancel' },
+              { text:'Hapus', style:'destructive', onPress: async () => {
+                try { await api.orders.remove(token, order.id); onChanged?.(); onClose(); } catch(e:any){ Alert.alert('Gagal hapus', e.message || String(e)); }
+              } }
+            ]);
+          }}>
+            <Text style={{ color:'#c62828', fontWeight:'700' }}>Hapus</Text>
+          </TouchableOpacity>
         </View>
         <View style={styles.tabs}>
           <TouchableOpacity onPress={()=> setTab('assign')} style={[styles.tab, tab==='assign' && styles.tabActive]}><Text style={tab==='assign'?styles.tabActiveText:styles.tabText}>Detail & Assign</Text></TouchableOpacity>
@@ -261,6 +423,8 @@ const styles = StyleSheet.create({
   badgeInfo: { backgroundColor:'#e3f2fd', color:'#0b5394' },
   badgeSuccess: { backgroundColor:'#e8f5e9', color:'#2e7d32' },
   badgeDanger: { backgroundColor:'#ffebee', color:'#c62828' },
+  editBtn: { paddingVertical:6, paddingHorizontal:10, backgroundColor:'#1976d2', borderRadius:6, marginLeft:8 },
+  editBtnText: { color:'#fff', fontWeight:'700' },
 });
 
 function toDisplayUrl(p?: string) {

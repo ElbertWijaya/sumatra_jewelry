@@ -124,10 +124,11 @@ export class OrdersService {
   }
 
   async update(id: number, dto: UpdateOrderDto, userId: string) {
-    const order = await this.findById(id);
-    const updated = await this.prisma.order.update({
-      where: { id },
-      data: {
+    const updatedCore = await this.prisma.$transaction(async (tx) => {
+      const order = await tx.order.findUnique({ where: { id } });
+      if (!order) throw new NotFoundException('Order tidak ditemukan');
+
+      const data: Prisma.OrderUpdateInput = {
         customerName: dto.customerName ?? order.customerName,
         customerAddress: dto.customerAddress ?? order.customerAddress,
         customerPhone: dto.customerPhone ?? order.customerPhone,
@@ -142,19 +143,36 @@ export class OrdersService {
         tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : order.tanggalSelesai,
         tanggalAmbil: dto.tanggalAmbil ? new Date(dto.tanggalAmbil) : order.tanggalAmbil,
         catatan: dto.catatan ?? order.catatan,
-        referensiGambarUrls: (dto.referensiGambarUrls as any) ?? order.referensiGambarUrls,
-        updatedById: userId,
-      },
+  referensiGambarUrls: (dto.referensiGambarUrls as any) ?? order.referensiGambarUrls,
+  updatedBy: userId ? { connect: { id: userId } } as any : undefined,
+      };
+      try { console.log('[OrdersService.update] id=', id, 'patchKeys=', Object.keys(dto||{})); } catch {}
+      const updated = await tx.order.update({ where: { id }, data });
+
+      if (dto.stones) {
+        await tx.orderStone.deleteMany({ where: { orderId: id } });
+        if (dto.stones.length) {
+          await tx.orderStone.createMany({ data: dto.stones.map(s => ({ orderId: id, bentuk: s.bentuk, jumlah: s.jumlah, berat: s.berat })) });
+        }
+        const stones = dto.stones;
+        const stoneCount = stones.length;
+        const sum = stones.reduce((acc, s) => acc + (s.berat ? Number(s.berat) : 0), 0);
+        const totalBerat = new Prisma.Decimal(sum.toFixed(2));
+        await tx.order.update({ where: { id }, data: { stoneCount, totalBerat: totalBerat as any } });
+      }
+
+      await tx.orderHistory.create({
+        data: {
+          orderId: id,
+          userId,
+          changeSummary: 'EDIT ORDER',
+          diff: dto as any,
+        },
+      });
+      return updated;
     });
-    await this.prisma.orderHistory.create({
-      data: {
-        orderId: id,
-        userId,
-        changeSummary: 'EDIT ORDER',
-        diff: dto as any,
-      },
-    });
-    return updated;
+    try { console.log('[OrdersService.update] done id=', id); } catch {}
+    return this.findById(id);
   }
 
   async remove(id: number, userId: string) {
@@ -163,14 +181,10 @@ export class OrdersService {
     if (order.status === 'DIAMBIL' || order.status === 'BATAL') {
       throw new BadRequestException('Tidak dapat menghapus order history/non-aktif');
     }
-    await this.prisma.orderHistory.create({
-      data: {
-        orderId: id,
-        userId,
-        changeSummary: 'DELETE ORDER',
-        diff: { deleted: true },
-      },
-    });
+  // Hapus history dulu untuk menghindari constraint error (tidak ada cascade di schema untuk OrderHistory)
+  await (this.prisma as any).orderHistory.deleteMany({ where: { orderId: id } });
+  // Catatan: kita kehilangan jejak 'DELETE ORDER' karena history ikut terhapus.
+  // Alternatif: pindahkan log ke tabel audit terpisah yg tidak berelasi hard.
     await this.prisma.order.delete({ where: { id } });
     return { success: true };
   }

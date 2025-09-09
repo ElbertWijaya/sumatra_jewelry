@@ -47,4 +47,5 @@ export declare class UpdateOrderDto {
     tanggalAmbil?: string;
     catatan?: string;
     referensiGambarUrls?: string[];
+    stones?: StoneDto[];
 }

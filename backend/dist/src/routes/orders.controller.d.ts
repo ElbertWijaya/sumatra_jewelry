@@ -140,6 +140,15 @@ export declare class OrdersController {
         updatedById: string | null;
     }>;
     update(id: number, dto: UpdateOrderDto, user: RequestUser): Promise<{
+        stones: {
+            id: number;
+            createdAt: Date;
+            orderId: number;
+            bentuk: string;
+            jumlah: number;
+            berat: import("@prisma/client/runtime/library").Decimal | null;
+        }[];
+    } & {
         id: number;
         createdAt: Date;
         updatedAt: Date;

@@ -56,4 +56,5 @@ export class UpdateOrderDto {
   @IsOptional() @IsDateString() tanggalAmbil?: string;
   @IsOptional() @IsString() catatan?: string;
   @IsOptional() @IsArray() @IsString({ each: true }) referensiGambarUrls?: string[];
+  @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => StoneDto) stones?: StoneDto[];
 }

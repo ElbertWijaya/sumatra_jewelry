@@ -18,8 +18,8 @@ async function bootstrap() {
         app.use(express.json({ limit: '2mb', type: ['application/json', 'application/*+json'] }));
         app.use(express.text({ type: 'text/plain', limit: '2mb' }));
         app.use((req, _res, next) => {
-            const needsParse = req.method === 'POST' && ((req.url.startsWith('/api/orders')) ||
-                (req.url.startsWith('/api/tasks/assign-bulk')));
+            const needsParse = ((req.method === 'POST' && (req.url.startsWith('/api/orders') || req.url.startsWith('/api/tasks/assign-bulk'))) ||
+                (req.method === 'PATCH' && req.url.startsWith('/api/orders/')));
             if (needsParse && typeof req.body === 'string') {
                 const raw = req.body.trim();
                 if ((raw.startsWith('{') && raw.endsWith('}')) || (raw.startsWith('[') && raw.endsWith(']'))) {

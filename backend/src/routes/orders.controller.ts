@@ -80,6 +80,19 @@ export class OrdersController {
   @Patch(':id')
   @Roles('ADMINISTRATOR','SALES')
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateOrderDto, @CurrentUser() user: RequestUser) {
+    // Debug log sementara untuk memastikan request update masuk dan payload yang dikirim
+    try {
+      console.log('[Orders][PATCH] id=', id, 'by=', user?.email || user?.userId, 'keys=', Object.keys(dto || {}));
+      const sample: any = dto || {};
+      console.log('[Orders][PATCH] sample', {
+        customerName: sample.customerName,
+        jenisBarang: sample.jenisBarang,
+        jenisEmas: sample.jenisEmas,
+        warnaEmas: sample.warnaEmas,
+        promisedReadyDate: sample.promisedReadyDate,
+        stonesCount: Array.isArray(sample.stones) ? sample.stones.length : undefined,
+      });
+    } catch {}
     return this.orders.update(id, dto, user.userId);
   }
 

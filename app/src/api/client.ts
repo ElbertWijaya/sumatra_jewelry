@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 
 // Otomatis tentukan BASE sesuai permintaan:
@@ -10,9 +11,24 @@ import * as Device from 'expo-device';
 const LAN_BASE = 'http://192.168.110.63:3000/api';
 const ANDROID_EMULATOR_BASE = 'http://10.0.2.2:3000/api';
 
+function getDevHostIp(): string | null {
+  try {
+    const c: any = Constants as any;
+    const host: string | undefined = c?.expoConfig?.hostUri || c?.manifest2?.extra?.expoGo?.debuggerHost || c?.manifest?.debuggerHost;
+    if (host && typeof host === 'string') {
+      const h = host.split(':')[0];
+      if (/^\d+\.\d+\.\d+\.\d+$/.test(h)) return h;
+    }
+  } catch {}
+  return null;
+}
+
 function computeAutoBase() {
   const envOverride = process.env.EXPO_PUBLIC_API_URL;
   if (envOverride) return normalizeBase(envOverride);
+  // Prefer the Expo dev host IP when running via Expo Go / dev
+  const devIp = getDevHostIp();
+  if (__DEV__ && devIp) return normalizeBase(`http://${devIp}:3000/api`);
   if (Platform.OS === 'android') {
     return Device.isDevice ? LAN_BASE : ANDROID_EMULATOR_BASE;
   }
@@ -55,10 +71,11 @@ async function request(path: string, options: RequestInit = {}) {
   const TIMEOUT_MS = 12000;
   const t = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
+    const mergedHeaders: any = { 'Content-Type': 'application/json', ...(options.headers || {}) };
     const res = await fetch(url, {
-      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-      signal: controller.signal,
       ...options,
+      headers: mergedHeaders,
+      signal: controller.signal,
     });
     if (!res.ok) {
       const text = await res.text();
@@ -83,6 +100,8 @@ export const api = {
   orders: {
     list: (token: string) => request('/orders', { headers: { Authorization: `Bearer ${token}` } }),
   get: (token: string, id: number) => request(`/orders/${id}`, { headers: { Authorization: `Bearer ${token}` } }),
+  update: (token: string, id: number, patch: any) => request(`/orders/${id}`, { method: 'PATCH', body: JSON.stringify(patch), headers: { Authorization: `Bearer ${token}` } }),
+  remove: (token: string, id: number) => request(`/orders/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }),
   create: (token: string, payload: any) => request('/orders', { method: 'POST', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` } }),
   },
   tasks: {

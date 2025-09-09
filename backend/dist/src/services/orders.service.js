@@ -122,10 +122,11 @@ let OrdersService = class OrdersService {
         }));
     }
     async update(id, dto, userId) {
-        const order = await this.findById(id);
-        const updated = await this.prisma.order.update({
-            where: { id },
-            data: {
+        const updatedCore = await this.prisma.$transaction(async (tx) => {
+            const order = await tx.order.findUnique({ where: { id } });
+            if (!order)
+                throw new common_1.NotFoundException('Order tidak ditemukan');
+            const data = {
                 customerName: dto.customerName ?? order.customerName,
                 customerAddress: dto.customerAddress ?? order.customerAddress,
                 customerPhone: dto.customerPhone ?? order.customerPhone,
@@ -141,32 +142,46 @@ let OrdersService = class OrdersService {
                 tanggalAmbil: dto.tanggalAmbil ? new Date(dto.tanggalAmbil) : order.tanggalAmbil,
                 catatan: dto.catatan ?? order.catatan,
                 referensiGambarUrls: dto.referensiGambarUrls ?? order.referensiGambarUrls,
-                updatedById: userId,
-            },
+                updatedBy: userId ? { connect: { id: userId } } : undefined,
+            };
+            try {
+                console.log('[OrdersService.update] id=', id, 'patchKeys=', Object.keys(dto || {}));
+            }
+            catch { }
+            const updated = await tx.order.update({ where: { id }, data });
+            if (dto.stones) {
+                await tx.orderStone.deleteMany({ where: { orderId: id } });
+                if (dto.stones.length) {
+                    await tx.orderStone.createMany({ data: dto.stones.map(s => ({ orderId: id, bentuk: s.bentuk, jumlah: s.jumlah, berat: s.berat })) });
+                }
+                const stones = dto.stones;
+                const stoneCount = stones.length;
+                const sum = stones.reduce((acc, s) => acc + (s.berat ? Number(s.berat) : 0), 0);
+                const totalBerat = new client_1.Prisma.Decimal(sum.toFixed(2));
+                await tx.order.update({ where: { id }, data: { stoneCount, totalBerat: totalBerat } });
+            }
+            await tx.orderHistory.create({
+                data: {
+                    orderId: id,
+                    userId,
+                    changeSummary: 'EDIT ORDER',
+                    diff: dto,
+                },
+            });
+            return updated;
         });
-        await this.prisma.orderHistory.create({
-            data: {
-                orderId: id,
-                userId,
-                changeSummary: 'EDIT ORDER',
-                diff: dto,
-            },
-        });
-        return updated;
+        try {
+            console.log('[OrdersService.update] done id=', id);
+        }
+        catch { }
+        return this.findById(id);
     }
     async remove(id, userId) {
         const order = await this.findById(id);
         if (order.status === 'DIAMBIL' || order.status === 'BATAL') {
             throw new common_1.BadRequestException('Tidak dapat menghapus order history/non-aktif');
         }
-        await this.prisma.orderHistory.create({
-            data: {
-                orderId: id,
-                userId,
-                changeSummary: 'DELETE ORDER',
-                diff: { deleted: true },
-            },
-        });
+        await this.prisma.orderHistory.deleteMany({ where: { orderId: id } });
         await this.prisma.order.delete({ where: { id } });
         return { success: true };
     }

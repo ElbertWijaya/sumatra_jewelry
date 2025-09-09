@@ -73,6 +73,19 @@ let OrdersController = class OrdersController {
         return this.orders.updateStatus(id, dto, user.userId);
     }
     update(id, dto, user) {
+        try {
+            console.log('[Orders][PATCH] id=', id, 'by=', user?.email || user?.userId, 'keys=', Object.keys(dto || {}));
+            const sample = dto || {};
+            console.log('[Orders][PATCH] sample', {
+                customerName: sample.customerName,
+                jenisBarang: sample.jenisBarang,
+                jenisEmas: sample.jenisEmas,
+                warnaEmas: sample.warnaEmas,
+                promisedReadyDate: sample.promisedReadyDate,
+                stonesCount: Array.isArray(sample.stones) ? sample.stones.length : undefined,
+            });
+        }
+        catch { }
         return this.orders.update(id, dto, user.userId);
     }
     remove(id, user) {
