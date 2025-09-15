@@ -15,6 +15,9 @@ export declare class TasksController {
         created: number;
     }>;
     requestDone(id: number, dto: RequestDoneDto, user: RequestUser): Promise<any>;
+    requestDoneMine(orderId: number, user: RequestUser, dto: RequestDoneDto): Promise<{
+        updated: number;
+    }>;
     start(id: number, user: RequestUser): Promise<any>;
     validate(id: number, dto: ValidateTaskDto, user: RequestUser): Promise<any>;
     check(id: number, user: RequestUser): Promise<any>;

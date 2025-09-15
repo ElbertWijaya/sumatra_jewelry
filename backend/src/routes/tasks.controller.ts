@@ -46,6 +46,17 @@ export class TasksController {
     return this.tasks.requestDone(id, user.userId, dto.notes);
   }
 
+  // Order-level atomic request-done for assignee's tasks
+  @Post('order/:orderId/request-done-mine')
+  @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
+  requestDoneMine(
+    @Param('orderId', ParseIntPipe) orderId: number,
+    @CurrentUser() user: RequestUser,
+    @Body() dto: RequestDoneDto,
+  ) {
+    return this.tasks.requestDoneForOrderForUser(orderId, user.userId, dto?.notes);
+  }
+
   @Post(':id/start')
   @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
   start(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: RequestUser) {

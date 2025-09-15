@@ -160,6 +160,23 @@ let TasksService = class TasksService {
             throw new common_1.BadRequestException('Order sudah nonaktif (history).');
         if (task.assignedToId && task.assignedToId !== requesterUserId)
             throw new common_1.BadRequestException('Hanya yang ditugaskan yang bisa request selesai');
+        const selfCheck = await this.prisma.$queryRawUnsafe(`SELECT is_checked FROM OrderTask WHERE id=${Number(id)} LIMIT 1`);
+        const isSelfChecked = !!(selfCheck?.[0]?.is_checked);
+        if (task.status !== task_dtos_1.TaskStatus.IN_PROGRESS) {
+            throw new common_1.BadRequestException('Task harus dalam status IN_PROGRESS untuk request selesai');
+        }
+        if (!isSelfChecked) {
+            throw new common_1.BadRequestException('Checklist wajib dicentang sebelum request selesai');
+        }
+        const rows = await this.prisma.$queryRawUnsafe(`SELECT id, status, is_checked FROM OrderTask WHERE order_id=${Number(task.orderId)} AND assigned_to_id ${requesterUserId ? `='${requesterUserId}'` : 'IS NULL'} AND status IN ('ASSIGNED','IN_PROGRESS')`);
+        const hasUnstarted = rows.some(r => String(r.status) === 'ASSIGNED');
+        if (hasUnstarted) {
+            throw new common_1.BadRequestException('Ada sub-tugas yang belum dimulai/di-checklist. Mohon checklist semua dulu.');
+        }
+        const anyUnchecked = rows.some(r => String(r.status) === 'IN_PROGRESS' && !r.is_checked);
+        if (anyUnchecked) {
+            throw new common_1.BadRequestException('Semua sub-tugas harus dichecklist sebelum bisa request selesai.');
+        }
         return this.prisma.orderTask.update({ where: { id }, data: { notes: notes ?? task.notes, requestedDoneAt: new Date(), status: task_dtos_1.TaskStatus.AWAITING_VALIDATION } });
     }
     async validateDone(id, validatorUserId, notes) {
@@ -170,6 +187,26 @@ let TasksService = class TasksService {
             throw new common_1.BadRequestException('Order sudah nonaktif (history).');
         return this.prisma.orderTask.update({ where: { id }, data: { validatedById: validatorUserId, validatedAt: new Date(), notes: notes ?? task.notes, status: task_dtos_1.TaskStatus.DONE } });
     }
+    async requestDoneForOrderForUser(orderId, requesterUserId, notes) {
+        const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+        if (!order)
+            throw new common_1.NotFoundException('Order not found');
+        if (!this.isOrderActive(order.status))
+            throw new common_1.BadRequestException('Order sudah nonaktif (history).');
+        const rows = await this.prisma.$queryRawUnsafe(`SELECT id, status, is_checked FROM OrderTask WHERE order_id=${Number(orderId)} AND assigned_to_id='${requesterUserId}' AND status IN ('ASSIGNED','IN_PROGRESS')`);
+        if (rows.length === 0)
+            throw new common_1.BadRequestException('Tidak ada tugas yang bisa diajukan');
+        if (rows.some(r => String(r.status) === 'ASSIGNED'))
+            throw new common_1.BadRequestException('Ada sub-tugas yang belum dimulai. Checklist untuk memulai.');
+        if (rows.some(r => String(r.status) === 'IN_PROGRESS' && !r.is_checked))
+            throw new common_1.BadRequestException('Semua sub-tugas harus dichecklist dulu.');
+        const ids = rows.filter(r => String(r.status) === 'IN_PROGRESS').map(r => Number(r.id));
+        if (!ids.length)
+            return { updated: 0 };
+        const updates = ids.map(id => this.prisma.orderTask.update({ where: { id }, data: { notes, requestedDoneAt: new Date(), status: task_dtos_1.TaskStatus.AWAITING_VALIDATION } }));
+        await this.prisma.$transaction(updates);
+        return { updated: ids.length };
+    }
     async setChecked(id, actorUserId, value) {
         const task = await this.prisma.orderTask.findUnique({ where: { id }, include: { order: true } });
         if (!task)
@@ -178,9 +215,18 @@ let TasksService = class TasksService {
             throw new common_1.BadRequestException('Order sudah nonaktif (history).');
         if (task.assignedToId && task.assignedToId !== actorUserId)
             throw new common_1.BadRequestException('Hanya yang ditugaskan yang bisa mengubah checklist');
+        if (task.status === task_dtos_1.TaskStatus.AWAITING_VALIDATION || task.status === task_dtos_1.TaskStatus.DONE) {
+            throw new common_1.BadRequestException('Checklist tidak bisa diubah setelah request selesai diajukan atau divalidasi');
+        }
+        const shouldAutoStart = value && task.status === task_dtos_1.TaskStatus.ASSIGNED;
         const checkedVal = value ? 1 : 0;
         const checkedBySql = value ? `'${actorUserId}'` : 'NULL';
-        await this.prisma.$executeRawUnsafe(`UPDATE OrderTask SET is_checked=${checkedVal}, checked_at=${value ? 'NOW()' : 'NULL'}, checked_by_id=${checkedBySql} WHERE id=${Number(id)}`);
+        const updates = [];
+        updates.push(this.prisma.$executeRawUnsafe(`UPDATE OrderTask SET is_checked=${checkedVal}, checked_at=${value ? 'NOW()' : 'NULL'}, checked_by_id=${checkedBySql} WHERE id=${Number(id)}`));
+        if (shouldAutoStart) {
+            updates.push(this.prisma.orderTask.update({ where: { id }, data: { status: task_dtos_1.TaskStatus.IN_PROGRESS } }));
+        }
+        await this.prisma.$transaction(updates);
         const updated = await this.prisma.orderTask.findUnique({ where: { id } });
         return { ...updated, isChecked: !!value };
     }

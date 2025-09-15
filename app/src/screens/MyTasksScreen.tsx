@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, Alert, Animated, Easing } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
 import { OrderActionsModal } from './OrderActionsModal';
@@ -17,6 +17,48 @@ type Task = {
 
 type Group = { orderId: number; order?: any; tasks: Task[] };
 
+const progressFor = (g: Group) => {
+  const rel = g.tasks.filter(t => t.status === 'ASSIGNED' || t.status === 'IN_PROGRESS');
+  const total = rel.length;
+  const checked = rel.filter(t => (t as any).isChecked).length;
+  return { checked, total };
+};
+
+const SquareActionButton = ({ title, disabled, muted, onPress }: { title: string; disabled?: boolean; muted?: boolean; onPress: () => void; }) => {
+  const radius = useRef(new Animated.Value(8)).current;
+  const scale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (disabled || muted) return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(radius, { toValue: 10, duration: 900, easing: Easing.out(Easing.quad), useNativeDriver: false }),
+        Animated.timing(radius, { toValue: 8, duration: 900, easing: Easing.in(Easing.quad), useNativeDriver: false }),
+      ])
+    );
+    loop.start();
+    return () => { loop.stop(); };
+  }, [disabled, muted, radius]);
+
+  const onPressIn = () => {
+    Animated.spring(scale, { toValue: 0.98, useNativeDriver: true, speed: 20, bounciness: 3 }).start();
+  };
+  const onPressOut = () => {
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 3 }).start();
+    if (!disabled) onPress();
+  };
+
+  const bg = disabled ? '#e0e0e0' : muted ? '#e0e0e0' : '#1976d2';
+  const fg = disabled ? '#888' : muted ? '#666' : '#fff';
+  return (
+    <Animated.View style={{ transform: [{ scale }], borderRadius: radius, backgroundColor: bg, paddingHorizontal: 14, paddingVertical: 10, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 }}>
+      <TouchableOpacity activeOpacity={0.85} onPressIn={onPressIn} onPressOut={onPressOut} disabled={disabled}>
+        <Text style={{ color: fg, fontWeight: '700' }}>{title}</Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
 export default function MyTasksScreen() {
   const { token, user } = useAuth();
   const [all, setAll] = useState<Task[]>([]);
@@ -25,6 +67,7 @@ export default function MyTasksScreen() {
   const [processing, setProcessing] = useState<Record<number, boolean>>({});
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
 
   const load = useCallback(async () => {
     if (!token) return; setLoading(true);
@@ -44,60 +87,14 @@ export default function MyTasksScreen() {
     return () => clearInterval(t);
   }, [load]);
 
-  const startTask = async (task: Task) => {
-    if (!token) return;
-    try {
-      await api.tasks.start(token, task.id);
-    } catch (e:any) { throw e; }
-  };
-
-  const requestDone = async (task: Task) => {
-    if (!token || !user?.id) return;
-    try {
-      await api.tasks.requestDone(token, task.id, task.notes || undefined);
-    } catch (e:any) { throw e; }
-  };
-
-  const startGroup = async (g: Group) => {
-    if (!token) return;
-    const orderId = g.orderId;
-    setProcessing(p => ({ ...p, [orderId]: true }));
-    try {
-      const targets = g.tasks.filter(t => t.status === 'ASSIGNED');
-      if (targets.length === 0) return;
-      await Promise.all(targets.map(t => startTask(t)));
-      await load();
-    } catch (e:any) {
-      Alert.alert('Gagal mulai', e.message || String(e));
-    } finally {
-      setProcessing(p => ({ ...p, [orderId]: false }));
-    }
-  };
-
-  const requestDoneGroup = async (g: Group) => {
-    if (!token) return;
-    const orderId = g.orderId;
-    setProcessing(p => ({ ...p, [orderId]: true }));
-    try {
-      const targets = g.tasks.filter(t => t.status === 'IN_PROGRESS');
-      if (targets.length === 0) return;
-      await Promise.all(targets.map(t => requestDone(t)));
-      Alert.alert('Request', 'Semua tugas diminta validasi');
-      await load();
-    } catch (e:any) {
-      Alert.alert('Gagal request selesai', e.message || String(e));
-    } finally {
-      setProcessing(p => ({ ...p, [orderId]: false }));
-    }
-  };
-
   const toggleCheck = async (t: Task, value: boolean) => {
     if (!token) return;
     try {
-      if (value) await api.tasks.check(token, t.id);
-      else await api.tasks.uncheck(token, t.id);
+      if (value) await api.tasks.check(token, t.id); else await api.tasks.uncheck(token, t.id);
       await load();
-    } catch (e:any) { Alert.alert('Gagal update checklist', e.message || String(e)); }
+    } catch (e:any) {
+      Alert.alert('Gagal update checklist', e.message || String(e));
+    }
   };
 
   // group tasks by order
@@ -116,47 +113,98 @@ export default function MyTasksScreen() {
     return groups.filter(g => g.tasks.some(t => t.status === 'IN_PROGRESS' || t.status === 'AWAITING_VALIDATION'));
   }, [groups, tab]);
 
+  const canRequestDone = (g: Group) => {
+    const relevant = g.tasks.filter(t => t.status === 'ASSIGNED' || t.status === 'IN_PROGRESS');
+    if (relevant.length === 0) return false;
+    if (relevant.some(t => t.status === 'ASSIGNED')) return false;
+    return relevant.every(t => (t as any).isChecked);
+  };
+
+  const disabledReason = (g: Group) => {
+    const relevant = g.tasks.filter(t => t.status === 'ASSIGNED' || t.status === 'IN_PROGRESS');
+    if (relevant.some(t => t.status === 'ASSIGNED')) return 'Mulai & checklist semua sub-tugas';
+    if (!relevant.every(t => (t as any).isChecked)) return 'Checklist semua sub-tugas';
+    if (relevant.length === 0) return 'Tidak ada sub-tugas aktif';
+    return '';
+  };
+
+  const requestDoneOrder = async (g: Group) => {
+    if (!token) return;
+    setProcessing(p => ({ ...p, [g.orderId]: true }));
+    try {
+      // Use atomic endpoint
+      await api.tasks.requestDoneMine(token, g.orderId);
+      Alert.alert('Request', 'Permintaan selesai diajukan.');
+      await load();
+    } catch (e:any) {
+      Alert.alert('Gagal request selesai', e.message || String(e));
+    } finally {
+      setProcessing(p => ({ ...p, [g.orderId]: false }));
+    }
+  };
+
   const renderGroup = ({ item }: { item: Group }) => {
-    const pending = item.tasks.filter(t => t.status === 'ASSIGNED');
-    const working = item.tasks.filter(t => t.status === 'IN_PROGRESS');
-    const waiting = item.tasks.filter(t => t.status === 'AWAITING_VALIDATION');
     const busy = !!processing[item.orderId];
+    const { checked, total } = progressFor(item);
+    const readyToRequest = canRequestDone(item);
+    const reason = disabledReason(item);
+    const isExpanded = expanded[item.orderId] ?? (tab === 'working');
+
     return (
-      <TouchableOpacity activeOpacity={0.85} onPress={() => { setSelectedOrder(item.order || { id: item.orderId }); setDetailOpen(true); }} style={styles.card}>
+      <View style={[styles.card, isExpanded && styles.cardExpanded]}>
         <View style={{ flexDirection:'row', justifyContent:'space-between', alignItems:'center' }}>
-          <Text style={styles.title}>Order #{item.order?.code || item.orderId}</Text>
-          <View style={{ flexDirection:'row', alignItems:'center', gap:8 }}>
-            <Text style={styles.countPill}>{item.tasks.length} tugas</Text>
-            {tab === 'inbox' && pending.length > 0 ? (
-              <TouchableOpacity disabled={busy} onPress={()=> startGroup(item)} style={[styles.smallBtn, busy && styles.smallBtnDisabled]}>
-                <Text style={styles.smallBtnText}>{busy ? '...' : 'Mulai'}</Text>
-              </TouchableOpacity>
-            ) : null}
-            {tab === 'working' && working.length > 0 ? (
-              <TouchableOpacity disabled={busy} onPress={()=> requestDoneGroup(item)} style={[styles.smallBtn, busy && styles.smallBtnDisabled]}>
-                <Text style={styles.smallBtnText}>{busy ? '...' : 'Request Selesai'}</Text>
-              </TouchableOpacity>
-            ) : null}
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => setExpanded(prev => ({ ...prev, [item.orderId]: !isExpanded }))
+            }
+            onLongPress={() => { setSelectedOrder(item.order || { id: item.orderId }); setDetailOpen(true); }}
+          >
+            <Text style={styles.title}>Order #{item.order?.code || item.orderId}</Text>
+            {item.order?.customerName ? <Text style={styles.subtle}>{item.order.customerName} • {item.order?.jenisBarang} • {item.order?.jenisEmas}</Text> : null}
+            <Text style={styles.expandHint}>{isExpanded ? 'Sembunyikan' : 'Tampilkan'} detail</Text>
+          </TouchableOpacity>
+          <View style={{ alignItems:'flex-end' }}>
+            <Text style={styles.countPill}>{checked}/{total} checklist</Text>
+            <View style={styles.progressBar}><View style={[styles.progressFill, { width: `${total>0 ? (checked/total)*100 : 0}%` }]} /></View>
+            <Text style={styles.hintCaption}>Checklist = mulai otomatis</Text>
           </View>
         </View>
-        {item.order?.customerName ? <Text style={styles.subtle}>{item.order.customerName} • {item.order?.jenisBarang} • {item.order?.jenisEmas}</Text> : null}
-        <View style={styles.divider} />
-        {item.tasks.sort((a,b)=> String(a.stage||'').localeCompare(String(b.stage||''))).map(t => (
-          <View key={t.id} style={styles.row}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.stage}>{t.stage || 'Tanpa Stage'}</Text>
-              <Text style={styles.subtleSmall}>Status: {t.status}</Text>
-            </View>
-            {tab === 'working' && (t.status === 'IN_PROGRESS' || t.status === 'AWAITING_VALIDATION') ? (
-              <TouchableOpacity onPress={() => toggleCheck(t, !(t as any).isChecked)} style={[styles.checkPill, (t as any).isChecked && styles.checkPillActive]}>
-                <Text style={[styles.checkPillText, (t as any).isChecked && styles.checkPillTextActive]}>{(t as any).isChecked ? 'Checked' : 'Checklist'}</Text>
-              </TouchableOpacity>
-            ) : t.status === 'AWAITING_VALIDATION' ? (
-              <Text style={styles.badge}>Menunggu Validasi</Text>
-            ) : null}
+
+        {isExpanded && <>
+          <View style={styles.divider} />
+          {item.tasks
+            .sort((a,b)=> String(a.stage||'').localeCompare(String(b.stage||'')))
+            .map(t => {
+              const showCheckbox = (t.status === 'ASSIGNED' || t.status === 'IN_PROGRESS');
+              const dotStyle = t.status === 'IN_PROGRESS' ? styles.dotProgress : t.status === 'ASSIGNED' ? styles.dotAssigned : styles.dotOther;
+              return (
+                <View key={t.id} style={styles.row}>
+                  <View style={{ flexDirection:'row', alignItems:'center', flex:1 }}>
+                    <View style={[styles.statusDot, dotStyle]} />
+                    <Text style={styles.stage}>{t.stage || 'Tanpa Stage'}</Text>
+                  </View>
+                  {showCheckbox ? (
+                    <TouchableOpacity onPress={() => toggleCheck(t, !(t as any).isChecked)} style={[styles.checkbox, (t as any).isChecked && styles.checkboxChecked]}>
+                      <View style={[styles.checkboxInner, (t as any).isChecked && styles.checkboxInnerChecked]} />
+                    </TouchableOpacity>
+                  ) : t.status === 'AWAITING_VALIDATION' ? (
+                    <Text style={styles.badge}>Menunggu Validasi</Text>
+                  ) : null}
+                </View>
+              );
+            })}
+
+          {/* Floating bottom-right button */}
+          <View style={{ height: 40 }} />
+          <View pointerEvents={busy ? 'none' : 'auto'} style={styles.fabContainer}>
+              {readyToRequest ? (
+                <SquareActionButton title="Ajukan verifikasi" onPress={() => requestDoneOrder(item)} />
+              ) : (
+                <SquareActionButton title="Ajukan verifikasi" muted onPress={() => Alert.alert('Belum bisa', reason || 'Checklist semua sub-tugas')} />
+              )}
           </View>
-        ))}
-      </TouchableOpacity>
+        </>}
+      </View>
     );
   };
 
@@ -166,7 +214,7 @@ export default function MyTasksScreen() {
         <TouchableOpacity onPress={()=> setTab('inbox')} style={[styles.tab, tab==='inbox' && styles.tabActive]}><Text style={tab==='inbox'?styles.tabActiveText:styles.tabText}>Inbox</Text></TouchableOpacity>
         <TouchableOpacity onPress={()=> setTab('working')} style={[styles.tab, tab==='working' && styles.tabActive]}><Text style={tab==='working'?styles.tabActiveText:styles.tabText}>Sedang Dikerjakan</Text></TouchableOpacity>
       </View>
-  <FlatList
+      <FlatList
         data={filteredGroups}
         keyExtractor={(it)=> String(it.orderId)}
         renderItem={renderGroup}
@@ -174,7 +222,7 @@ export default function MyTasksScreen() {
         contentContainerStyle={{ padding: 12 }}
         ListEmptyComponent={!loading ? <Text style={{ textAlign:'center', marginTop: 40 }}>Tidak ada item</Text> : null}
       />
-  <OrderActionsModal visible={detailOpen} order={selectedOrder} onClose={()=> setDetailOpen(false)} onChanged={()=> load()} />
+      <OrderActionsModal visible={detailOpen} order={selectedOrder} onClose={()=> setDetailOpen(false)} onChanged={()=> load()} />
     </View>
   );
 }
@@ -185,20 +233,37 @@ const styles = StyleSheet.create({
   tabActive: { borderBottomColor:'#1976d2' },
   tabText: { color:'#666' },
   tabActiveText: { color:'#1976d2', fontWeight:'700' },
-  card: { backgroundColor:'#fff', borderWidth:1, borderColor:'#eee', borderRadius:8, padding:12, marginBottom:12 },
+  card: { backgroundColor:'#fff', borderWidth:1, borderColor:'#eee', borderRadius:12, padding:14, marginBottom:12, shadowColor:'#000', shadowOpacity:0.05, shadowRadius:8, elevation:2 },
+  cardExpanded: { position:'relative' },
   title: { fontSize:16, fontWeight:'700', color:'#111' },
   subtle: { color:'#555', marginTop:4 },
   subtleSmall: { color:'#777', fontSize:12 },
   divider: { height:1, backgroundColor:'#f0f0f0', marginVertical:8 },
   row: { flexDirection:'row', alignItems:'center', gap:10, paddingVertical:6 },
-  stage: { fontWeight:'600', color:'#222' },
-  smallBtn: { backgroundColor:'#1976d2', paddingVertical:6, paddingHorizontal:10, borderRadius:6 },
-  smallBtnText: { color:'#fff', fontWeight:'700' },
-  smallBtnDisabled: { opacity: 0.6 },
-  badge: { backgroundColor:'#fff8e1', color:'#ff8f00', paddingHorizontal:8, paddingVertical:4, borderRadius:6, overflow:'hidden' },
+  stage: { color:'#222' },
+  statusDot: { width:8, height:8, borderRadius:4, marginRight:8, backgroundColor:'#c7c7c7' },
+  dotAssigned: { backgroundColor:'#c7c7c7' },
+  dotProgress: { backgroundColor:'#2e7d32' },
+  dotOther: { backgroundColor:'#bdbdbd' },
   countPill: { backgroundColor:'#eef3ff', color:'#3056d3', paddingHorizontal:8, paddingVertical:4, borderRadius:6, overflow:'hidden', fontWeight:'700' },
-  checkPill: { borderWidth:1, borderColor:'#bbb', paddingHorizontal:10, paddingVertical:4, borderRadius:16 },
-  checkPillActive: { backgroundColor:'#e8f5e9', borderColor:'#a5d6a7' },
-  checkPillText: { color:'#333' },
-  checkPillTextActive: { color:'#2e7d32', fontWeight:'700' },
+  checkbox: { width:24, height:24, borderRadius:6, borderWidth:2, borderColor:'#c5c5c5', alignItems:'center', justifyContent:'center' },
+  checkboxChecked: { borderColor:'#2e7d32', backgroundColor:'#e8f5e9' },
+  checkboxInner: { width:12, height:12, borderRadius:3, backgroundColor:'transparent' },
+  checkboxInnerChecked: { backgroundColor:'#2e7d32' },
+  masterCheckboxHeader: { width:20, height:20, borderRadius:6, borderWidth:2, borderColor:'#c5c5c5', alignItems:'center', justifyContent:'center' },
+  masterCheckboxHeaderReady: { borderColor:'#1976d2' },
+  masterCheckboxDisabled: { opacity:0.5 },
+  checkboxInnerTiny: { width:8, height:8, borderRadius:2, backgroundColor:'transparent' },
+  badge: { backgroundColor:'#fff8e1', color:'#ff8f00', paddingHorizontal:8, paddingVertical:4, borderRadius:6, overflow:'hidden' },
+  footerText: { fontWeight:'600', color:'#1976d2' },
+  footerTextMuted: { color:'#888' },
+  hintCaption: { marginTop:4, color:'#999', fontSize:12 },
+  progressBar: { width: 120, height: 6, backgroundColor:'#eee', borderRadius:4, overflow:'hidden', marginTop:4 },
+  progressFill: { height: '100%', backgroundColor:'#3056d3' },
+  expandHint: { color:'#8a8a8a', fontSize:12, marginTop:4 },
+  fabContainer: { position:'absolute', right:12, bottom:12 },
+  fab: { backgroundColor:'#1976d2', paddingHorizontal:14, paddingVertical:10, borderRadius:24, shadowColor:'#000', shadowOpacity:0.15, shadowRadius:8, elevation:3 },
+  fabDisabled: { backgroundColor:'#e0e0e0' },
+  fabText: { color:'#fff', fontWeight:'700' },
+  fabTextDisabled: { color:'#888' },
 });

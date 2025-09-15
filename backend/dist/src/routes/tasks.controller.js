@@ -37,6 +37,9 @@ let TasksController = class TasksController {
     requestDone(id, dto, user) {
         return this.tasks.requestDone(id, user.userId, dto.notes);
     }
+    requestDoneMine(orderId, user, dto) {
+        return this.tasks.requestDoneForOrderForUser(orderId, user.userId, dto?.notes);
+    }
     start(id, user) {
         return this.tasks.start(id, user.userId);
     }
@@ -116,6 +119,16 @@ __decorate([
     __metadata("design:paramtypes", [Number, task_dtos_1.RequestDoneDto, Object]),
     __metadata("design:returntype", void 0)
 ], TasksController.prototype, "requestDone", null);
+__decorate([
+    (0, common_1.Post)('order/:orderId/request-done-mine'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES', 'DESIGNER', 'CASTER', 'CARVER', 'DIAMOND_SETTER', 'FINISHER', 'INVENTORY'),
+    __param(0, (0, common_1.Param)('orderId', common_1.ParseIntPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object, task_dtos_1.RequestDoneDto]),
+    __metadata("design:returntype", void 0)
+], TasksController.prototype, "requestDoneMine", null);
 __decorate([
     (0, common_1.Post)(':id/start'),
     (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES', 'DESIGNER', 'CASTER', 'CARVER', 'DIAMOND_SETTER', 'FINISHER', 'INVENTORY'),

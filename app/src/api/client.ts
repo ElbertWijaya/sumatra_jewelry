@@ -117,6 +117,7 @@ export const api = {
   start: (token: string, id: number) => request(`/tasks/${id}/start`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }),
   check: (token: string, id: number) => request(`/tasks/${id}/check`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }),
   uncheck: (token: string, id: number) => request(`/tasks/${id}/uncheck`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }),
+  requestDoneMine: (token: string, orderId: number, notes?: string) => request(`/tasks/order/${orderId}/request-done-mine`, { method: 'POST', body: JSON.stringify({ notes }), headers: { Authorization: `Bearer ${token}` } }),
   },
   users: {
     list: (token: string, opts?: { jobRole?: string }) => {
