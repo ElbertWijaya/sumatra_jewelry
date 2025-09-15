@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, StyleSheet, TextInput, FlatList, Alert, Image, ScrollView } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, StyleSheet, TextInput, FlatList, Alert, Image, ScrollView, Platform } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { api, API_URL } from '../api/client';
 import { InlineSelect } from '../components/InlineSelect';
 import { JENIS_BARANG_OPTIONS, JENIS_EMAS_OPTIONS, WARNA_EMAS_OPTIONS, BENTUK_BATU_OPTIONS } from '../constants/orderOptions';
 import ImagePreviewModal from '@/src/components/ImagePreviewModal';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 type Props = { visible: boolean; order: any | null; onClose(): void; onChanged?(): void };
 
@@ -26,6 +27,7 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [selectedStages, setSelectedStages] = useState<string[]>([]);
   const [validations, setValidations] = useState<any[]>([]);
+  const [orderTasks, setOrderTasks] = useState<any[]>([]);
   const [orderDetail, setOrderDetail] = useState<any | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [edit, setEdit] = useState(false);
@@ -45,6 +47,7 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
   const [fHargaPerkiraan, setFHargaPerkiraan] = useState('');
   const [fHargaAkhir, setFHargaAkhir] = useState('');
   const [fStones, setFStones] = useState<{ bentuk: string; jumlah: string; berat: string }[]>([]);
+  const [showPicker, setShowPicker] = useState<null | { field: 'ready' | 'selesai' | 'ambil'; date: Date }>(null);
 
   useEffect(() => { if (!visible) return; setTab('assign'); setRole(''); setSelectedStages([]); setSelectedUserId(''); setUsers([]); setValidations([]); setOrderDetail(null); setEdit(false); }, [visible]);
 
@@ -61,6 +64,17 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
       try { const res = await api.tasks.awaitingValidation(token, order.id); setValidations(res); } catch (e:any) { /* ignore */ }
     })();
   }, [token, visible, order]);
+
+  useEffect(() => { // load tasks for this order to determine assign UI visibility
+    (async () => {
+      if (!token || !visible || !order?.id) return;
+      try {
+        const all = await api.tasks.list(token);
+        const filtered = Array.isArray(all) ? all.filter((t:any) => t.orderId === order.id) : [];
+        setOrderTasks(filtered);
+      } catch {}
+    })();
+  }, [token, visible, order?.id]);
 
   useEffect(() => { // get latest order detail for header section
     (async () => {
@@ -121,6 +135,23 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
     }
   };
 
+  const pickDate = (field: 'ready' | 'selesai' | 'ambil') => {
+    const current = field === 'ready' ? fReady : field === 'selesai' ? fSelesai : fAmbil;
+    const seed = current || new Date().toISOString().slice(0,10);
+    setShowPicker({ field, date: new Date(seed) });
+  };
+
+  const onDateChange = (_: any, selected?: Date) => {
+    if (!showPicker) return;
+    if (Platform.OS !== 'ios') setShowPicker(null);
+    if (selected) {
+      const iso = selected.toISOString().slice(0,10);
+      if (showPicker.field === 'ready') setFReady(iso);
+      if (showPicker.field === 'selesai') setFSelesai(iso);
+      if (showPicker.field === 'ambil') setFAmbil(iso);
+    }
+  };
+
   const toggleStage = (stage: string) => setSelectedStages(s => s.includes(stage) ? s.filter(x=>x!==stage) : [...s, stage]);
 
   const canValidate = user?.jobRole === 'ADMINISTRATOR' || user?.jobRole === 'SALES';
@@ -140,6 +171,10 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
       };
       await api.tasks.assignBulk(token, payload);
       Alert.alert('Assign', 'Tugas berhasil dibuat.');
+      try {
+        const all = await api.tasks.list(token);
+        setOrderTasks(Array.isArray(all) ? all.filter((t:any)=> t.orderId === order.id) : []);
+      } catch {}
       onChanged?.();
       onClose();
     } catch (e: any) { Alert.alert('Gagal Assign', e.message || String(e)); }
@@ -242,9 +277,36 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
               <View style={styles.sectionDivider} />
               <Text style={styles.sectionTitle}>Tanggal</Text>
               <View style={styles.rowGrid}>
-                <View style={styles.infoRow}><Text style={styles.infoLabel}>Perkiraan Siap</Text>{!edit ? <Text style={styles.infoValue}>{formatDateOnly(det.promisedReadyDate)}</Text> : <TextInput placeholder='YYYY-MM-DD' style={styles.input} value={fReady} onChangeText={setFReady} />}</View>
-                <View style={styles.infoRow}><Text style={styles.infoLabel}>Selesai</Text>{!edit ? <Text style={styles.infoValue}>{formatDateOnly(det.tanggalSelesai)}</Text> : <TextInput placeholder='YYYY-MM-DD' style={styles.input} value={fSelesai} onChangeText={setFSelesai} />}</View>
-                <View style={styles.infoRow}><Text style={styles.infoLabel}>Ambil</Text>{!edit ? <Text style={styles.infoValue}>{formatDateOnly(det.tanggalAmbil)}</Text> : <TextInput placeholder='YYYY-MM-DD' style={styles.input} value={fAmbil} onChangeText={setFAmbil} />}</View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Perkiraan Siap</Text>
+                  {!edit ? (
+                    <Text style={styles.infoValue}>{formatDateOnly(det.promisedReadyDate)}</Text>
+                  ) : (
+                    <TouchableOpacity onPress={()=>pickDate('ready')} style={[styles.input,{justifyContent:'center'}]}>
+                      <Text>{fReady || 'Pilih tanggal'}</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Selesai</Text>
+                  {!edit ? (
+                    <Text style={styles.infoValue}>{formatDateOnly(det.tanggalSelesai)}</Text>
+                  ) : (
+                    <TouchableOpacity onPress={()=>pickDate('selesai')} style={[styles.input,{justifyContent:'center'}]}>
+                      <Text>{fSelesai || 'Pilih tanggal'}</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Ambil</Text>
+                  {!edit ? (
+                    <Text style={styles.infoValue}>{formatDateOnly(det.tanggalAmbil)}</Text>
+                  ) : (
+                    <TouchableOpacity onPress={()=>pickDate('ambil')} style={[styles.input,{justifyContent:'center'}]}>
+                      <Text>{fAmbil || 'Pilih tanggal'}</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
               {(!edit && det.stones?.length) ? (
                 <>
@@ -310,27 +372,44 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
         })()}
       </View>
 
-      {/* Assign UI */}
-      <InlineSelect label="Role Pekerjaan" value={role} options={(ROLE_OPTIONS as any)} onChange={(r)=> { setRole(r); setSelectedStages([]); setSelectedUserId(''); }} />
-      <InlineSelect label="Pilih Orang" value={selectedUserId} options={users.filter(u => !role || u.jobRole === role).map(u=>({ label: u.fullName, value: u.id }))} onChange={(v)=> setSelectedUserId(v)} disabled={!role} />
-      <Text style={styles.section}>Sub-tasks</Text>
-      {(ROLE_TEMPLATES[role] || []).map((st) => {
-        const active = selectedStages.includes(st);
+      {/* Assign UI: hidden if currently assigned to someone; reappears once validated */}
+      {(() => {
+        const hasActiveAssignment = orderTasks.some((t:any) => t.orderId === (order?.id ?? t.orderId) && !!t.assignedTo && t.status !== 'DONE' && t.status !== 'CANCELLED');
+        if (hasActiveAssignment) return null;
         return (
-          <TouchableOpacity key={st} onPress={()=> toggleStage(st)} style={[styles.stageItem, active && styles.stageItemActive]}>
-            <Text style={[styles.stageText, active && styles.stageTextActive]}>{st}</Text>
-          </TouchableOpacity>
+          <>
+            <InlineSelect label="Role Pekerjaan" value={role} options={(ROLE_OPTIONS as any)} onChange={(r)=> { setRole(r); setSelectedStages([]); setSelectedUserId(''); }} />
+            <InlineSelect label="Pilih Orang" value={selectedUserId} options={users.filter(u => !role || u.jobRole === role).map(u=>({ label: u.fullName, value: u.id }))} onChange={(v)=> setSelectedUserId(v)} disabled={!role} />
+            <Text style={styles.section}>Sub-tasks</Text>
+            {(ROLE_TEMPLATES[role] || []).map((st) => {
+              const active = selectedStages.includes(st);
+              return (
+                <TouchableOpacity key={st} onPress={()=> toggleStage(st)} style={[styles.stageItem, active && styles.stageItemActive]}>
+                  <Text style={[styles.stageText, active && styles.stageTextActive]}>{st}</Text>
+                </TouchableOpacity>
+              );
+            })}
+            <View style={{ height: 12 }} />
+            <TouchableOpacity onPress={doAssignBulk} style={styles.primary}><Text style={styles.primaryText}>Simpan & Assign</Text></TouchableOpacity>
+          </>
         );
-      })}
-      <View style={{ height: 12 }} />
-  <TouchableOpacity onPress={doAssignBulk} style={styles.primary}><Text style={styles.primaryText}>Simpan & Assign</Text></TouchableOpacity>
+      })()}
   {previewUrl && <ImagePreviewModal url={toDisplayUrl(previewUrl)} onClose={()=> setPreviewUrl(null)} />}
     </>
   );
 
   const doValidate = async (taskId: number) => {
     if (!token) return;
-    try { await api.tasks.validate(token, taskId); const res = await api.tasks.awaitingValidation(token!, order!.id); setValidations(res); onChanged?.(); } catch (e:any) { Alert.alert('Gagal validasi', e.message || String(e)); }
+    try {
+      await api.tasks.validate(token, taskId);
+      const res = await api.tasks.awaitingValidation(token!, order!.id);
+      setValidations(res);
+      try {
+        const all = await api.tasks.list(token!);
+        setOrderTasks(Array.isArray(all) ? all.filter((t:any)=> t.orderId === order!.id) : []);
+      } catch {}
+      onChanged?.();
+    } catch (e:any) { Alert.alert('Gagal validasi', e.message || String(e)); }
   };
 
   const renderValidate = () => (
@@ -379,6 +458,14 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
           contentContainerStyle={{ padding:16 }}
           renderItem={() => (tab === 'assign' ? renderAssign() : renderValidate()) as any}
         />
+        {showPicker && (
+          <DateTimePicker
+            value={showPicker.date}
+            mode='date'
+            display='default'
+            onChange={onDateChange}
+          />
+        )}
       </View>
     </Modal>
   );

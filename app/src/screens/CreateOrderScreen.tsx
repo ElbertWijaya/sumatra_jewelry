@@ -17,7 +17,7 @@ import { Platform } from 'react-native';
 import ImagePreviewModal from '@/src/components/ImagePreviewModal';
 
 export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCreated }) => {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const qc = useQueryClient();
   const [customerName, setCustomerName] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
@@ -114,7 +114,8 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
     onError: (e: any) => Alert.alert('Error', e.message || 'Gagal membuat order'),
   });
 
-  const disabled = !customerName || !jenisBarang || !jenisEmas || !warnaEmas || mutation.isPending || uploading;
+  const canCreate = user?.jobRole === 'ADMINISTRATOR' || user?.jobRole === 'SALES';
+  const disabled = !customerName || !jenisBarang || !jenisEmas || !warnaEmas || mutation.isPending || uploading || !canCreate;
 
   // Menggunakan CameraView (expo-camera versi baru)
 
@@ -308,6 +309,9 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
         <TextInput placeholder='Catatan' style={[styles.input,{height:90}]} value={catatan} onChangeText={setCatatan} multiline />
       </FormSection>
 
+      {!canCreate ? (
+        <Text style={{ color:'#c62828', marginBottom:8 }}>Akun Anda tidak memiliki izin untuk membuat order. Silakan login sebagai Sales atau Admin.</Text>
+      ) : null}
       <View style={{ paddingHorizontal:4, marginTop:10 }}>
         <Button title={mutation.isPending ? 'Menyimpan...' : 'Simpan'} disabled={disabled} onPress={() => mutation.mutate()} />
       </View>
