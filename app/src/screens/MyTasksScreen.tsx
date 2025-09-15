@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
+import { OrderActionsModal } from './OrderActionsModal';
 
 type Task = {
   id: number;
@@ -22,6 +23,8 @@ export default function MyTasksScreen() {
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<'inbox'|'working'>('inbox');
   const [processing, setProcessing] = useState<Record<number, boolean>>({});
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
 
   const load = useCallback(async () => {
     if (!token) return; setLoading(true);
@@ -44,7 +47,7 @@ export default function MyTasksScreen() {
   const startTask = async (task: Task) => {
     if (!token) return;
     try {
-      await api.tasks.update(token, task.id, { status: 'IN_PROGRESS' });
+      await api.tasks.start(token, task.id);
     } catch (e:any) { throw e; }
   };
 
@@ -88,6 +91,15 @@ export default function MyTasksScreen() {
     }
   };
 
+  const toggleCheck = async (t: Task, value: boolean) => {
+    if (!token) return;
+    try {
+      if (value) await api.tasks.check(token, t.id);
+      else await api.tasks.uncheck(token, t.id);
+      await load();
+    } catch (e:any) { Alert.alert('Gagal update checklist', e.message || String(e)); }
+  };
+
   // group tasks by order
   const groups: Group[] = useMemo(() => {
     const byOrder = new Map<number, Group>();
@@ -110,7 +122,7 @@ export default function MyTasksScreen() {
     const waiting = item.tasks.filter(t => t.status === 'AWAITING_VALIDATION');
     const busy = !!processing[item.orderId];
     return (
-      <View style={styles.card}>
+      <TouchableOpacity activeOpacity={0.85} onPress={() => { setSelectedOrder(item.order || { id: item.orderId }); setDetailOpen(true); }} style={styles.card}>
         <View style={{ flexDirection:'row', justifyContent:'space-between', alignItems:'center' }}>
           <Text style={styles.title}>Order #{item.order?.code || item.orderId}</Text>
           <View style={{ flexDirection:'row', alignItems:'center', gap:8 }}>
@@ -135,12 +147,16 @@ export default function MyTasksScreen() {
               <Text style={styles.stage}>{t.stage || 'Tanpa Stage'}</Text>
               <Text style={styles.subtleSmall}>Status: {t.status}</Text>
             </View>
-            {t.status === 'AWAITING_VALIDATION' ? (
+            {tab === 'working' && (t.status === 'IN_PROGRESS' || t.status === 'AWAITING_VALIDATION') ? (
+              <TouchableOpacity onPress={() => toggleCheck(t, !(t as any).isChecked)} style={[styles.checkPill, (t as any).isChecked && styles.checkPillActive]}>
+                <Text style={[styles.checkPillText, (t as any).isChecked && styles.checkPillTextActive]}>{(t as any).isChecked ? 'Checked' : 'Checklist'}</Text>
+              </TouchableOpacity>
+            ) : t.status === 'AWAITING_VALIDATION' ? (
               <Text style={styles.badge}>Menunggu Validasi</Text>
             ) : null}
           </View>
         ))}
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -150,7 +166,7 @@ export default function MyTasksScreen() {
         <TouchableOpacity onPress={()=> setTab('inbox')} style={[styles.tab, tab==='inbox' && styles.tabActive]}><Text style={tab==='inbox'?styles.tabActiveText:styles.tabText}>Inbox</Text></TouchableOpacity>
         <TouchableOpacity onPress={()=> setTab('working')} style={[styles.tab, tab==='working' && styles.tabActive]}><Text style={tab==='working'?styles.tabActiveText:styles.tabText}>Sedang Dikerjakan</Text></TouchableOpacity>
       </View>
-      <FlatList
+  <FlatList
         data={filteredGroups}
         keyExtractor={(it)=> String(it.orderId)}
         renderItem={renderGroup}
@@ -158,6 +174,7 @@ export default function MyTasksScreen() {
         contentContainerStyle={{ padding: 12 }}
         ListEmptyComponent={!loading ? <Text style={{ textAlign:'center', marginTop: 40 }}>Tidak ada item</Text> : null}
       />
+  <OrderActionsModal visible={detailOpen} order={selectedOrder} onClose={()=> setDetailOpen(false)} onChanged={()=> load()} />
     </View>
   );
 }
@@ -180,4 +197,8 @@ const styles = StyleSheet.create({
   smallBtnDisabled: { opacity: 0.6 },
   badge: { backgroundColor:'#fff8e1', color:'#ff8f00', paddingHorizontal:8, paddingVertical:4, borderRadius:6, overflow:'hidden' },
   countPill: { backgroundColor:'#eef3ff', color:'#3056d3', paddingHorizontal:8, paddingVertical:4, borderRadius:6, overflow:'hidden', fontWeight:'700' },
+  checkPill: { borderWidth:1, borderColor:'#bbb', paddingHorizontal:10, paddingVertical:4, borderRadius:16 },
+  checkPillActive: { backgroundColor:'#e8f5e9', borderColor:'#a5d6a7' },
+  checkPillText: { color:'#333' },
+  checkPillTextActive: { color:'#2e7d32', fontWeight:'700' },
 });

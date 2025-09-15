@@ -4,7 +4,7 @@ import { RequestUser } from '../types/order.dtos';
 export declare class TasksController {
     private tasks;
     constructor(tasks: TasksService);
-    list(): any;
+    list(): Promise<any>;
     create(dto: CreateTaskDto): Promise<any>;
     update(id: number, dto: UpdateTaskDto): Promise<any>;
     remove(id: number): Promise<{
@@ -15,7 +15,10 @@ export declare class TasksController {
         created: number;
     }>;
     requestDone(id: number, dto: RequestDoneDto, user: RequestUser): Promise<any>;
+    start(id: number, user: RequestUser): Promise<any>;
     validate(id: number, dto: ValidateTaskDto, user: RequestUser): Promise<any>;
+    check(id: number, user: RequestUser): Promise<any>;
+    uncheck(id: number, user: RequestUser): Promise<any>;
     awaitingValidation(orderId: number): Promise<any>;
     backfill(): Promise<{
         created: number;

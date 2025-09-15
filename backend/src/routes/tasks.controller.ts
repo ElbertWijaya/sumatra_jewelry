@@ -46,10 +46,28 @@ export class TasksController {
     return this.tasks.requestDone(id, user.userId, dto.notes);
   }
 
+  @Post(':id/start')
+  @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
+  start(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: RequestUser) {
+    return this.tasks.start(id, user.userId);
+  }
+
   @Post(':id/validate')
   @Roles('ADMINISTRATOR','SALES')
   validate(@Param('id', ParseIntPipe) id: number, @Body() dto: ValidateTaskDto, @CurrentUser() user: RequestUser) {
     return this.tasks.validateDone(id, user.userId, dto.notes);
+  }
+
+  @Post(':id/check')
+  @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
+  check(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: RequestUser) {
+    return this.tasks.setChecked(id, user.userId, true);
+  }
+
+  @Post(':id/uncheck')
+  @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
+  uncheck(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: RequestUser) {
+    return this.tasks.setChecked(id, user.userId, false);
   }
 
   @Get('awaiting-validation')

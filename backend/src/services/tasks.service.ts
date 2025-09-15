@@ -28,14 +28,25 @@ export class TasksService {
     return { created: missing.length };
   }
   listActive() {
-    return (this.prisma as any).orderTask.findMany({
-      where: {
-        status: { not: TaskStatus.DONE as any },
-        order: { status: { in: ['DRAFT','DITERIMA','DALAM_PROSES'] } },
-      },
-      orderBy: { createdAt: 'desc' },
-      include: { order: true, assignedTo: true, validatedBy: true },
-    });
+    return (async () => {
+      const rows = await (this.prisma as any).orderTask.findMany({
+        where: {
+          status: { not: TaskStatus.DONE as any },
+          order: { status: { in: ['DRAFT','DITERIMA','DALAM_PROSES'] } },
+        },
+        orderBy: { createdAt: 'desc' },
+        include: { order: true, assignedTo: true, validatedBy: true },
+      });
+      if (!rows.length) return rows;
+      const ids = rows.map((r: any) => r.id).join(',');
+      try {
+        const checks: any[] = await this.prisma.$queryRawUnsafe(`SELECT id, is_checked FROM OrderTask WHERE id IN (${ids})`);
+        const map = new Map<number, any>();
+        checks.forEach((c: any) => map.set(Number(c.id), c));
+        rows.forEach((r: any) => { const c = map.get(Number(r.id)); if (c) (r as any).isChecked = !!c.is_checked; });
+      } catch {}
+      return rows;
+    })();
   }
   async listAwaitingValidationByOrder(orderId: number) {
     // Only tasks for this order that are awaiting validation
@@ -144,5 +155,26 @@ export class TasksService {
     if (!task) throw new NotFoundException('Task not found');
   if (!this.isOrderActive(task.order?.status)) throw new BadRequestException('Order sudah nonaktif (history).');
   return (this.prisma as any).orderTask.update({ where: { id }, data: { validatedById: validatorUserId, validatedAt: new Date(), notes: notes ?? task.notes, status: TaskStatus.DONE as any } });
+  }
+
+  async setChecked(id: number, actorUserId: string, value: boolean) {
+    const task = await (this.prisma as any).orderTask.findUnique({ where: { id }, include: { order: true } });
+    if (!task) throw new NotFoundException('Task not found');
+    if (!this.isOrderActive(task.order?.status)) throw new BadRequestException('Order sudah nonaktif (history).');
+    if (task.assignedToId && task.assignedToId !== actorUserId) throw new BadRequestException('Hanya yang ditugaskan yang bisa mengubah checklist');
+    const checkedVal = value ? 1 : 0;
+    const checkedBySql = value ? `'${actorUserId}'` : 'NULL';
+    await this.prisma.$executeRawUnsafe(`UPDATE OrderTask SET is_checked=${checkedVal}, checked_at=${value ? 'NOW()' : 'NULL'}, checked_by_id=${checkedBySql} WHERE id=${Number(id)}`);
+    const updated = await (this.prisma as any).orderTask.findUnique({ where: { id } });
+    return { ...updated, isChecked: !!value } as any;
+  }
+
+  async start(id: number, actorUserId: string) {
+    const task = await (this.prisma as any).orderTask.findUnique({ where: { id }, include: { order: true } });
+    if (!task) throw new NotFoundException('Task not found');
+    if (!this.isOrderActive(task.order?.status)) throw new BadRequestException('Order sudah nonaktif (history).');
+    if (task.status !== TaskStatus.ASSIGNED) throw new BadRequestException('Hanya task ASSIGNED yang bisa dimulai');
+    if (task.assignedToId && task.assignedToId !== actorUserId) throw new BadRequestException('Hanya yang ditugaskan yang bisa memulai');
+    return (this.prisma as any).orderTask.update({ where: { id }, data: { status: TaskStatus.IN_PROGRESS as any } });
   }
 }

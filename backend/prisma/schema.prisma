@@ -19,6 +19,7 @@ model AppUser {
   histories OrderHistory[]
   tasksAssigned OrderTask[] @relation("TaskAssignedTo")
   tasksValidated OrderTask[] @relation("TaskValidatedBy")
+  tasksChecked  OrderTask[]
 }
 
 model Order {
@@ -92,10 +93,16 @@ model OrderTask {
   validatedById String?   @map("validated_by_id")
   validatedAt   DateTime? @map("validated_at")
   notes         String?   @map("notes")
+  // Progress check by assignee
+  isChecked     Boolean   @default(false) @map("is_checked")
+  checkedAt     DateTime? @map("checked_at")
+  checkedBy     AppUser?  @relation(fields: [checkedById], references: [id])
+  checkedById   String?   @map("checked_by_id")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
   @@index([orderId])
+  @@index([assignedToId])
 }
 
 enum TaskStatus {

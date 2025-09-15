@@ -7,7 +7,7 @@ export declare class TasksService {
     backfillActive(): Promise<{
         created: number;
     }>;
-    listActive(): any;
+    listActive(): Promise<any>;
     listAwaitingValidationByOrder(orderId: number): Promise<any>;
     create(data: {
         orderId: number;
@@ -38,4 +38,6 @@ export declare class TasksService {
     }>;
     requestDone(id: number, requesterUserId: string, notes?: string): Promise<any>;
     validateDone(id: number, validatorUserId: string, notes?: string): Promise<any>;
+    setChecked(id: number, actorUserId: string, value: boolean): Promise<any>;
+    start(id: number, actorUserId: string): Promise<any>;
 }

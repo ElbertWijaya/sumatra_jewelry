@@ -37,8 +37,17 @@ let TasksController = class TasksController {
     requestDone(id, dto, user) {
         return this.tasks.requestDone(id, user.userId, dto.notes);
     }
+    start(id, user) {
+        return this.tasks.start(id, user.userId);
+    }
     validate(id, dto, user) {
         return this.tasks.validateDone(id, user.userId, dto.notes);
+    }
+    check(id, user) {
+        return this.tasks.setChecked(id, user.userId, true);
+    }
+    uncheck(id, user) {
+        return this.tasks.setChecked(id, user.userId, false);
     }
     awaitingValidation(orderId) {
         return this.tasks.listAwaitingValidationByOrder(orderId);
@@ -108,6 +117,15 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], TasksController.prototype, "requestDone", null);
 __decorate([
+    (0, common_1.Post)(':id/start'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES', 'DESIGNER', 'CASTER', 'CARVER', 'DIAMOND_SETTER', 'FINISHER', 'INVENTORY'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", void 0)
+], TasksController.prototype, "start", null);
+__decorate([
     (0, common_1.Post)(':id/validate'),
     (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
@@ -117,6 +135,24 @@ __decorate([
     __metadata("design:paramtypes", [Number, task_dtos_1.ValidateTaskDto, Object]),
     __metadata("design:returntype", void 0)
 ], TasksController.prototype, "validate", null);
+__decorate([
+    (0, common_1.Post)(':id/check'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES', 'DESIGNER', 'CASTER', 'CARVER', 'DIAMOND_SETTER', 'FINISHER', 'INVENTORY'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", void 0)
+], TasksController.prototype, "check", null);
+__decorate([
+    (0, common_1.Post)(':id/uncheck'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES', 'DESIGNER', 'CASTER', 'CARVER', 'DIAMOND_SETTER', 'FINISHER', 'INVENTORY'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", void 0)
+], TasksController.prototype, "uncheck", null);
 __decorate([
     (0, common_1.Get)('awaiting-validation'),
     (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES'),
