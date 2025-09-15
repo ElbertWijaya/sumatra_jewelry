@@ -2,6 +2,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { TaskStatus } from '../types/task.dtos';
 export declare class TasksService {
     private prisma;
+    private readonly logger;
     constructor(prisma: PrismaService);
     private isOrderActive;
     backfillActive(): Promise<{
@@ -38,9 +39,15 @@ export declare class TasksService {
     }>;
     requestDone(id: number, requesterUserId: string, notes?: string): Promise<any>;
     validateDone(id: number, validatorUserId: string, notes?: string): Promise<any>;
+    validateAllForOrderAndUser(orderId: number, targetUserId: string, validatorUserId: string, notes?: string): Promise<{
+        updated: number;
+    }>;
     requestDoneForOrderForUser(orderId: number, requesterUserId: string, notes?: string): Promise<{
         updated: number;
     }>;
     setChecked(id: number, actorUserId: string, value: boolean): Promise<any>;
     start(id: number, actorUserId: string): Promise<any>;
+    acceptOrderForUser(orderId: number, actorUserId: string): Promise<{
+        accepted: number;
+    }>;
 }

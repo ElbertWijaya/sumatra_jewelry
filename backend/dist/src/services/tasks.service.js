@@ -8,14 +8,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var TasksService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TasksService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const task_dtos_1 = require("../types/task.dtos");
-let TasksService = class TasksService {
+let TasksService = TasksService_1 = class TasksService {
     constructor(prisma) {
         this.prisma = prisma;
+        this.logger = new common_1.Logger(TasksService_1.name);
     }
     isOrderActive(status) {
         return status === 'DRAFT' || status === 'DITERIMA' || status === 'DALAM_PROSES';
@@ -48,9 +50,13 @@ let TasksService = class TasksService {
             });
             if (!rows.length)
                 return rows;
-            const ids = rows.map((r) => r.id).join(',');
+            const ids = rows.map((r) => r.id);
             try {
-                const checks = await this.prisma.$queryRawUnsafe(`SELECT id, is_checked FROM OrderTask WHERE id IN (${ids})`);
+                if (!ids.length)
+                    return rows;
+                const fragments = ids.map(() => `?`).join(',');
+                const sql = `SELECT id, is_checked FROM OrderTask WHERE id IN (${fragments})`;
+                const checks = await this.prisma.$queryRawUnsafe(sql, ...ids);
                 const map = new Map();
                 checks.forEach((c) => map.set(Number(c.id), c));
                 rows.forEach((r) => { const c = map.get(Number(r.id)); if (c)
@@ -153,6 +159,7 @@ let TasksService = class TasksService {
         return { created: creates.length };
     }
     async requestDone(id, requesterUserId, notes) {
+        this.logger.debug(`requestDone id=${id} by=${requesterUserId}`);
         const task = await this.prisma.orderTask.findUnique({ where: { id }, include: { order: true } });
         if (!task)
             throw new common_1.NotFoundException('Task not found');
@@ -160,7 +167,7 @@ let TasksService = class TasksService {
             throw new common_1.BadRequestException('Order sudah nonaktif (history).');
         if (task.assignedToId && task.assignedToId !== requesterUserId)
             throw new common_1.BadRequestException('Hanya yang ditugaskan yang bisa request selesai');
-        const selfCheck = await this.prisma.$queryRawUnsafe(`SELECT is_checked FROM OrderTask WHERE id=${Number(id)} LIMIT 1`);
+        const selfCheck = await this.prisma.$queryRaw `SELECT is_checked FROM OrderTask WHERE id = ${Number(id)} LIMIT 1`;
         const isSelfChecked = !!(selfCheck?.[0]?.is_checked);
         if (task.status !== task_dtos_1.TaskStatus.IN_PROGRESS) {
             throw new common_1.BadRequestException('Task harus dalam status IN_PROGRESS untuk request selesai');
@@ -168,7 +175,7 @@ let TasksService = class TasksService {
         if (!isSelfChecked) {
             throw new common_1.BadRequestException('Checklist wajib dicentang sebelum request selesai');
         }
-        const rows = await this.prisma.$queryRawUnsafe(`SELECT id, status, is_checked FROM OrderTask WHERE order_id=${Number(task.orderId)} AND assigned_to_id ${requesterUserId ? `='${requesterUserId}'` : 'IS NULL'} AND status IN ('ASSIGNED','IN_PROGRESS')`);
+        const rows = await this.prisma.$queryRaw `SELECT id, status, is_checked FROM OrderTask WHERE orderId = ${Number(task.orderId)} AND assigned_to_id = ${requesterUserId} AND status IN ('ASSIGNED','IN_PROGRESS')`;
         const hasUnstarted = rows.some(r => String(r.status) === 'ASSIGNED');
         if (hasUnstarted) {
             throw new common_1.BadRequestException('Ada sub-tugas yang belum dimulai/di-checklist. Mohon checklist semua dulu.');
@@ -177,7 +184,15 @@ let TasksService = class TasksService {
         if (anyUnchecked) {
             throw new common_1.BadRequestException('Semua sub-tugas harus dichecklist sebelum bisa request selesai.');
         }
-        return this.prisma.orderTask.update({ where: { id }, data: { notes: notes ?? task.notes, requestedDoneAt: new Date(), status: task_dtos_1.TaskStatus.AWAITING_VALIDATION } });
+        try {
+            const res = await this.prisma.orderTask.update({ where: { id }, data: { notes: notes ?? task.notes, requestedDoneAt: new Date(), status: task_dtos_1.TaskStatus.AWAITING_VALIDATION } });
+            this.logger.debug(`requestDone OK id=${id}`);
+            return res;
+        }
+        catch (e) {
+            this.logger.error(`requestDone FAIL id=${id} by=${requesterUserId}: ${e?.message}`, e?.stack);
+            throw new common_1.BadRequestException(e?.message || 'Gagal mengajukan verifikasi');
+        }
     }
     async validateDone(id, validatorUserId, notes) {
         const task = await this.prisma.orderTask.findUnique({ where: { id }, include: { order: true } });
@@ -187,13 +202,33 @@ let TasksService = class TasksService {
             throw new common_1.BadRequestException('Order sudah nonaktif (history).');
         return this.prisma.orderTask.update({ where: { id }, data: { validatedById: validatorUserId, validatedAt: new Date(), notes: notes ?? task.notes, status: task_dtos_1.TaskStatus.DONE } });
     }
-    async requestDoneForOrderForUser(orderId, requesterUserId, notes) {
+    async validateAllForOrderAndUser(orderId, targetUserId, validatorUserId, notes) {
         const order = await this.prisma.order.findUnique({ where: { id: orderId } });
         if (!order)
             throw new common_1.NotFoundException('Order not found');
         if (!this.isOrderActive(order.status))
             throw new common_1.BadRequestException('Order sudah nonaktif (history).');
-        const rows = await this.prisma.$queryRawUnsafe(`SELECT id, status, is_checked FROM OrderTask WHERE order_id=${Number(orderId)} AND assigned_to_id='${requesterUserId}' AND status IN ('ASSIGNED','IN_PROGRESS')`);
+        const tasks = await this.prisma.orderTask.findMany({
+            where: { orderId, assignedToId: targetUserId, status: task_dtos_1.TaskStatus.AWAITING_VALIDATION },
+            select: { id: true },
+        });
+        if (!tasks.length)
+            return { updated: 0 };
+        const ops = tasks.map(t => this.prisma.orderTask.update({
+            where: { id: t.id },
+            data: { validatedById: validatorUserId, validatedAt: new Date(), notes, status: task_dtos_1.TaskStatus.DONE },
+        }));
+        await this.prisma.$transaction(ops);
+        return { updated: tasks.length };
+    }
+    async requestDoneForOrderForUser(orderId, requesterUserId, notes) {
+        this.logger.debug(`requestDoneForOrderForUser order=${orderId} by=${requesterUserId}`);
+        const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+        if (!order)
+            throw new common_1.NotFoundException('Order not found');
+        if (!this.isOrderActive(order.status))
+            throw new common_1.BadRequestException('Order sudah nonaktif (history).');
+        const rows = await this.prisma.$queryRaw `SELECT id, status, is_checked FROM OrderTask WHERE orderId = ${Number(orderId)} AND assigned_to_id = ${requesterUserId} AND status IN ('ASSIGNED','IN_PROGRESS')`;
         if (rows.length === 0)
             throw new common_1.BadRequestException('Tidak ada tugas yang bisa diajukan');
         if (rows.some(r => String(r.status) === 'ASSIGNED'))
@@ -203,11 +238,19 @@ let TasksService = class TasksService {
         const ids = rows.filter(r => String(r.status) === 'IN_PROGRESS').map(r => Number(r.id));
         if (!ids.length)
             return { updated: 0 };
-        const updates = ids.map(id => this.prisma.orderTask.update({ where: { id }, data: { notes, requestedDoneAt: new Date(), status: task_dtos_1.TaskStatus.AWAITING_VALIDATION } }));
-        await this.prisma.$transaction(updates);
-        return { updated: ids.length };
+        try {
+            const updates = ids.map(id => this.prisma.orderTask.update({ where: { id }, data: { notes, requestedDoneAt: new Date(), status: task_dtos_1.TaskStatus.AWAITING_VALIDATION } }));
+            await this.prisma.$transaction(updates);
+            this.logger.debug(`requestDoneForOrderForUser OK order=${orderId} updated=${ids.length}`);
+            return { updated: ids.length };
+        }
+        catch (e) {
+            this.logger.error(`requestDoneForOrderForUser FAIL order=${orderId} by=${requesterUserId}: ${e?.message}`, e?.stack);
+            throw new common_1.BadRequestException(e?.message || 'Gagal mengajukan verifikasi');
+        }
     }
     async setChecked(id, actorUserId, value) {
+        this.logger.debug(`setChecked id=${id} by=${actorUserId} value=${value}`);
         const task = await this.prisma.orderTask.findUnique({ where: { id }, include: { order: true } });
         if (!task)
             throw new common_1.NotFoundException('Task not found');
@@ -218,19 +261,16 @@ let TasksService = class TasksService {
         if (task.status === task_dtos_1.TaskStatus.AWAITING_VALIDATION || task.status === task_dtos_1.TaskStatus.DONE) {
             throw new common_1.BadRequestException('Checklist tidak bisa diubah setelah request selesai diajukan atau divalidasi');
         }
-        const shouldAutoStart = value && task.status === task_dtos_1.TaskStatus.ASSIGNED;
-        const checkedVal = value ? 1 : 0;
-        const checkedBySql = value ? `'${actorUserId}'` : 'NULL';
-        const updates = [];
-        updates.push(this.prisma.$executeRawUnsafe(`UPDATE OrderTask SET is_checked=${checkedVal}, checked_at=${value ? 'NOW()' : 'NULL'}, checked_by_id=${checkedBySql} WHERE id=${Number(id)}`));
-        if (shouldAutoStart) {
-            updates.push(this.prisma.orderTask.update({ where: { id }, data: { status: task_dtos_1.TaskStatus.IN_PROGRESS } }));
+        if (task.status === task_dtos_1.TaskStatus.ASSIGNED && value) {
+            throw new common_1.BadRequestException('Mohon terima pesanan terlebih dahulu untuk memulai.');
         }
-        await this.prisma.$transaction(updates);
+        const checkedVal = value ? 1 : 0;
+        await this.prisma.$executeRaw `UPDATE OrderTask SET is_checked = ${checkedVal}, checked_at = ${value ? new Date() : null}, checked_by_id = ${value ? actorUserId : null} WHERE id = ${Number(id)}`;
         const updated = await this.prisma.orderTask.findUnique({ where: { id } });
         return { ...updated, isChecked: !!value };
     }
     async start(id, actorUserId) {
+        this.logger.debug(`start id=${id} by=${actorUserId}`);
         const task = await this.prisma.orderTask.findUnique({ where: { id }, include: { order: true } });
         if (!task)
             throw new common_1.NotFoundException('Task not found');
@@ -242,9 +282,25 @@ let TasksService = class TasksService {
             throw new common_1.BadRequestException('Hanya yang ditugaskan yang bisa memulai');
         return this.prisma.orderTask.update({ where: { id }, data: { status: task_dtos_1.TaskStatus.IN_PROGRESS } });
     }
+    async acceptOrderForUser(orderId, actorUserId) {
+        this.logger.debug(`acceptOrderForUser order=${orderId} by=${actorUserId}`);
+        const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+        if (!order)
+            throw new common_1.NotFoundException('Order not found');
+        if (!this.isOrderActive(order.status))
+            throw new common_1.BadRequestException('Order sudah nonaktif (history).');
+        const tasks = await this.prisma.orderTask.findMany({
+            where: { orderId, assignedToId: actorUserId, status: task_dtos_1.TaskStatus.ASSIGNED },
+            select: { id: true },
+        });
+        if (!tasks.length)
+            throw new common_1.BadRequestException('Tidak ada tugas ASSIGNED untuk diterima');
+        await this.prisma.$transaction(tasks.map(t => this.prisma.orderTask.update({ where: { id: t.id }, data: { status: task_dtos_1.TaskStatus.IN_PROGRESS } })));
+        return { accepted: tasks.length };
+    }
 };
 exports.TasksService = TasksService;
-exports.TasksService = TasksService = __decorate([
+exports.TasksService = TasksService = TasksService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], TasksService);

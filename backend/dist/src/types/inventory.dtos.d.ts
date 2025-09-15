@@ -1,0 +1,25 @@
+export type CreateInventoryDto = {
+    orderId: number;
+    code?: string;
+    name?: string;
+    category?: string;
+    material?: string;
+    karat?: string;
+    goldType?: string;
+    goldColor?: string;
+    weightGross?: number;
+    weightNet?: number;
+    stoneCount?: number;
+    stoneWeight?: number;
+    size?: string;
+    dimensions?: string;
+    barcode?: string;
+    sku?: string;
+    location?: string;
+    cost?: number;
+    price?: number;
+    status?: string;
+    images?: string[];
+    notes?: string;
+};
+export type UpdateInventoryDto = Partial<CreateInventoryDto>;

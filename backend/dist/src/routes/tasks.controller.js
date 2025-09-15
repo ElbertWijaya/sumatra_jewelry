@@ -40,11 +40,17 @@ let TasksController = class TasksController {
     requestDoneMine(orderId, user, dto) {
         return this.tasks.requestDoneForOrderForUser(orderId, user.userId, dto?.notes);
     }
+    acceptMine(orderId, user) {
+        return this.tasks.acceptOrderForUser(orderId, user.userId);
+    }
     start(id, user) {
         return this.tasks.start(id, user.userId);
     }
     validate(id, dto, user) {
         return this.tasks.validateDone(id, user.userId, dto.notes);
+    }
+    validateUserForOrder(orderId, userId, user, dto) {
+        return this.tasks.validateAllForOrderAndUser(orderId, userId, user.userId, dto?.notes);
     }
     check(id, user) {
         return this.tasks.setChecked(id, user.userId, true);
@@ -130,6 +136,15 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], TasksController.prototype, "requestDoneMine", null);
 __decorate([
+    (0, common_1.Post)('order/:orderId/accept-mine'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES', 'DESIGNER', 'CASTER', 'CARVER', 'DIAMOND_SETTER', 'FINISHER', 'INVENTORY'),
+    __param(0, (0, common_1.Param)('orderId', common_1.ParseIntPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", void 0)
+], TasksController.prototype, "acceptMine", null);
+__decorate([
     (0, common_1.Post)(':id/start'),
     (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES', 'DESIGNER', 'CASTER', 'CARVER', 'DIAMOND_SETTER', 'FINISHER', 'INVENTORY'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
@@ -148,6 +163,17 @@ __decorate([
     __metadata("design:paramtypes", [Number, task_dtos_1.ValidateTaskDto, Object]),
     __metadata("design:returntype", void 0)
 ], TasksController.prototype, "validate", null);
+__decorate([
+    (0, common_1.Post)('order/:orderId/validate-user/:userId'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES'),
+    __param(0, (0, common_1.Param)('orderId', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Param)('userId')),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
+    __param(3, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, String, Object, task_dtos_1.ValidateTaskDto]),
+    __metadata("design:returntype", void 0)
+], TasksController.prototype, "validateUserForOrder", null);
 __decorate([
     (0, common_1.Post)(':id/check'),
     (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES', 'DESIGNER', 'CASTER', 'CARVER', 'DIAMOND_SETTER', 'FINISHER', 'INVENTORY'),

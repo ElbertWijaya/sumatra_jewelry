@@ -398,31 +398,49 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
     </>
   );
 
-  const doValidate = async (taskId: number) => {
-    if (!token) return;
+  const groupedValidations = useMemo(() => {
+    const map = new Map<string, { userId: string; name: string; role: string | undefined; stages: string[]; count: number }>();
+    for (const v of validations) {
+      const uid = v.assignedTo?.id || 'unknown';
+      const key = uid;
+      const cur = map.get(key) || { userId: uid, name: v.assignedTo?.fullName || '-', role: v.assignedTo?.jobRole, stages: [], count: 0 } as any;
+      if (v.stage) cur.stages.push(v.stage);
+      cur.count += 1;
+      map.set(key, cur);
+    }
+    return Array.from(map.values());
+  }, [validations]);
+
+  const validateGroup = async (userId: string) => {
+    if (!token || !order?.id) return;
     try {
-      await api.tasks.validate(token, taskId);
-      const res = await api.tasks.awaitingValidation(token!, order!.id);
+      // call bulk endpoint
+      // @ts-ignore
+      await api.tasks.validateUserForOrder(token, order.id, userId);
+      const res = await api.tasks.awaitingValidation(token, order.id);
       setValidations(res);
-      try {
-        const all = await api.tasks.list(token!);
-        setOrderTasks(Array.isArray(all) ? all.filter((t:any)=> t.orderId === order!.id) : []);
-      } catch {}
       onChanged?.();
-    } catch (e:any) { Alert.alert('Gagal validasi', e.message || String(e)); }
+      Alert.alert('Validasi', 'Semua tugas tervalidasi');
+    } catch (e:any) {
+      Alert.alert('Gagal validasi', e.message || String(e));
+    }
   };
 
   const renderValidate = () => (
     <View>
       {!canValidate ? <Text>Anda tidak memiliki akses untuk validasi.</Text> : (
-        validations.length === 0 ? <Text>Tidak ada tugas yang menunggu validasi.</Text> : (
-          <FlatList data={validations} keyExtractor={(it)=>String(it.id)} renderItem={({item}) => (
+        groupedValidations.length === 0 ? <Text>Tidak ada tugas yang menunggu validasi.</Text> : (
+          <FlatList data={groupedValidations} keyExtractor={(it)=>String(it.userId)} renderItem={({item}) => (
             <View style={styles.valCard}>
-              <Text style={{ fontWeight:'600' }}>{item.stage || 'Tanpa Stage'}</Text>
-              <Text style={{ color:'#555' }}>Oleh: {item.assignedTo?.fullName || '-'}</Text>
-              {item.notes ? <Text style={{ color:'#333' }}>Catatan: {item.notes}</Text> : null}
-              <View style={{ height: 8 }} />
-              <TouchableOpacity onPress={()=> doValidate(item.id)} style={[styles.primary, { paddingVertical: 8 }]}><Text style={styles.primaryText}>Validasi</Text></TouchableOpacity>
+              <Text style={{ fontWeight:'700', fontSize: 15 }}>{item.name}</Text>
+              <Text style={{ color:'#555' }}>{item.role || '-'}</Text>
+              <View style={{ height:6 }} />
+              <Text style={{ color:'#333', marginBottom:6 }}>Sub-tugas:</Text>
+              <View style={styles.pillRow}>
+                {item.stages.map((s, idx) => (<View key={idx} style={styles.pill}><Text style={styles.pillText}>{s}</Text></View>))}
+              </View>
+              <View style={{ height:10 }} />
+              <TouchableOpacity onPress={()=> validateGroup(item.userId)} style={[styles.primary, { paddingVertical: 10 }]}><Text style={styles.primaryText}>Validate ({item.count})</Text></TouchableOpacity>
             </View>
           )} />
         )

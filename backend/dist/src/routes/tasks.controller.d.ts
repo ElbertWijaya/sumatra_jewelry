@@ -18,8 +18,14 @@ export declare class TasksController {
     requestDoneMine(orderId: number, user: RequestUser, dto: RequestDoneDto): Promise<{
         updated: number;
     }>;
+    acceptMine(orderId: number, user: RequestUser): Promise<{
+        accepted: number;
+    }>;
     start(id: number, user: RequestUser): Promise<any>;
     validate(id: number, dto: ValidateTaskDto, user: RequestUser): Promise<any>;
+    validateUserForOrder(orderId: number, userId: string, user: RequestUser, dto: ValidateTaskDto): Promise<{
+        updated: number;
+    }>;
     check(id: number, user: RequestUser): Promise<any>;
     uncheck(id: number, user: RequestUser): Promise<any>;
     awaitingValidation(orderId: number): Promise<any>;

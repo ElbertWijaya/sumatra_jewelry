@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, Alert, Animated, Easing } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
 import { OrderActionsModal } from './OrderActionsModal';
@@ -61,6 +62,7 @@ const SquareActionButton = ({ title, disabled, muted, onPress }: { title: string
 
 export default function MyTasksScreen() {
   const { token, user } = useAuth();
+  const router = useRouter();
   const [all, setAll] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<'inbox'|'working'>('inbox');
@@ -97,6 +99,20 @@ export default function MyTasksScreen() {
     }
   };
 
+  const acceptOrder = async (g: Group) => {
+    if (!token) return;
+    setProcessing(p => ({ ...p, [g.orderId]: true }));
+    try {
+      await api.tasks.acceptMine(token, g.orderId);
+      Alert.alert('Diterima', 'Pesanan ditandai mulai dikerjakan.');
+      await load();
+    } catch (e: any) {
+      Alert.alert('Gagal menerima pesanan', e.message || String(e));
+    } finally {
+      setProcessing(p => ({ ...p, [g.orderId]: false }));
+    }
+  };
+
   // group tasks by order
   const groups: Group[] = useMemo(() => {
     const byOrder = new Map<number, Group>();
@@ -109,7 +125,7 @@ export default function MyTasksScreen() {
   }, [all]);
 
   const filteredGroups = useMemo(() => {
-    if (tab === 'inbox') return groups.filter(g => g.tasks.some(t => t.status === 'ASSIGNED'));
+  if (tab === 'inbox') return groups.filter(g => g.tasks.some(t => t.status === 'ASSIGNED'));
     return groups.filter(g => g.tasks.some(t => t.status === 'IN_PROGRESS' || t.status === 'AWAITING_VALIDATION'));
   }, [groups, tab]);
 
@@ -146,7 +162,7 @@ export default function MyTasksScreen() {
   const renderGroup = ({ item }: { item: Group }) => {
     const busy = !!processing[item.orderId];
     const { checked, total } = progressFor(item);
-    const readyToRequest = canRequestDone(item);
+  const readyToRequest = canRequestDone(item);
     const reason = disabledReason(item);
     const isExpanded = expanded[item.orderId] ?? (tab === 'working');
 
@@ -166,7 +182,7 @@ export default function MyTasksScreen() {
           <View style={{ alignItems:'flex-end' }}>
             <Text style={styles.countPill}>{checked}/{total} checklist</Text>
             <View style={styles.progressBar}><View style={[styles.progressFill, { width: `${total>0 ? (checked/total)*100 : 0}%` }]} /></View>
-            <Text style={styles.hintCaption}>Checklist = mulai otomatis</Text>
+            <Text style={styles.hintCaption}>Harus terima pesanan dahulu</Text>
           </View>
         </View>
 
@@ -184,9 +200,15 @@ export default function MyTasksScreen() {
                     <Text style={styles.stage}>{t.stage || 'Tanpa Stage'}</Text>
                   </View>
                   {showCheckbox ? (
-                    <TouchableOpacity onPress={() => toggleCheck(t, !(t as any).isChecked)} style={[styles.checkbox, (t as any).isChecked && styles.checkboxChecked]}>
-                      <View style={[styles.checkboxInner, (t as any).isChecked && styles.checkboxInnerChecked]} />
-                    </TouchableOpacity>
+                    t.status === 'ASSIGNED' ? (
+                      <View style={[styles.checkbox, styles.masterCheckboxDisabled]}>
+                        <View style={styles.checkboxInner} />
+                      </View>
+                    ) : (
+                      <TouchableOpacity onPress={() => toggleCheck(t, !(t as any).isChecked)} style={[styles.checkbox, (t as any).isChecked && styles.checkboxChecked]}>
+                        <View style={[styles.checkboxInner, (t as any).isChecked && styles.checkboxInnerChecked]} />
+                      </TouchableOpacity>
+                    )
                   ) : t.status === 'AWAITING_VALIDATION' ? (
                     <Text style={styles.badge}>Menunggu Validasi</Text>
                   ) : null}
@@ -197,11 +219,24 @@ export default function MyTasksScreen() {
           {/* Floating bottom-right button */}
           <View style={{ height: 40 }} />
           <View pointerEvents={busy ? 'none' : 'auto'} style={styles.fabContainer}>
-              {readyToRequest ? (
+            {tab === 'inbox' && item.tasks.some(t => t.status === 'ASSIGNED') ? (
+              user?.jobRole === 'INVENTORY' ? (
+                <SquareActionButton title="Masukkan Ke Dalam Inventory" onPress={async () => {
+                  try {
+                    if (token) await api.tasks.acceptMine(token, item.orderId);
+                  } catch (e:any) { /* ignore start errors, still navigate */ }
+                  router.push({ pathname: '/inventory-form', params: { orderId: String(item.orderId) } });
+                }} />
+              ) : (
+                <SquareActionButton title="Terima Pesanan" onPress={() => acceptOrder(item)} />
+              )
+            ) : (
+              readyToRequest ? (
                 <SquareActionButton title="Ajukan verifikasi" onPress={() => requestDoneOrder(item)} />
               ) : (
                 <SquareActionButton title="Ajukan verifikasi" muted onPress={() => Alert.alert('Belum bisa', reason || 'Checklist semua sub-tugas')} />
-              )}
+              )
+            )}
           </View>
         </>}
       </View>

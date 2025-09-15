@@ -1,0 +1,1 @@
+-- Removed erroneous redefinition, index already exists or named differently.

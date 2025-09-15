@@ -57,6 +57,16 @@ export class TasksController {
     return this.tasks.requestDoneForOrderForUser(orderId, user.userId, dto?.notes);
   }
 
+  // Order-level accept for assignee's tasks: move ASSIGNED -> IN_PROGRESS explicitly
+  @Post('order/:orderId/accept-mine')
+  @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
+  acceptMine(
+    @Param('orderId', ParseIntPipe) orderId: number,
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.tasks.acceptOrderForUser(orderId, user.userId);
+  }
+
   @Post(':id/start')
   @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
   start(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: RequestUser) {
@@ -67,6 +77,18 @@ export class TasksController {
   @Roles('ADMINISTRATOR','SALES')
   validate(@Param('id', ParseIntPipe) id: number, @Body() dto: ValidateTaskDto, @CurrentUser() user: RequestUser) {
     return this.tasks.validateDone(id, user.userId, dto.notes);
+  }
+
+  // Bulk validate: validate all AWAITING_VALIDATION tasks for a specific user on an order
+  @Post('order/:orderId/validate-user/:userId')
+  @Roles('ADMINISTRATOR','SALES')
+  validateUserForOrder(
+    @Param('orderId', ParseIntPipe) orderId: number,
+    @Param('userId') userId: string,
+    @CurrentUser() user: RequestUser,
+    @Body() dto: ValidateTaskDto,
+  ) {
+    return this.tasks.validateAllForOrderAndUser(orderId, userId, user.userId, dto?.notes);
   }
 
   @Post(':id/check')

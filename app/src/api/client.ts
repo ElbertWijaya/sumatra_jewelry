@@ -113,11 +113,13 @@ export const api = {
     assign: (token: string, id: number, assignedToId: string) => request(`/tasks/${id}/assign`, { method: 'POST', body: JSON.stringify({ assignedToId }), headers: { Authorization: `Bearer ${token}` } }),
     assignBulk: (token: string, payload: { orderId: number; role: string; userId: string; subtasks: { stage?: string; notes?: string }[] }) => request('/tasks/assign-bulk', { method: 'POST', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` } }),
     requestDone: (token: string, id: number, notes?: string) => request(`/tasks/${id}/request-done`, { method: 'POST', body: JSON.stringify({ notes }), headers: { Authorization: `Bearer ${token}` } }),
-    validate: (token: string, id: number, notes?: string) => request(`/tasks/${id}/validate`, { method: 'POST', body: JSON.stringify({ notes }), headers: { Authorization: `Bearer ${token}` } }),
+  validate: (token: string, id: number, notes?: string) => request(`/tasks/${id}/validate`, { method: 'POST', body: JSON.stringify({ notes }), headers: { Authorization: `Bearer ${token}` } }),
+  validateUserForOrder: (token: string, orderId: number, userId: string, notes?: string) => request(`/tasks/order/${orderId}/validate-user/${userId}`, { method: 'POST', body: JSON.stringify({ notes }), headers: { Authorization: `Bearer ${token}` } }),
   start: (token: string, id: number) => request(`/tasks/${id}/start`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }),
   check: (token: string, id: number) => request(`/tasks/${id}/check`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }),
   uncheck: (token: string, id: number) => request(`/tasks/${id}/uncheck`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }),
   requestDoneMine: (token: string, orderId: number, notes?: string) => request(`/tasks/order/${orderId}/request-done-mine`, { method: 'POST', body: JSON.stringify({ notes }), headers: { Authorization: `Bearer ${token}` } }),
+  acceptMine: (token: string, orderId: number) => request(`/tasks/order/${orderId}/accept-mine`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }),
   },
   users: {
     list: (token: string, opts?: { jobRole?: string }) => {
@@ -126,5 +128,11 @@ export const api = {
       const q = params.length ? `?${params.join('&')}` : '';
       return request(`/users${q}`, { headers: { Authorization: `Bearer ${token}` } });
     },
+  },
+  inventory: {
+    get: (token: string, id: number) => request(`/inventory/${id}`, { headers: { Authorization: `Bearer ${token}` } }),
+    listByOrder: (token: string, orderId: number) => request(`/inventory?orderId=${orderId}`, { headers: { Authorization: `Bearer ${token}` } }),
+    create: (token: string, payload: any) => request('/inventory', { method: 'POST', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` } }),
+    update: (token: string, id: number, patch: any) => request(`/inventory/${id}`, { method: 'PATCH', body: JSON.stringify(patch), headers: { Authorization: `Bearer ${token}` } }),
   }
 };

@@ -105,6 +105,43 @@ model OrderTask {
   @@index([assignedToId])
 }
 
+model InventoryItem {
+  id           Int       @id @default(autoincrement())
+  order        Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  orderId      Int?
+  code         String?   @map("code")
+  name         String?   @map("name")
+  category     String?   @map("category")
+  material     String?   @map("material")
+  karat        String?   @map("karat")
+  goldType     String?   @map("gold_type")
+  goldColor    String?   @map("gold_color")
+  weightGross  Decimal?  @db.Decimal(10,2) @map("weight_gross")
+  weightNet    Decimal?  @db.Decimal(10,2) @map("weight_net")
+  stoneCount   Int?      @map("stone_count")
+  stoneWeight  Decimal?  @db.Decimal(10,2) @map("stone_weight")
+  size         String?   @map("size")
+  dimensions   String?   @map("dimensions")
+  barcode      String?   @unique @map("barcode")
+  sku          String?   @unique @map("sku")
+  location     String?   @map("location")
+  cost         Decimal?  @db.Decimal(14,2) @map("cost")
+  price        Decimal?  @db.Decimal(14,2) @map("price")
+  status       String?   @map("status")
+  images       Json?     @map("images")
+  notes        String?   @map("notes")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  createdBy    AppUser?  @relation(fields: [createdById], references: [id])
+  createdById  String?   @map("created_by_id")
+  updatedBy    AppUser?  @relation(fields: [updatedById], references: [id])
+  updatedById  String?   @map("updated_by_id")
+
+  @@index([orderId])
+  @@index([barcode])
+  @@index([sku])
+}
+
 enum TaskStatus {
   OPEN
   ASSIGNED
