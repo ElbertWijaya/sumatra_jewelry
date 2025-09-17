@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-  "start": "node dist/src/main.js",
+    "start": "node dist/src/main.js",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "build": "nest build",
@@ -13,8 +13,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "seed": "ts-node -r tsconfig-paths/register prisma/seed.ts",
-  "db:reset": "ts-node -r tsconfig-paths/register src/scripts/reset-db.ts",
-  "db:ensure-checklist": "ts-node -r tsconfig-paths/register src/scripts/ensure-task-checklist-columns.ts",
+    "db:reset": "ts-node -r tsconfig-paths/register src/scripts/reset-db.ts",
+    "db:ensure-checklist": "ts-node -r tsconfig-paths/register src/scripts/ensure-task-checklist-columns.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
@@ -27,6 +27,7 @@
     "@nestjs/jwt": "^10.0.0",
     "@nestjs/passport": "^10.0.0",
     "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/websockets": "^10.4.20",
     "@prisma/client": "5.22.0",
     "argon2": "^0.41.0",
     "bcrypt": "^5.1.1",
@@ -42,6 +43,7 @@
     "pino-pretty": "^10.3.0",
     "prisma": "5.22.0",
     "rxjs": "^7.8.1",
+    "socket.io": "^4.8.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {
