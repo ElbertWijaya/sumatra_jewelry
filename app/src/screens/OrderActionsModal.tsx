@@ -219,7 +219,7 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
             <>
               <View style={{ flexDirection:'row', justifyContent:'space-between', alignItems:'center' }}>
                 <Text style={styles.detailTitle}>{det.code ? `#${det.code}` : `#${det.id}`}</Text>
-                {det.status ? (
+                {det.status && String(det.status).toUpperCase() !== 'DALAM_PROSES' ? (
                   <Text style={[styles.badgeBase, badgeStyle]}>{String(det.status)}</Text>
                 ) : null}
               </View>
@@ -399,16 +399,18 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
         <Text style={[styles.subtleSmall, { paddingVertical: 4 }]}>Terakhir diperbarui: {lastUpdated.toLocaleTimeString()}</Text>
       ) : null}
       <View style={{ gap: 6 }}>
-        {liveTasks.length === 0 ? (
+        {(() => { const visibleTasks = (liveTasks || []).filter((t:any)=> ['ASSIGNED','IN_PROGRESS','AWAITING_VALIDATION'].includes(String(t.status))); return visibleTasks; })().length === 0 ? (
           <Text style={styles.subtleSmall}>Belum ada tugas untuk order ini.</Text>
         ) : (
-          liveTasks.map((t: any) => (
+          (liveTasks || []).filter((t:any)=> ['ASSIGNED','IN_PROGRESS','AWAITING_VALIDATION'].includes(String(t.status))).map((t: any) => (
             <View key={t.id} style={{ flexDirection: 'row', justifyContent:'space-between', alignItems:'center', paddingVertical: 4 }}>
               <Text style={styles.infoValue}>{t.stage || 'Tanpa Stage'}</Text>
               <View style={{ flexDirection:'row', alignItems:'center', gap:8 }}>
-                <Text style={styles.badgeBase}>{String(t.status)}</Text>
+                {t.status === 'ASSIGNED' ? (
+                  <Text style={styles.badgeBase}>ASSIGNED</Text>
+                ) : null}
                 {t.status === 'ASSIGNED' || t.status === 'IN_PROGRESS' ? (
-                  <View style={[styles.checkbox, t.isChecked && styles.checkboxChecked]}>
+                  <View style={[styles.checkbox, t.isChecked && styles.checkboxChecked, t.status === 'ASSIGNED' ? { opacity: 0.5 } : null]}>
                     <View style={[styles.checkboxInner, t.isChecked && styles.checkboxInnerChecked]} />
                   </View>
                 ) : t.status === 'AWAITING_VALIDATION' ? (
@@ -594,10 +596,10 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 2,
-    backgroundColor: '#1976d2',
+    backgroundColor: 'transparent',
   },
   checkboxInnerChecked: {
-    backgroundColor: '#0b5394',
+    backgroundColor: '#1976d2',
   },
   subtleSmall: {
     color: '#999',
