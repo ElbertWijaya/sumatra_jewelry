@@ -3,9 +3,9 @@ module.exports = function (api) {
   return {
     presets: ['babel-preset-expo'],
     plugins: [
-      'expo-router/babel',
-      // NOTE: Reanimated plugin must be listed last
-      'react-native-reanimated/plugin',
+      // Expo Router plugin is included via babel-preset-expo in SDK 50+; no need to add here
+      // Reanimated v4 moved its Babel plugin to react-native-worklets; keep this last
+      'react-native-worklets/plugin',
     ],
   };
 };
