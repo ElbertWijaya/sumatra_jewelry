@@ -1,11 +1,9 @@
 import { PrismaService } from '../prisma/prisma.service';
-import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { TaskStatus } from '../types/task.dtos';
 export declare class TasksService {
     private prisma;
-    private rt;
     private readonly logger;
-    constructor(prisma: PrismaService, rt: RealtimeGateway);
+    constructor(prisma: PrismaService);
     private isOrderActive;
     backfillActive(): Promise<{
         created: number;

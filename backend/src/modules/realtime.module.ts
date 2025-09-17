@@ -1,10 +1,2 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { RealtimeGateway } from '../realtime/realtime.gateway';
-
-@Module({
-  imports: [ConfigModule],
-  providers: [RealtimeGateway],
-  exports: [RealtimeGateway],
-})
-export class RealtimeModule {}
+// Realtime module removed
+export {};

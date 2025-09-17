@@ -13,12 +13,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TasksService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
-const realtime_gateway_1 = require("../realtime/realtime.gateway");
 const task_dtos_1 = require("../types/task.dtos");
 let TasksService = TasksService_1 = class TasksService {
-    constructor(prisma, rt) {
+    constructor(prisma) {
         this.prisma = prisma;
-        this.rt = rt;
         this.logger = new common_1.Logger(TasksService_1.name);
     }
     isOrderActive(status) {
@@ -123,11 +121,6 @@ let TasksService = TasksService_1 = class TasksService {
         }
         ops.push(this.prisma.orderTask.update({ where: { id }, data: { assignedToId, status: task_dtos_1.TaskStatus.ASSIGNED } }));
         const txResult = await this.prisma.$transaction(ops);
-        try {
-            if (assignedToId)
-                this.rt.emitToUser(assignedToId, 'task.assigned', { taskId: id, orderId: task.orderId });
-        }
-        catch { }
         return txResult[txResult.length - 1];
     }
     async assignBulk(params) {
@@ -163,10 +156,6 @@ let TasksService = TasksService_1 = class TasksService {
         }
         updates.push(...creates);
         await this.prisma.$transaction(updates);
-        try {
-            this.rt.emitToUser(params.userId, 'task.assigned.bulk', { orderId: params.orderId, count: creates.length });
-        }
-        catch { }
         return { created: creates.length };
     }
     async requestDone(id, requesterUserId, notes) {
@@ -313,6 +302,6 @@ let TasksService = TasksService_1 = class TasksService {
 exports.TasksService = TasksService;
 exports.TasksService = TasksService = TasksService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService, realtime_gateway_1.RealtimeGateway])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], TasksService);
 //# sourceMappingURL=tasks.service.js.map

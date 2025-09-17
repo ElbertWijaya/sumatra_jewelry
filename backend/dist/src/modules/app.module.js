@@ -16,13 +16,12 @@ const files_module_1 = require("./files.module");
 const tasks_module_1 = require("./tasks.module");
 const users_module_1 = require("./users.module");
 const inventory_module_1 = require("./inventory.module");
-const realtime_module_1 = require("./realtime.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [config_1.ConfigModule.forRoot({ isGlobal: true }), prisma_module_1.PrismaModule, auth_module_1.AuthModule, orders_module_1.OrdersModule, files_module_1.FilesModule, tasks_module_1.TasksModule, users_module_1.UsersModule, inventory_module_1.InventoryModule, realtime_module_1.RealtimeModule],
+        imports: [config_1.ConfigModule.forRoot({ isGlobal: true }), prisma_module_1.PrismaModule, auth_module_1.AuthModule, orders_module_1.OrdersModule, files_module_1.FilesModule, tasks_module_1.TasksModule, users_module_1.UsersModule, inventory_module_1.InventoryModule],
         controllers: [],
         providers: [],
     })

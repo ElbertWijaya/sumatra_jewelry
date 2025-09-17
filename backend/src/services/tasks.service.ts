@@ -1,12 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { TaskStatus } from '../types/task.dtos';
 
 @Injectable()
 export class TasksService {
   private readonly logger = new Logger(TasksService.name);
-  constructor(private prisma: PrismaService, private rt: RealtimeGateway) {}
+  constructor(private prisma: PrismaService) {}
 
   private isOrderActive(status: string | null | undefined) {
     // Active statuses: DRAFT, DITERIMA, DALAM_PROSES
@@ -107,7 +106,7 @@ export class TasksService {
   }
   ops.push((this.prisma as any).orderTask.update({ where: { id }, data: { assignedToId, status: TaskStatus.ASSIGNED as any } }));
   const txResult = await this.prisma.$transaction(ops);
-  try { if (assignedToId) this.rt.emitToUser(assignedToId, 'task.assigned', { taskId: id, orderId: task.orderId }); } catch {}
+  // realtime disabled
   // Return the task update result (last op)
   return txResult[txResult.length - 1];
   }
@@ -146,7 +145,7 @@ export class TasksService {
     }
     updates.push(...creates);
   await this.prisma.$transaction(updates);
-  try { this.rt.emitToUser(params.userId, 'task.assigned.bulk', { orderId: params.orderId, count: creates.length }); } catch {}
+  // realtime disabled
     return { created: creates.length };
   }
 

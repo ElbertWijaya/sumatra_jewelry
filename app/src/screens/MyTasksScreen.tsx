@@ -83,6 +83,7 @@ export default function MyTasksScreen() {
   }, [token, user?.id]);
 
   useEffect(() => { load(); }, [load]);
+  // Realtime via sockets disabled (polling remains)
   useEffect(() => {
     // simple realtime via polling
     const t = setInterval(() => { load(); }, 15000);
