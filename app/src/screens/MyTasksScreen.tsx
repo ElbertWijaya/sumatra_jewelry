@@ -38,14 +38,18 @@ const SquareActionButton = ({ title, disabled, muted, onPress }: { title: string
       ])
     );
     loop.start();
-    return () => { loop.stop(); };
+    return () => {
+      loop.stop();
+      radius.stopAnimation();
+    };
   }, [disabled, muted, radius]);
 
   const onPressIn = () => {
-    Animated.spring(scale, { toValue: 0.98, useNativeDriver: true, speed: 20, bounciness: 3 }).start();
+    // Keep JS driver to avoid mixing native/JS on same node (borderRadius anim is JS-driven)
+    Animated.spring(scale, { toValue: 0.98, useNativeDriver: false, speed: 20, bounciness: 3 }).start();
   };
   const onPressOut = () => {
-    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 3 }).start();
+    Animated.spring(scale, { toValue: 1, useNativeDriver: false, speed: 20, bounciness: 3 }).start();
     if (!disabled) onPress();
   };
 
@@ -166,6 +170,8 @@ export default function MyTasksScreen() {
   const readyToRequest = canRequestDone(item);
     const reason = disabledReason(item);
     const isExpanded = expanded[item.orderId] ?? (tab === 'working');
+    const hasAssigned = item.tasks.some(t => t.status === 'ASSIGNED');
+    const showAcceptHint = tab === 'inbox' && hasAssigned;
 
     return (
       <View style={[styles.card, isExpanded && styles.cardExpanded]}>
@@ -183,7 +189,9 @@ export default function MyTasksScreen() {
           <View style={{ alignItems:'flex-end' }}>
             <Text style={styles.countPill}>{checked}/{total} checklist</Text>
             <View style={styles.progressBar}><View style={[styles.progressFill, { width: `${total>0 ? (checked/total)*100 : 0}%` }]} /></View>
-            <Text style={styles.hintCaption}>Harus terima pesanan dahulu</Text>
+            {showAcceptHint ? (
+              <Text style={styles.hintCaption}>Harus terima pesanan dahulu</Text>
+            ) : null}
           </View>
         </View>
 

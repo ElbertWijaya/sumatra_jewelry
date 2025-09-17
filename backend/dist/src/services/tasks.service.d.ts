@@ -9,6 +9,7 @@ export declare class TasksService {
         created: number;
     }>;
     listActive(): Promise<any>;
+    listByOrder(orderId: number): Promise<any>;
     listAwaitingValidationByOrder(orderId: number): Promise<any>;
     create(data: {
         orderId: number;

@@ -66,6 +66,25 @@ let TasksService = TasksService_1 = class TasksService {
             return rows;
         })();
     }
+    async listByOrder(orderId) {
+        const rows = await this.prisma.orderTask.findMany({
+            where: { orderId: Number(orderId) },
+            orderBy: { createdAt: 'asc' },
+            include: { assignedTo: true },
+        });
+        if (!rows.length)
+            return rows;
+        try {
+            const sql = `SELECT id, is_checked FROM OrderTask WHERE orderId = ?`;
+            const checks = await this.prisma.$queryRawUnsafe(sql, Number(orderId));
+            const map = new Map();
+            checks.forEach((c) => map.set(Number(c.id), c));
+            rows.forEach((r) => { const c = map.get(Number(r.id)); if (c)
+                r.isChecked = !!c.is_checked; });
+        }
+        catch { }
+        return rows;
+    }
     async listAwaitingValidationByOrder(orderId) {
         const order = await this.prisma.order.findUnique({ where: { id: orderId } });
         if (!order)

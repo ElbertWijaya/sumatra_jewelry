@@ -106,6 +106,7 @@ export const api = {
   },
   tasks: {
     list: (token: string) => request('/tasks', { headers: { Authorization: `Bearer ${token}` } }),
+    listByOrder: (token: string, orderId: number) => request(`/tasks/order/${orderId}`, { headers: { Authorization: `Bearer ${token}` } }),
     awaitingValidation: (token: string, orderId: number) => request(`/tasks/awaiting-validation?orderId=${orderId}`, { headers: { Authorization: `Bearer ${token}` } }),
     create: (token: string, payload: { orderId: number; stage?: string; notes?: string }) => request('/tasks', { method: 'POST', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` } }),
     update: (token: string, id: number, patch: any) => request(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(patch), headers: { Authorization: `Bearer ${token}` } }),

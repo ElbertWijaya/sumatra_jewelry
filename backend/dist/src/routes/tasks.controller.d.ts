@@ -29,6 +29,7 @@ export declare class TasksController {
     check(id: number, user: RequestUser): Promise<any>;
     uncheck(id: number, user: RequestUser): Promise<any>;
     awaitingValidation(orderId: number): Promise<any>;
+    listByOrder(orderId: number): Promise<any>;
     backfill(): Promise<{
         created: number;
     }>;

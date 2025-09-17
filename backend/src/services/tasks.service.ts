@@ -53,6 +53,23 @@ export class TasksService {
       return rows;
     })();
   }
+
+  async listByOrder(orderId: number) {
+    const rows = await (this.prisma as any).orderTask.findMany({
+      where: { orderId: Number(orderId) },
+      orderBy: { createdAt: 'asc' },
+      include: { assignedTo: true },
+    });
+    if (!rows.length) return rows;
+    try {
+      const sql = `SELECT id, is_checked FROM OrderTask WHERE orderId = ?`;
+      const checks: any[] = await (this.prisma as any).$queryRawUnsafe(sql, Number(orderId));
+      const map = new Map<number, any>();
+      checks.forEach((c: any) => map.set(Number(c.id), c));
+      rows.forEach((r: any) => { const c = map.get(Number(r.id)); if (c) (r as any).isChecked = !!c.is_checked; });
+    } catch {}
+    return rows;
+  }
   async listAwaitingValidationByOrder(orderId: number) {
     // Only tasks for this order that are awaiting validation
     const order = await this.prisma.order.findUnique({ where: { id: orderId } });

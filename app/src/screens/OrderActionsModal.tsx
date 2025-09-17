@@ -48,6 +48,8 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
   const [fHargaAkhir, setFHargaAkhir] = useState('');
   const [fStones, setFStones] = useState<{ bentuk: string; jumlah: string; berat: string }[]>([]);
   const [showPicker, setShowPicker] = useState<null | { field: 'ready' | 'selesai' | 'ambil'; date: Date }>(null);
+  const [liveTasks, setLiveTasks] = useState<any[]>([]);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useEffect(() => { if (!visible) return; setTab('assign'); setRole(''); setSelectedStages([]); setSelectedUserId(''); setUsers([]); setValidations([]); setOrderDetail(null); setEdit(false); }, [visible]);
 
@@ -179,6 +181,24 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
       onClose();
     } catch (e: any) { Alert.alert('Gagal Assign', e.message || String(e)); }
   };
+
+  useEffect(() => { // live tasks polling while modal visible
+    if (!token || !visible || !order?.id) return;
+    let cancel = false;
+    let timer: any;
+    const loadLive = async () => {
+      try {
+        const rows = await api.tasks.listByOrder(token, order.id);
+        if (!cancel) {
+          setLiveTasks(Array.isArray(rows) ? rows : []);
+          setLastUpdated(new Date());
+        }
+      } catch {}
+    };
+    loadLive();
+    timer = setInterval(loadLive, 5000);
+    return () => { cancel = true; if (timer) clearInterval(timer); };
+  }, [token, visible, order?.id]);
 
   const renderAssign = () => (
     <>
@@ -372,6 +392,34 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
         })()}
       </View>
 
+      {/* Live Task Status */}
+      <View style={styles.sectionDivider} />
+      <Text style={styles.sectionTitle}>Status Tugas</Text>
+      {lastUpdated ? (
+        <Text style={[styles.subtleSmall, { paddingVertical: 4 }]}>Terakhir diperbarui: {lastUpdated.toLocaleTimeString()}</Text>
+      ) : null}
+      <View style={{ gap: 6 }}>
+        {liveTasks.length === 0 ? (
+          <Text style={styles.subtleSmall}>Belum ada tugas untuk order ini.</Text>
+        ) : (
+          liveTasks.map((t: any) => (
+            <View key={t.id} style={{ flexDirection: 'row', justifyContent:'space-between', alignItems:'center', paddingVertical: 4 }}>
+              <Text style={styles.infoValue}>{t.stage || 'Tanpa Stage'}</Text>
+              <View style={{ flexDirection:'row', alignItems:'center', gap:8 }}>
+                <Text style={styles.badgeBase}>{String(t.status)}</Text>
+                {t.status === 'ASSIGNED' || t.status === 'IN_PROGRESS' ? (
+                  <View style={[styles.checkbox, t.isChecked && styles.checkboxChecked]}>
+                    <View style={[styles.checkboxInner, t.isChecked && styles.checkboxInnerChecked]} />
+                  </View>
+                ) : t.status === 'AWAITING_VALIDATION' ? (
+                  <Text style={[styles.badgeBase, styles.badgeInfo]}>Menunggu Validasi</Text>
+                ) : null}
+              </View>
+            </View>
+          ))
+        )}
+      </View>
+
       {/* Assign UI: hidden if currently assigned to someone; reappears once validated */}
       {(() => {
         const hasActiveAssignment = orderTasks.some((t:any) => t.orderId === (order?.id ?? t.orderId) && !!t.assignedTo && t.status !== 'DONE' && t.status !== 'CANCELLED');
@@ -530,6 +578,33 @@ const styles = StyleSheet.create({
   badgeDanger: { backgroundColor:'#ffebee', color:'#c62828' },
   editBtn: { paddingVertical:6, paddingHorizontal:10, backgroundColor:'#1976d2', borderRadius:6, marginLeft:8 },
   editBtnText: { color:'#fff', fontWeight:'700' },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+    borderColor: '#1976d2',
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#e3f2fd',
+  },
+  checkboxInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 2,
+    backgroundColor: '#1976d2',
+  },
+  checkboxInnerChecked: {
+    backgroundColor: '#0b5394',
+  },
+  subtleSmall: {
+    color: '#999',
+    fontSize: 12,
+    textAlign: 'center',
+    paddingVertical: 16,
+  },
 });
 
 function toDisplayUrl(p?: string) {

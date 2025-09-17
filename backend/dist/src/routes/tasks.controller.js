@@ -61,6 +61,9 @@ let TasksController = class TasksController {
     awaitingValidation(orderId) {
         return this.tasks.listAwaitingValidationByOrder(orderId);
     }
+    listByOrder(orderId) {
+        return this.tasks.listByOrder(orderId);
+    }
     backfill() { return this.tasks.backfillActive(); }
 };
 exports.TasksController = TasksController;
@@ -200,6 +203,14 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", void 0)
 ], TasksController.prototype, "awaitingValidation", null);
+__decorate([
+    (0, common_1.Get)('order/:orderId'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES', 'DESIGNER', 'CASTER', 'CARVER', 'DIAMOND_SETTER', 'FINISHER', 'INVENTORY'),
+    __param(0, (0, common_1.Param)('orderId', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], TasksController.prototype, "listByOrder", null);
 __decorate([
     (0, common_1.Post)('backfill'),
     (0, roles_decorator_1.Roles)('ADMINISTRATOR'),

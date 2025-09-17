@@ -109,6 +109,12 @@ export class TasksController {
     return this.tasks.listAwaitingValidationByOrder(orderId);
   }
 
+  @Get('order/:orderId')
+  @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
+  listByOrder(@Param('orderId', ParseIntPipe) orderId: number) {
+    return this.tasks.listByOrder(orderId);
+  }
+
   @Post('backfill')
   @Roles('ADMINISTRATOR')
   backfill() { return this.tasks.backfillActive(); }
