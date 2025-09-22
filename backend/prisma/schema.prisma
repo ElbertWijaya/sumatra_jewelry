@@ -20,6 +20,8 @@ model AppUser {
   tasksAssigned OrderTask[] @relation("TaskAssignedTo")
   tasksValidated OrderTask[] @relation("TaskValidatedBy")
   tasksChecked  OrderTask[]
+  inventoryCreated InventoryItem[] @relation("InventoryItemCreatedBy")
+  inventoryUpdated InventoryItem[] @relation("InventoryItemUpdatedBy")
 }
 
 model Order {
@@ -53,6 +55,7 @@ model Order {
   histories    OrderHistory[]
   stones       OrderStone[]
   tasks        OrderTask[]
+  inventoryItems InventoryItem[]
 }
 
 model OrderStone {
@@ -132,9 +135,9 @@ model InventoryItem {
   notes        String?   @map("notes")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
-  createdBy    AppUser?  @relation(fields: [createdById], references: [id])
+  createdBy    AppUser?  @relation("InventoryItemCreatedBy", fields: [createdById], references: [id])
   createdById  String?   @map("created_by_id")
-  updatedBy    AppUser?  @relation(fields: [updatedById], references: [id])
+  updatedBy    AppUser?  @relation("InventoryItemUpdatedBy", fields: [updatedById], references: [id])
   updatedById  String?   @map("updated_by_id")
 
   @@index([orderId])

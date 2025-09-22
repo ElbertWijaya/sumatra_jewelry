@@ -6,6 +6,7 @@ import { InlineSelect } from '../components/InlineSelect';
 import { JENIS_BARANG_OPTIONS, JENIS_EMAS_OPTIONS, WARNA_EMAS_OPTIONS, BENTUK_BATU_OPTIONS } from '../constants/orderOptions';
 import ImagePreviewModal from '@/src/components/ImagePreviewModal';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { formatIDR, formatIDRInputText, parseIDR } from '../utils/currency';
 
 type Props = { visible: boolean; order: any | null; onClose(): void; onChanged?(): void };
 
@@ -98,10 +99,10 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
   setFJenisBarang(det.jenisBarang || '');
   setFJenisEmas(det.jenisEmas || '');
   setFWarnaEmas(det.warnaEmas || '');
-  setFHargaPerGram(det.hargaEmasPerGram != null ? String(det.hargaEmasPerGram) : '');
-  setFDp(det.dp != null ? String(det.dp) : '');
-  setFHargaPerkiraan(det.hargaPerkiraan != null ? String(det.hargaPerkiraan) : '');
-  setFHargaAkhir(det.hargaAkhir != null ? String(det.hargaAkhir) : '');
+  setFHargaPerGram(det.hargaEmasPerGram != null ? formatIDRInputText(String(det.hargaEmasPerGram)) : '');
+  setFDp(det.dp != null ? formatIDRInputText(String(det.dp)) : '');
+  setFHargaPerkiraan(det.hargaPerkiraan != null ? formatIDRInputText(String(det.hargaPerkiraan)) : '');
+  setFHargaAkhir(det.hargaAkhir != null ? formatIDRInputText(String(det.hargaAkhir)) : '');
   const stones = Array.isArray(det.stones) ? det.stones : [];
   setFStones(stones.map((s: any) => ({ bentuk: s.bentuk || '', jumlah: s.jumlah != null ? String(s.jumlah) : '', berat: s.berat != null ? String(s.berat) : '' })));
   }, [orderDetail]);
@@ -116,10 +117,10 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
   jenisBarang: fJenisBarang || undefined,
   jenisEmas: fJenisEmas || undefined,
   warnaEmas: fWarnaEmas || undefined,
-  hargaEmasPerGram: fHargaPerGram ? Number(fHargaPerGram) : undefined,
-  dp: fDp ? Number(fDp) : undefined,
-  hargaPerkiraan: fHargaPerkiraan ? Number(fHargaPerkiraan) : undefined,
-  hargaAkhir: fHargaAkhir ? Number(fHargaAkhir) : undefined,
+  hargaEmasPerGram: parseIDR(fHargaPerGram) ?? undefined,
+  dp: parseIDR(fDp) ?? undefined,
+  hargaPerkiraan: parseIDR(fHargaPerkiraan) ?? undefined,
+  hargaAkhir: parseIDR(fHargaAkhir) ?? undefined,
       promisedReadyDate: fReady || undefined,
       tanggalSelesai: fSelesai || undefined,
       tanggalAmbil: fAmbil || undefined,
@@ -206,7 +207,7 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
       <View style={styles.detailCard}>
         {(() => {
           const det = orderDetail || order || {};
-          const fmt = (n?: number) => (n == null ? '-' : `Rp ${String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`);
+          const fmt = (n?: number) => formatIDR(n as any);
           const badgeStyle = (() => {
             const s = (det.status || '').toUpperCase();
             if (s === 'DRAFT') return styles.badgeNeutral;
@@ -289,10 +290,62 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
               <View style={styles.sectionDivider} />
               <Text style={styles.sectionTitle}>Pembayaran</Text>
               <View style={styles.rowGrid}>
-                <View style={styles.infoRow}><Text style={styles.infoLabel}>Harga/gr</Text>{!edit ? <Text style={styles.infoValue}>{fmt(det.hargaEmasPerGram)}</Text> : <TextInput placeholder='Harga/gr' style={styles.input} value={fHargaPerGram} onChangeText={setFHargaPerGram} keyboardType='numeric' />}</View>
-                <View style={styles.infoRow}><Text style={styles.infoLabel}>DP</Text>{!edit ? <Text style={styles.infoValue}>{fmt(det.dp)}</Text> : <TextInput placeholder='DP' style={styles.input} value={fDp} onChangeText={setFDp} keyboardType='numeric' />}</View>
-                <View style={styles.infoRow}><Text style={styles.infoLabel}>Perkiraan</Text>{!edit ? <Text style={styles.infoValue}>{fmt(det.hargaPerkiraan)}</Text> : <TextInput placeholder='Perkiraan' style={styles.input} value={fHargaPerkiraan} onChangeText={setFHargaPerkiraan} keyboardType='numeric' />}</View>
-                <View style={styles.infoRow}><Text style={styles.infoLabel}>Harga Akhir</Text>{!edit ? <Text style={styles.infoValue}>{fmt(det.hargaAkhir)}</Text> : <TextInput placeholder='Harga Akhir' style={styles.input} value={fHargaAkhir} onChangeText={setFHargaAkhir} keyboardType='numeric' />}</View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Harga/gr</Text>
+                  {!edit ? (
+                    <Text style={styles.infoValue}>{fmt(det.hargaEmasPerGram)}</Text>
+                  ) : (
+                    <TextInput
+                      placeholder='Harga/gr'
+                      style={styles.input}
+                      value={fHargaPerGram}
+                      onChangeText={(t)=> setFHargaPerGram(formatIDRInputText(t))}
+                      keyboardType='numeric'
+                    />
+                  )}
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>DP</Text>
+                  {!edit ? (
+                    <Text style={styles.infoValue}>{fmt(det.dp)}</Text>
+                  ) : (
+                    <TextInput
+                      placeholder='DP'
+                      style={styles.input}
+                      value={fDp}
+                      onChangeText={(t)=> setFDp(formatIDRInputText(t))}
+                      keyboardType='numeric'
+                    />
+                  )}
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Perkiraan</Text>
+                  {!edit ? (
+                    <Text style={styles.infoValue}>{fmt(det.hargaPerkiraan)}</Text>
+                  ) : (
+                    <TextInput
+                      placeholder='Perkiraan'
+                      style={styles.input}
+                      value={fHargaPerkiraan}
+                      onChangeText={(t)=> setFHargaPerkiraan(formatIDRInputText(t))}
+                      keyboardType='numeric'
+                    />
+                  )}
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Harga Akhir</Text>
+                  {!edit ? (
+                    <Text style={styles.infoValue}>{fmt(det.hargaAkhir)}</Text>
+                  ) : (
+                    <TextInput
+                      placeholder='Harga Akhir'
+                      style={styles.input}
+                      value={fHargaAkhir}
+                      onChangeText={(t)=> setFHargaAkhir(formatIDRInputText(t))}
+                      keyboardType='numeric'
+                    />
+                  )}
+                </View>
               </View>
               <View style={styles.sectionDivider} />
               <Text style={styles.sectionTitle}>Tanggal</Text>
