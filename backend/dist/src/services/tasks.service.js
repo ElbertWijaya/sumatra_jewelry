@@ -127,15 +127,22 @@ let TasksService = TasksService_1 = class TasksService {
         if (!this.isOrderActive(task.order?.status))
             throw new common_1.BadRequestException('Order sudah nonaktif (history).');
         const ops = [];
-        if (task.order && (task.order.status === 'DRAFT' || task.order.status === 'DITERIMA')) {
-            ops.push(this.prisma.order.update({ where: { id: task.orderId }, data: { status: 'DALAM_PROSES' } }));
+        if (task.order && task.order.status === 'DRAFT') {
+            const actor = actorUserId ? await this.prisma.appUser.findUnique({ where: { id: actorUserId }, select: { fullName: true, jobRole: true } }) : null;
+            ops.push(this.prisma.order.update({ where: { id: task.orderId }, data: { status: 'DITERIMA' } }));
             ops.push(this.prisma.orderHistory.create({
-                data: {
+                data: ({
                     orderId: task.orderId,
                     userId: actorUserId ?? null,
-                    changeSummary: `STATUS: ${task.order.status} -> DALAM_PROSES`,
-                    diff: { from: task.order.status, to: 'DALAM_PROSES' },
-                },
+                    action: 'STATUS_CHANGED',
+                    actorName: actor?.fullName ?? null,
+                    actorRole: actor?.jobRole ?? null,
+                    statusFrom: 'DRAFT',
+                    statusTo: 'DITERIMA',
+                    orderCode: task.order?.code ?? null,
+                    changeSummary: `STATUS: DRAFT -> DITERIMA`,
+                    diff: { from: 'DRAFT', to: 'DITERIMA' },
+                }),
             }));
         }
         ops.push(this.prisma.orderTask.update({ where: { id }, data: { assignedToId, status: task_dtos_1.TaskStatus.ASSIGNED } }));
@@ -162,15 +169,22 @@ let TasksService = TasksService_1 = class TasksService {
             },
         }));
         const updates = [];
-        if (order.status === 'DRAFT' || order.status === 'DITERIMA') {
-            updates.push(this.prisma.order.update({ where: { id: params.orderId }, data: { status: 'DALAM_PROSES' } }));
+        if (order.status === 'DRAFT') {
+            const actor = params.actorUserId ? await this.prisma.appUser.findUnique({ where: { id: params.actorUserId }, select: { fullName: true, jobRole: true } }) : null;
+            updates.push(this.prisma.order.update({ where: { id: params.orderId }, data: { status: 'DITERIMA' } }));
             updates.push(this.prisma.orderHistory.create({
-                data: {
+                data: ({
                     orderId: params.orderId,
                     userId: params.actorUserId ?? null,
-                    changeSummary: `STATUS: ${order.status} -> DALAM_PROSES`,
-                    diff: { from: order.status, to: 'DALAM_PROSES' },
-                },
+                    action: 'STATUS_CHANGED',
+                    actorName: actor?.fullName ?? null,
+                    actorRole: actor?.jobRole ?? null,
+                    statusFrom: 'DRAFT',
+                    statusTo: 'DITERIMA',
+                    orderCode: order.code ?? null,
+                    changeSummary: `STATUS: DRAFT -> DITERIMA`,
+                    diff: { from: 'DRAFT', to: 'DITERIMA' },
+                }),
             }));
         }
         updates.push(...creates);
@@ -205,6 +219,22 @@ let TasksService = TasksService_1 = class TasksService {
         }
         try {
             const res = await this.prisma.orderTask.update({ where: { id }, data: { notes: notes ?? task.notes, requestedDoneAt: new Date(), status: task_dtos_1.TaskStatus.AWAITING_VALIDATION } });
+            try {
+                const actor = await this.prisma.appUser.findUnique({ where: { id: requesterUserId }, select: { fullName: true, jobRole: true } });
+                await this.prisma.orderHistory.create({
+                    data: ({
+                        orderId: task.orderId,
+                        userId: requesterUserId,
+                        action: 'TASK_EVENT',
+                        actorName: actor?.fullName ?? null,
+                        actorRole: actor?.jobRole ?? null,
+                        orderCode: task.order?.code ?? null,
+                        changeSummary: `TASK_REQUESTED_VALIDATION (task#${id})`,
+                        diff: { taskId: id, event: 'REQUEST_VALIDATION', notes: notes ?? null },
+                    }),
+                });
+            }
+            catch { }
             this.logger.debug(`requestDone OK id=${id}`);
             return res;
         }
@@ -219,7 +249,24 @@ let TasksService = TasksService_1 = class TasksService {
             throw new common_1.NotFoundException('Task not found');
         if (!this.isOrderActive(task.order?.status))
             throw new common_1.BadRequestException('Order sudah nonaktif (history).');
-        return this.prisma.orderTask.update({ where: { id }, data: { validatedById: validatorUserId, validatedAt: new Date(), notes: notes ?? task.notes, status: task_dtos_1.TaskStatus.DONE } });
+        const updated = await this.prisma.orderTask.update({ where: { id }, data: { validatedById: validatorUserId, validatedAt: new Date(), notes: notes ?? task.notes, status: task_dtos_1.TaskStatus.DONE } });
+        try {
+            const actor = await this.prisma.appUser.findUnique({ where: { id: validatorUserId }, select: { fullName: true, jobRole: true } });
+            await this.prisma.orderHistory.create({
+                data: ({
+                    orderId: task.orderId,
+                    userId: validatorUserId,
+                    action: 'TASK_EVENT',
+                    actorName: actor?.fullName ?? null,
+                    actorRole: actor?.jobRole ?? null,
+                    orderCode: task.order?.code ?? null,
+                    changeSummary: `TASK_VALIDATED (task#${id})`,
+                    diff: { taskId: id, event: 'TASK_VALIDATED', notes: notes ?? null },
+                }),
+            });
+        }
+        catch { }
+        return updated;
     }
     async validateAllForOrderAndUser(orderId, targetUserId, validatorUserId, notes) {
         const order = await this.prisma.order.findUnique({ where: { id: orderId } });
@@ -238,6 +285,22 @@ let TasksService = TasksService_1 = class TasksService {
             data: { validatedById: validatorUserId, validatedAt: new Date(), notes, status: task_dtos_1.TaskStatus.DONE },
         }));
         await this.prisma.$transaction(ops);
+        try {
+            const actor = await this.prisma.appUser.findUnique({ where: { id: validatorUserId }, select: { fullName: true, jobRole: true } });
+            await this.prisma.orderHistory.create({
+                data: ({
+                    orderId,
+                    userId: validatorUserId,
+                    action: 'TASK_EVENT',
+                    actorName: actor?.fullName ?? null,
+                    actorRole: actor?.jobRole ?? null,
+                    orderCode: order.code ?? null,
+                    changeSummary: `TASKS_VALIDATED user=${targetUserId}`,
+                    diff: { userId: targetUserId, event: 'TASKS_VALIDATED', count: tasks.length, notes: notes ?? null },
+                }),
+            });
+        }
+        catch { }
         return { updated: tasks.length };
     }
     async requestDoneForOrderForUser(orderId, requesterUserId, notes) {
@@ -260,6 +323,22 @@ let TasksService = TasksService_1 = class TasksService {
         try {
             const updates = ids.map(id => this.prisma.orderTask.update({ where: { id }, data: { notes, requestedDoneAt: new Date(), status: task_dtos_1.TaskStatus.AWAITING_VALIDATION } }));
             await this.prisma.$transaction(updates);
+            try {
+                const actor = await this.prisma.appUser.findUnique({ where: { id: requesterUserId }, select: { fullName: true, jobRole: true } });
+                await this.prisma.orderHistory.create({
+                    data: ({
+                        orderId,
+                        userId: requesterUserId,
+                        action: 'TASK_EVENT',
+                        actorName: actor?.fullName ?? null,
+                        actorRole: actor?.jobRole ?? null,
+                        orderCode: order.code ?? null,
+                        changeSummary: `TASKS_REQUESTED_VALIDATION user=${requesterUserId}`,
+                        diff: { userId: requesterUserId, event: 'REQUEST_VALIDATION_BULK', count: ids.length, notes: notes ?? null },
+                    }),
+                });
+            }
+            catch { }
             this.logger.debug(`requestDoneForOrderForUser OK order=${orderId} updated=${ids.length}`);
             return { updated: ids.length };
         }
@@ -299,7 +378,28 @@ let TasksService = TasksService_1 = class TasksService {
             throw new common_1.BadRequestException('Hanya task ASSIGNED yang bisa dimulai');
         if (task.assignedToId && task.assignedToId !== actorUserId)
             throw new common_1.BadRequestException('Hanya yang ditugaskan yang bisa memulai');
-        return this.prisma.orderTask.update({ where: { id }, data: { status: task_dtos_1.TaskStatus.IN_PROGRESS } });
+        const ops = [];
+        if (task.order && (task.order.status === 'DRAFT' || task.order.status === 'DITERIMA')) {
+            const actor = await this.prisma.appUser.findUnique({ where: { id: actorUserId }, select: { fullName: true, jobRole: true } });
+            ops.push(this.prisma.order.update({ where: { id: task.orderId }, data: { status: 'DALAM_PROSES' } }));
+            ops.push(this.prisma.orderHistory.create({
+                data: ({
+                    orderId: task.orderId,
+                    userId: actorUserId,
+                    action: 'STATUS_CHANGED',
+                    actorName: actor?.fullName ?? null,
+                    actorRole: actor?.jobRole ?? null,
+                    statusFrom: task.order.status,
+                    statusTo: 'DALAM_PROSES',
+                    orderCode: task.order?.code ?? null,
+                    changeSummary: `STATUS: ${task.order.status} -> DALAM_PROSES`,
+                    diff: { from: task.order.status, to: 'DALAM_PROSES' },
+                }),
+            }));
+        }
+        ops.push(this.prisma.orderTask.update({ where: { id }, data: { status: task_dtos_1.TaskStatus.IN_PROGRESS } }));
+        const res = await this.prisma.$transaction(ops);
+        return res[res.length - 1];
     }
     async acceptOrderForUser(orderId, actorUserId) {
         this.logger.debug(`acceptOrderForUser order=${orderId} by=${actorUserId}`);
@@ -314,7 +414,26 @@ let TasksService = TasksService_1 = class TasksService {
         });
         if (!tasks.length)
             throw new common_1.BadRequestException('Tidak ada tugas ASSIGNED untuk diterima');
-        await this.prisma.$transaction(tasks.map(t => this.prisma.orderTask.update({ where: { id: t.id }, data: { status: task_dtos_1.TaskStatus.IN_PROGRESS } })));
+        const ops = tasks.map(t => this.prisma.orderTask.update({ where: { id: t.id }, data: { status: task_dtos_1.TaskStatus.IN_PROGRESS } }));
+        if (order.status === 'DRAFT' || order.status === 'DITERIMA') {
+            const actor = await this.prisma.appUser.findUnique({ where: { id: actorUserId }, select: { fullName: true, jobRole: true } });
+            ops.unshift(this.prisma.order.update({ where: { id: orderId }, data: { status: 'DALAM_PROSES' } }));
+            ops.unshift(this.prisma.orderHistory.create({
+                data: ({
+                    orderId,
+                    userId: actorUserId,
+                    action: 'STATUS_CHANGED',
+                    actorName: actor?.fullName ?? null,
+                    actorRole: actor?.jobRole ?? null,
+                    statusFrom: order.status,
+                    statusTo: 'DALAM_PROSES',
+                    orderCode: order.code ?? null,
+                    changeSummary: `STATUS: ${order.status} -> DALAM_PROSES`,
+                    diff: { from: order.status, to: 'DALAM_PROSES' },
+                }),
+            }));
+        }
+        await this.prisma.$transaction(ops);
         return { accepted: tasks.length };
     }
 };

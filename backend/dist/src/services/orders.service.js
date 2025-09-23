@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrdersService = void 0;
 const common_1 = require("@nestjs/common");
+const crypto_1 = require("crypto");
 const dayjs = require("dayjs");
 const prisma_service_1 = require("../prisma/prisma.service");
 const client_1 = require("@prisma/client");
@@ -59,6 +60,21 @@ let OrdersService = class OrdersService {
             }
             catch (e) {
             }
+            try {
+                const user = await this.prisma.appUser.findUnique({ where: { id: userId }, select: { fullName: true, jobRole: true } });
+                await tx.orderHistory.create({
+                    data: ({
+                        orderId: order.id,
+                        userId,
+                        action: 'CREATED',
+                        actorName: user?.fullName ?? null,
+                        actorRole: user?.jobRole ?? null,
+                        orderCode: updated.code ?? null,
+                        changeSummary: 'CREATE ORDER',
+                    }),
+                });
+            }
+            catch { }
             return updated;
         });
         return this.findById(created.id);
@@ -96,13 +112,20 @@ let OrdersService = class OrdersService {
                 updatedById: userId,
             },
         });
+        const user = await this.prisma.appUser.findUnique({ where: { id: userId }, select: { fullName: true, jobRole: true } });
         await this.prisma.orderHistory.create({
-            data: {
+            data: ({
                 orderId: id,
                 userId,
+                action: 'STATUS_CHANGED',
+                actorName: user?.fullName ?? null,
+                actorRole: user?.jobRole ?? null,
+                statusFrom: order.status,
+                statusTo: dto.status,
+                orderCode: order.code ?? null,
                 changeSummary: `STATUS: ${order.status} -> ${dto.status}`,
                 diff: { from: order.status, to: dto.status },
-            },
+            }),
         });
         return updated;
     }
@@ -116,9 +139,12 @@ let OrdersService = class OrdersService {
         return records.map((r) => ({
             id: r.id,
             changedAt: r.changedAt,
-            by: r.user ? { id: r.user.id, fullName: r.user.fullName, jobRole: r.user.jobRole ?? null } : null,
+            by: r.user ? { id: r.user.id, fullName: r.user.fullName, jobRole: r.user.jobRole ?? null } : r.actorName ? { id: r.userId, fullName: r.actorName, jobRole: r.actorRole ?? null } : null,
+            action: r.action,
+            statusFrom: r.statusFrom ?? null,
+            statusTo: r.statusTo ?? null,
             summary: r.changeSummary,
-            diff: r.diff
+            diff: r.diff,
         }));
     }
     async update(id, dto, userId) {
@@ -149,6 +175,20 @@ let OrdersService = class OrdersService {
             }
             catch { }
             const updated = await tx.order.update({ where: { id }, data });
+            const fields = ['customerName', 'customerAddress', 'customerPhone', 'jenisBarang', 'jenisEmas', 'warnaEmas', 'dp', 'hargaEmasPerGram', 'hargaPerkiraan', 'hargaAkhir', 'promisedReadyDate', 'tanggalSelesai', 'tanggalAmbil', 'catatan', 'referensiGambarUrls'];
+            const prevPatch = {};
+            const nextPatch = {};
+            for (const k of fields) {
+                const newVal = dto[k];
+                if (newVal !== undefined) {
+                    const oldVal = order[k];
+                    const changed = JSON.stringify(oldVal) !== JSON.stringify(newVal);
+                    if (changed) {
+                        prevPatch[k] = oldVal ?? null;
+                        nextPatch[k] = newVal ?? null;
+                    }
+                }
+            }
             if (dto.stones) {
                 await tx.orderStone.deleteMany({ where: { orderId: id } });
                 if (dto.stones.length) {
@@ -159,15 +199,29 @@ let OrdersService = class OrdersService {
                 const sum = stones.reduce((acc, s) => acc + (s.berat ? Number(s.berat) : 0), 0);
                 const totalBerat = new client_1.Prisma.Decimal(sum.toFixed(2));
                 await tx.order.update({ where: { id }, data: { stoneCount, totalBerat: totalBerat } });
+                nextPatch['stoneCount'] = stoneCount;
+                nextPatch['totalBerat'] = totalBerat;
             }
-            await tx.orderHistory.create({
-                data: {
-                    orderId: id,
-                    userId,
-                    changeSummary: 'EDIT ORDER',
-                    diff: dto,
-                },
-            });
+            try {
+                const user = await this.prisma.appUser.findUnique({ where: { id: userId }, select: { fullName: true, jobRole: true } });
+                const groupId = (0, crypto_1.randomUUID)();
+                await tx.orderHistory.create({
+                    data: ({
+                        orderId: id,
+                        userId,
+                        action: 'UPDATED',
+                        actorName: user?.fullName ?? null,
+                        actorRole: user?.jobRole ?? null,
+                        orderCode: updated.code ?? null,
+                        changeSummary: 'EDIT ORDER',
+                        prev: Object.keys(prevPatch).length ? prevPatch : undefined,
+                        next: Object.keys(nextPatch).length ? nextPatch : undefined,
+                        diff: dto,
+                        groupId,
+                    }),
+                });
+            }
+            catch { }
             return updated;
         });
         try {

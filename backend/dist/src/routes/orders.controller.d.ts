@@ -15,14 +15,14 @@ export declare class OrdersController {
     } & {
         id: number;
         createdAt: Date;
-        updatedAt: Date;
-        code: string | null;
         customerName: string;
-        customerAddress: string | null;
-        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
+        updatedAt: Date;
+        code: string | null;
+        customerAddress: string | null;
+        customerPhone: string | null;
         hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;
         hargaPerkiraan: import("@prisma/client/runtime/library").Decimal | null;
         hargaAkhir: import("@prisma/client/runtime/library").Decimal | null;
@@ -51,14 +51,14 @@ export declare class OrdersController {
     } & {
         id: number;
         createdAt: Date;
-        updatedAt: Date;
-        code: string | null;
         customerName: string;
-        customerAddress: string | null;
-        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
+        updatedAt: Date;
+        code: string | null;
+        customerAddress: string | null;
+        customerPhone: string | null;
         hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;
         hargaPerkiraan: import("@prisma/client/runtime/library").Decimal | null;
         hargaAkhir: import("@prisma/client/runtime/library").Decimal | null;
@@ -87,14 +87,14 @@ export declare class OrdersController {
     } & {
         id: number;
         createdAt: Date;
-        updatedAt: Date;
-        code: string | null;
         customerName: string;
-        customerAddress: string | null;
-        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
+        updatedAt: Date;
+        code: string | null;
+        customerAddress: string | null;
+        customerPhone: string | null;
         hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;
         hargaPerkiraan: import("@prisma/client/runtime/library").Decimal | null;
         hargaAkhir: import("@prisma/client/runtime/library").Decimal | null;
@@ -111,18 +111,31 @@ export declare class OrdersController {
         createdById: string | null;
         updatedById: string | null;
     }>;
-    history(id: number): Promise<any>;
+    history(id: number): Promise<{
+        id: number;
+        changedAt: Date;
+        by: {
+            id: any;
+            fullName: any;
+            jobRole: any;
+        } | null;
+        action: any;
+        statusFrom: any;
+        statusTo: any;
+        summary: string | null;
+        diff: import("@prisma/client/runtime/library").JsonValue;
+    }[]>;
     updateStatus(id: number, dto: UpdateOrderStatusDto, user: RequestUser): Promise<{
         id: number;
         createdAt: Date;
-        updatedAt: Date;
-        code: string | null;
         customerName: string;
-        customerAddress: string | null;
-        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
+        updatedAt: Date;
+        code: string | null;
+        customerAddress: string | null;
+        customerPhone: string | null;
         hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;
         hargaPerkiraan: import("@prisma/client/runtime/library").Decimal | null;
         hargaAkhir: import("@prisma/client/runtime/library").Decimal | null;
@@ -151,14 +164,14 @@ export declare class OrdersController {
     } & {
         id: number;
         createdAt: Date;
-        updatedAt: Date;
-        code: string | null;
         customerName: string;
-        customerAddress: string | null;
-        customerPhone: string | null;
         jenisBarang: string;
         jenisEmas: string;
         warnaEmas: string;
+        updatedAt: Date;
+        code: string | null;
+        customerAddress: string | null;
+        customerPhone: string | null;
         hargaEmasPerGram: import("@prisma/client/runtime/library").Decimal | null;
         hargaPerkiraan: import("@prisma/client/runtime/library").Decimal | null;
         hargaAkhir: import("@prisma/client/runtime/library").Decimal | null;

@@ -3,8 +3,8 @@ import { View, Text, TextInput, Button, ScrollView, StyleSheet, Alert, Touchable
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system';
-// Pastikan menambahkan dependency: expo install expo-camera (untuk modal kamera lanjutan)
-import { CameraView, useCameraPermissions } from 'expo-camera';
+// Migrasi ke react-native-vision-camera
+import { Camera, useCameraDevice } from 'react-native-vision-camera';
 import { api, API_URL } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -41,13 +41,14 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   const [localImageName, setLocalImageName] = useState<string | null>(null);
   // Image preview (zoom only) modal state
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  // Advanced camera modal
+  // Advanced camera modal (Vision Camera)
   const [showCamera, setShowCamera] = useState(false);
-  // Gunakan any agar tidak error: 'Camera' refers to a value but is being used as a type
-  // (Alternatif lebih ketat jika tipe tersedia: useRef<InstanceType<typeof Camera> | null>(null))
-  const cameraRef = useRef<CameraView | null>(null);
+  const cameraRef = useRef<Camera | null>(null);
+  const deviceBack = useCameraDevice('back');
+  const deviceFront = useCameraDevice('front');
   const [cameraType, setCameraType] = useState<'back' | 'front'>('back');
-  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const device = cameraType === 'back' ? deviceBack : deviceFront;
+  const [camGranted, setCamGranted] = useState(false);
   // (Cropping logic removed per new requirement: now only preview zoom after upload)
   const [catatan, setCatatan] = useState('');
   const [stones, setStones] = useState<StoneFormItem[]>([]);
@@ -121,28 +122,60 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
 
   // --- Orientation Normalization Helper ---
   const normalizeOrientation = async (asset: { uri: string; width?: number; height?: number; exif?: any; fileName?: string | null; mimeType?: string | null }) => {
-    const orientation = asset?.exif?.Orientation || asset?.exif?.orientation;
-    const rotateMap: Record<number, number> = { 3: 180, 6: 90, 8: 270 };
-    let rotated = asset;
-    if (orientation && rotateMap[orientation]) {
-      try {
-        const result = await ImageManipulator.manipulateAsync(
-          asset.uri,
-          [{ rotate: rotateMap[orientation] }],
-          { compress: 1, format: ImageManipulator.SaveFormat.JPEG }
-        );
-        rotated = { ...asset, uri: result.uri, width: result.width, height: result.height };
-      } catch {}
-    } else {
-      // do a no-op to ensure orientation baked in on some Android devices
+    const exif = asset?.exif || {};
+    const orientation: number | undefined = exif.Orientation || exif.orientation;
+    const ops: any[] = [];
+    const w = asset.width || 0;
+    const h = asset.height || 0;
+
+    // Heuristic to avoid double-rotation on some Android camera results:
+    // If orientation says 90/270 but pixels already portrait (h > w), skip rotate.
+    const pixelsPortrait = h > w && w > 0 && h > 0;
+
+    if (orientation) {
+      switch (orientation) {
+        case 3: // 180°
+          ops.push({ rotate: 180 });
+          break;
+        case 6: // 90° CW (common on portrait)
+          if (!pixelsPortrait) ops.push({ rotate: 90 });
+          break;
+        case 8: // 270° CW
+          if (!pixelsPortrait) ops.push({ rotate: 270 });
+          break;
+        case 2: // Flip horizontal
+          ops.push({ flip: ImageManipulator.FlipType.Horizontal });
+          break;
+        case 4: // Flip vertical
+          ops.push({ flip: ImageManipulator.FlipType.Vertical });
+          break;
+        case 5: // Transpose (rotate 90 + flip H)
+          ops.push({ rotate: 90 });
+          ops.push({ flip: ImageManipulator.FlipType.Horizontal });
+          break;
+        case 7: // Transverse (rotate 270 + flip H)
+          ops.push({ rotate: 270 });
+          ops.push({ flip: ImageManipulator.FlipType.Horizontal });
+          break;
+      }
+    }
+
+    try {
+      const result = await ImageManipulator.manipulateAsync(
+        asset.uri,
+        ops,
+        { compress: 1, format: ImageManipulator.SaveFormat.JPEG }
+      );
+      return { ...asset, uri: result.uri, width: result.width || w || 1, height: result.height || h || 1 };
+    } catch {
+      // Fallback no-op to bake current pixels without EXIF
       try {
         const noop = await ImageManipulator.manipulateAsync(asset.uri, [], { compress: 1, format: ImageManipulator.SaveFormat.JPEG });
-        rotated = { ...asset, uri: noop.uri, width: noop.width, height: noop.height };
-      } catch {}
+        return { ...asset, uri: noop.uri, width: noop.width || w || 1, height: noop.height || h || 1 };
+      } catch {
+        return { ...asset, width: w || 1, height: h || 1 };
+      }
     }
-    // Ensure width/height set
-    if (!rotated.width || !rotated.height) rotated = { ...rotated, width: asset.width || 1, height: asset.height || 1 };
-    return rotated;
   };
 
   // Convert relative /uploads path to absolute for Image component
@@ -228,7 +261,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
               setUploading(true);
               const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
               if(!perm.granted){ Alert.alert('Izin ditolak'); return; }
-              const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.85, exif: true });
+              const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.85, exif: true, allowsEditing: false });
               if(result.canceled) return;
               let asset = await normalizeOrientation(result.assets[0]);
               const uploaded = await handleUploadAsset(token || '', asset.uri, asset.fileName, asset.mimeType);
@@ -237,12 +270,11 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
             } catch(e:any){ Alert.alert('Upload gagal', e.message || 'Error'); }
             finally { setUploading(false); }
           }} />
-  <Button title='Kamera' onPress={async ()=>{
+          <Button title='Kamera' onPress={async ()=>{
             try {
-              if (!cameraPermission || !cameraPermission.granted) {
-                const perm = await requestCameraPermission();
-                if (!perm.granted) { Alert.alert('Izin kamera ditolak'); return; }
-              }
+              const status = await Camera.requestCameraPermission();
+              if (status !== 'granted') { Alert.alert('Izin kamera ditolak'); return; }
+              setCamGranted(true);
               setShowCamera(true);
             } catch(e:any){ Alert.alert('Gagal buka kamera', e.message || 'Error'); }
           }} />
@@ -318,17 +350,24 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       <View style={{ height: Platform.OS==='web' ? 40 : 120 }} />
   </ScrollView>
   {/* (Crop feature dihapus) */}
-  {/* Advanced Camera Modal */}
+  {/* Advanced Camera Modal (Vision Camera) */}
   <Modal visible={showCamera} animationType='slide' onRequestClose={()=>setShowCamera(false)}>
     <View style={{ flex:1, backgroundColor:'#000' }}>
       <View style={{ flex:1 }}>
-        <CameraView
-          ref={(r)=> { cameraRef.current = r; }}
-          style={{ flex:1 }}
-          facing={cameraType}
-          ratio="16:9"
-          onCameraReady={()=>{ /* ready */ }}
-        />
+        {device && camGranted ? (
+          <Camera
+            ref={(r: any)=> { cameraRef.current = r as any; }}
+            style={{ flex:1 }}
+            device={device}
+            isActive={true}
+            photo={true}
+            enableZoomGesture
+          />
+        ) : (
+          <View style={{ flex:1, alignItems:'center', justifyContent:'center' }}>
+            <Text style={{ color:'#fff' }}>Memuat kamera...</Text>
+          </View>
+        )}
         <View style={{ position:'absolute', top:40, left:20 }}>
           <TouchableOpacity onPress={()=>setShowCamera(false)} style={{ backgroundColor:'rgba(0,0,0,0.5)', padding:10, borderRadius:30 }}>
             <Text style={{ color:'#fff' }}>Tutup</Text>
@@ -339,11 +378,13 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
             <Text style={{ color:'#fff' }}>Flip</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={async ()=>{
-            if(!cameraRef.current) return;
+            const cam = cameraRef.current;
+            if(!cam || !device) return;
             try {
               setUploading(true);
-              const photo = await (cameraRef.current as any)?.takePictureAsync({ quality:1, exif:true, skipProcessing:false });
-              const normalized = await normalizeOrientation(photo as any);
+              const photo = await (cam as any).takePhoto({ qualityPrioritization: 'quality', flash: 'off' });
+              const uri = Platform.OS === 'android' ? `file://${photo.path}` : photo.path;
+              const normalized = await normalizeOrientation({ uri, width: photo.width, height: photo.height, exif: {} as any } as any);
               const uploaded = await handleUploadAsset(token || '', normalized.uri, 'camera.jpg', 'image/jpeg');
               setReferensiGambarUrls(prev => [...prev, uploaded.url]);
               setLocalImageName('camera.jpg');

@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
 import { api, API_URL } from '../api/client';
+import { Card } from '../ui/components/Card';
+import { Title, Body, Small } from '../ui/components/Text';
+import { Button } from '../ui/components/Button';
+import { luxuryTheme as t } from '../ui/theme/luxuryTheme';
 import { useAuth } from '../context/AuthContext';
 import { OrderActionsModal } from './OrderActionsModal';
 
@@ -86,43 +90,68 @@ export default function TasksScreen() {
 			return p.startsWith('/uploads') ? base + p : p;
 		};
 		const thumbSrc = Array.isArray(item.order?.referensiGambarUrls) && item.order.referensiGambarUrls[0] ? toDisplayUrl(item.order.referensiGambarUrls[0]) : undefined;
-			return (
-				<TouchableOpacity style={styles.card} activeOpacity={0.8} onPress={() => { setSelectedOrder(item.order || { id: item.orderId }); setActionsOpen(true); }}>
-				<View style={{ flexDirection: 'row' }}>
-					{thumbSrc ? (
-						<Image source={{ uri: thumbSrc }} style={styles.thumb} resizeMode="cover" />
-					) : (
-						<View style={[styles.thumb, { backgroundColor:'#eef1f4', alignItems:'center', justifyContent:'center' }]}>
-							<Text style={{ color:'#99a' }}>No Img</Text>
-						</View>
-					)}
-					<View style={{ flex:1, marginLeft: 12 }}>
-						<View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-							<Text style={styles.title}>Order #{item.orderId}</Text>
-							<View style={{ flexDirection:'row', alignItems:'center', gap:8 }}>
-								<Text style={[styles.badge, statusColor(item.status)]}>{item.status}</Text>
+		const canFinish = (() => {
+			const os = String(item?.order?.status || '').toUpperCase();
+			return os === 'DALAM_PROSES' || os === 'DITERIMA';
+		})();
+		const canSeeFinish = (user?.jobRole === 'ADMINISTRATOR' || user?.jobRole === 'SALES') && canFinish;
+		return (
+			<TouchableOpacity activeOpacity={0.88} onPress={() => { setSelectedOrder(item.order || { id: item.orderId }); setActionsOpen(true); }}>
+				<Card style={styles.card}>
+					<View style={{ flexDirection: 'row' }}>
+						{thumbSrc ? (
+							<Image source={{ uri: thumbSrc }} style={styles.thumb} resizeMode="cover" />
+						) : (
+							<View style={[styles.thumb, { backgroundColor: t.colors.surfaceElevated, alignItems:'center', justifyContent:'center', borderColor: t.colors.border, borderWidth: 1 }]}>
+								<Small>No Img</Small>
 							</View>
-						</View>
-						{item.order && (
-							<Text style={styles.subtle}>{item.order.customerName} • {item.order.jenisBarang} • {item.order.jenisEmas}</Text>
 						)}
-						{assignedSummary ? <Text style={styles.subtle}>{assignedSummary}</Text> : null}
+						<View style={{ flex:1, marginLeft: 12 }}>
+							{/* Header row: title + status badge, text truncates to avoid overflow */}
+							<View style={{ flexDirection: 'row', alignItems:'center', minWidth: 0 }}>
+								<Title numberOfLines={1} ellipsizeMode="tail" style={{ flexShrink: 1 }}>Order #{item.order?.code || item.orderId}</Title>
+								<Text style={[styles.badge, statusColor(item.status), { marginLeft: 10 }]}>{item.status}</Text>
+							</View>
+
+							{item.order && (
+								<Small style={{ marginTop: 6 }}>{item.order.customerName} • {item.order.jenisBarang} • {item.order.jenisEmas}</Small>
+							)}
+							{assignedSummary ? <Small style={{ marginTop: 4 }}>{assignedSummary}</Small> : null}
+
+							{/* Actions row: placed on its own line to prevent overflow */}
+							{canSeeFinish ? (
+								<View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10 }}>
+									<Button
+										compact
+										title="Selesaikan"
+										onPress={async () => {
+											if (!token) return;
+											Alert.alert('Selesaikan Pesanan', 'Yakin set status pesanan menjadi SIAP?', [
+												{ text:'Batal', style:'cancel' },
+												{ text:'Ya', style:'destructive', onPress: async () => {
+													try { await api.orders.updateStatus(token, item.order?.id || item.orderId, 'SIAP'); await load(); } catch(e:any){ Alert.alert('Gagal', e.message || String(e)); }
+												} }
+											]);
+										}}
+									/>
+								</View>
+							) : null}
+						</View>
 					</View>
-				</View>
-				{/* No inline kebab; actions moved into modal */}
+				</Card>
 			</TouchableOpacity>
 		);
 	};
 
 	return (
-		<View style={{ flex: 1 }}>
+		<View style={{ flex: 1, backgroundColor: t.colors.background }}>
 			<FlatList
 				data={data}
 				keyExtractor={(it) => String(it.orderId)}
 				renderItem={renderItem}
-				refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
+				refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={t.colors.primary} />}
 				contentContainerStyle={{ padding: 12 }}
-				ListEmptyComponent={!loading ? <Text style={{ textAlign: 'center', marginTop: 40 }}>Belum ada tasks aktif</Text> : null}
+				ListEmptyComponent={!loading ? <Small style={{ textAlign: 'center', marginTop: 40 }}>Belum ada tasks aktif</Small> : null}
 			/>
 
 			<OrderActionsModal
@@ -137,20 +166,18 @@ export default function TasksScreen() {
 
 function statusColor(s: Task['status']) {
 	switch (s) {
-		case 'OPEN': return { backgroundColor: '#e9f5ff', borderColor: '#90caf9', color: '#1976d2' } as any;
-		case 'ASSIGNED': return { backgroundColor: '#f3e5f5', borderColor: '#ce93d8', color: '#6a1b9a' } as any;
-		case 'IN_PROGRESS': return { backgroundColor: '#fff8e1', borderColor: '#ffe082', color: '#ff8f00' } as any;
-		case 'AWAITING_VALIDATION': return { backgroundColor: '#e8f5e9', borderColor: '#a5d6a7', color: '#2e7d32' } as any;
-		case 'DONE': return { backgroundColor: '#eceff1', borderColor: '#b0bec5', color: '#37474f' } as any;
-		case 'CANCELLED': return { backgroundColor: '#ffebee', borderColor: '#ffCDD2', color: '#c62828' } as any;
+		case 'OPEN': return { backgroundColor: t.colors.badgeBg, borderColor: t.colors.border, color: t.colors.textMuted } as any;
+		case 'ASSIGNED': return { backgroundColor: '#1e1a2b', borderColor: '#6d55c3', color: '#b7a9ff' } as any;
+		case 'IN_PROGRESS': return { backgroundColor: '#2a2217', borderColor: '#C5A028', color: '#ffcd63' } as any;
+		case 'AWAITING_VALIDATION': return { backgroundColor: '#1a2a25', borderColor: '#3a9f70', color: t.colors.success } as any;
+		case 'DONE': return { backgroundColor: '#172025', borderColor: t.colors.border, color: t.colors.textMuted } as any;
+		case 'CANCELLED': return { backgroundColor: '#2a1717', borderColor: '#8a3a3a', color: t.colors.danger } as any;
 	}
 }
 
 const styles = StyleSheet.create({
-	card: { backgroundColor: 'white', borderRadius: 10, padding: 12, marginBottom: 12, borderColor: '#eee', borderWidth: 1, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 4 },
-	thumb: { width: 64, height: 64, borderRadius: 8, backgroundColor: '#eee' },
-	title: { fontSize: 16, fontWeight: '600' },
-	badge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, overflow: 'hidden' },
-	subtle: { color: '#666', marginTop: 4 },
+	card: { marginBottom: 12 },
+	thumb: { width: 64, height: 64, borderRadius: 12, backgroundColor: t.colors.surfaceElevated },
+	badge: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, overflow: 'hidden', borderWidth: 1, marginRight: 8 },
 });
 

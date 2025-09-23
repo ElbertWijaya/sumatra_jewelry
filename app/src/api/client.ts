@@ -103,6 +103,7 @@ export const api = {
   update: (token: string, id: number, patch: any) => request(`/orders/${id}`, { method: 'PATCH', body: JSON.stringify(patch), headers: { Authorization: `Bearer ${token}` } }),
   remove: (token: string, id: number) => request(`/orders/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }),
   create: (token: string, payload: any) => request('/orders', { method: 'POST', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` } }),
+  updateStatus: (token: string, id: number, status: string) => request(`/orders/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }), headers: { Authorization: `Bearer ${token}` } }),
   },
   tasks: {
     list: (token: string) => request('/tasks', { headers: { Authorization: `Bearer ${token}` } }),
