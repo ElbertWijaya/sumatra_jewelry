@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import * as dayjs from 'dayjs';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -51,10 +52,26 @@ export class OrdersService {
 
       // Auto-create an OPEN task for this new order so it appears in Tasks
       try {
-        await (tx as any).orderTask.create({ data: { orderId: order.id, stage: 'Awal', status: 'OPEN' } });
+        await tx.orderTask.create({ data: { orderId: order.id, stage: 'Awal', status: 'OPEN' } });
       } catch (e) {
         // ignore if any race/duplicate; tasks can be created manually later
       }
+
+      // History: CREATED
+      try {
+        const user = await this.prisma.appUser.findUnique({ where: { id: userId }, select: { fullName: true, jobRole: true } });
+        await tx.orderHistory.create({
+          data: ({
+            orderId: order.id,
+            userId,
+            action: 'CREATED',
+            actorName: user?.fullName ?? null,
+            actorRole: (user as any)?.jobRole ?? null,
+            orderCode: updated.code ?? null,
+            changeSummary: 'CREATE ORDER',
+          }) as any,
+        });
+      } catch {}
       return updated;
     });
 
@@ -95,13 +112,20 @@ export class OrdersService {
         updatedById: userId,
       },
     });
+    const user = await this.prisma.appUser.findUnique({ where: { id: userId }, select: { fullName: true, jobRole: true } });
     await this.prisma.orderHistory.create({
-      data: {
+      data: ({
         orderId: id,
         userId,
+        action: 'STATUS_CHANGED',
+        actorName: user?.fullName ?? null,
+        actorRole: (user as any)?.jobRole ?? null,
+        statusFrom: order.status as any,
+        statusTo: dto.status as any,
+        orderCode: order.code ?? null,
         changeSummary: `STATUS: ${order.status} -> ${dto.status}`,
         diff: { from: order.status, to: dto.status },
-      },
+      }) as any,
     });
     return updated;
   }
@@ -109,17 +133,20 @@ export class OrdersService {
   async history(id: number) {
     // Ensure order exists (throws if not)
     await this.findById(id);
-    const records = await (this.prisma as any).orderHistory.findMany({
+    const records = await this.prisma.orderHistory.findMany({
       where: { orderId: id },
       include: { user: { select: { id: true, fullName: true, jobRole: true } } },
       orderBy: { changedAt: 'asc' }
     });
-  return records.map((r: any) => ({
+    return records.map((r) => ({
       id: r.id,
       changedAt: r.changedAt,
-  by: r.user ? { id: r.user.id, fullName: r.user.fullName, jobRole: (r.user as any).jobRole ?? null } : null,
+      by: (r as any).user ? { id: (r as any).user.id, fullName: (r as any).user.fullName, jobRole: (r as any).user.jobRole ?? null } : (r as any).actorName ? { id: (r as any).userId, fullName: (r as any).actorName, jobRole: (r as any).actorRole ?? null } : null,
+      action: (r as any).action,
+      statusFrom: (r as any).statusFrom ?? null,
+      statusTo: (r as any).statusTo ?? null,
       summary: r.changeSummary,
-      diff: r.diff
+      diff: r.diff,
     }));
   }
 
@@ -143,11 +170,27 @@ export class OrdersService {
         tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : order.tanggalSelesai,
         tanggalAmbil: dto.tanggalAmbil ? new Date(dto.tanggalAmbil) : order.tanggalAmbil,
         catatan: dto.catatan ?? order.catatan,
-  referensiGambarUrls: (dto.referensiGambarUrls as any) ?? order.referensiGambarUrls,
-  updatedBy: userId ? { connect: { id: userId } } as any : undefined,
+        referensiGambarUrls: (dto.referensiGambarUrls as any) ?? order.referensiGambarUrls,
+        updatedBy: userId ? ({ connect: { id: userId } } as any) : undefined,
       };
       try { console.log('[OrdersService.update] id=', id, 'patchKeys=', Object.keys(dto||{})); } catch {}
       const updated = await tx.order.update({ where: { id }, data });
+
+      // compute prev/next patches for history
+      const fields = ['customerName','customerAddress','customerPhone','jenisBarang','jenisEmas','warnaEmas','dp','hargaEmasPerGram','hargaPerkiraan','hargaAkhir','promisedReadyDate','tanggalSelesai','tanggalAmbil','catatan','referensiGambarUrls'] as const;
+      const prevPatch: Record<string, unknown> = {};
+      const nextPatch: Record<string, unknown> = {};
+      for (const k of fields) {
+        const newVal = (dto as any)[k];
+        if (newVal !== undefined) {
+          const oldVal = (order as any)[k];
+          const changed = JSON.stringify(oldVal) !== JSON.stringify(newVal);
+          if (changed) {
+            prevPatch[k] = oldVal ?? null;
+            nextPatch[k] = newVal ?? null;
+          }
+        }
+      }
 
       if (dto.stones) {
         await tx.orderStone.deleteMany({ where: { orderId: id } });
@@ -159,16 +202,29 @@ export class OrdersService {
         const sum = stones.reduce((acc, s) => acc + (s.berat ? Number(s.berat) : 0), 0);
         const totalBerat = new Prisma.Decimal(sum.toFixed(2));
         await tx.order.update({ where: { id }, data: { stoneCount, totalBerat: totalBerat as any } });
+        nextPatch['stoneCount'] = stoneCount;
+        nextPatch['totalBerat'] = totalBerat as any;
       }
 
-      await tx.orderHistory.create({
-        data: {
-          orderId: id,
-          userId,
-          changeSummary: 'EDIT ORDER',
-          diff: dto as any,
-        },
-      });
+      try {
+        const user = await this.prisma.appUser.findUnique({ where: { id: userId }, select: { fullName: true, jobRole: true } });
+        const groupId = randomUUID();
+        await tx.orderHistory.create({
+          data: ({
+            orderId: id,
+            userId,
+            action: 'UPDATED',
+            actorName: user?.fullName ?? null,
+            actorRole: (user as any)?.jobRole ?? null,
+            orderCode: updated.code ?? null,
+            changeSummary: 'EDIT ORDER',
+            prev: Object.keys(prevPatch).length ? (prevPatch as any) : undefined,
+            next: Object.keys(nextPatch).length ? (nextPatch as any) : undefined,
+            diff: dto as any,
+            groupId,
+          }) as any,
+        });
+      } catch {}
       return updated;
     });
     try { console.log('[OrdersService.update] done id=', id); } catch {}
@@ -182,7 +238,7 @@ export class OrdersService {
       throw new BadRequestException('Tidak dapat menghapus order history/non-aktif');
     }
   // Hapus history dulu untuk menghindari constraint error (tidak ada cascade di schema untuk OrderHistory)
-  await (this.prisma as any).orderHistory.deleteMany({ where: { orderId: id } });
+    await this.prisma.orderHistory.deleteMany({ where: { orderId: id } });
   // Catatan: kita kehilangan jejak 'DELETE ORDER' karena history ikut terhapus.
   // Alternatif: pindahkan log ke tabel audit terpisah yg tidak berelasi hard.
     await this.prisma.order.delete({ where: { id } });

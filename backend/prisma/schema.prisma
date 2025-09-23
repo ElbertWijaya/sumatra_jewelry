@@ -80,6 +80,33 @@ model OrderHistory {
   userId     String?
   changeSummary String?
   diff       Json?
+  // Richer audit fields
+  action      OrderHistoryAction @default(UPDATED)
+  actorName   String?
+  actorRole   TaskJobRole?
+  statusFrom  OrderStatus?
+  statusTo    OrderStatus?
+  field       String?
+  prev        Json?
+  next        Json?
+  context     Json?
+  groupId     String?
+  orderCode   String?
+  snapshot    Json?
+
+  @@index([orderId, changedAt])
+  @@index([action])
+  @@index([field])
+  @@index([userId])
+}
+
+enum OrderHistoryAction {
+  CREATED
+  UPDATED
+  STATUS_CHANGED
+  NOTE_ADDED
+  TASK_EVENT
+  DELETED
 }
 
 model OrderTask {
