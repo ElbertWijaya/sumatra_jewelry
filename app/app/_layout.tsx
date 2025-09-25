@@ -7,7 +7,7 @@ import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import LoginScreen from '../src/screens/LoginScreen';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+// import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
@@ -52,12 +52,23 @@ export default function RootLayout() {
 const qc = new QueryClient();
 
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'expo-router';
 
 const Gate: React.FC<{children: React.ReactNode}> = ({ children }) => {
   const { token, login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const prevToken = useRef<string | null>(null);
+
+  useEffect(() => {
+    // Jika token baru saja didapat (login sukses), redirect ke /home
+    if (token && !prevToken.current) {
+      router.replace('/home');
+    }
+    prevToken.current = token;
+  }, [token]);
 
   if (!token) {
     return (
