@@ -1,9 +1,11 @@
 
+
 import React from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Platform, Dimensions } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../../src/context/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 
 const MOCK_NOTIF = [
   { id: 1, text: 'Order #1234 telah disetujui' },
@@ -25,6 +27,7 @@ const COLORS = {
 export default function HomeScreen() {
   const { user } = useAuth();
   const { width, height } = Dimensions.get('window');
+  const router = useRouter();
   return (
     <View style={{flex:1}}>
       <LinearGradient
@@ -64,7 +67,7 @@ export default function HomeScreen() {
 
         {/* Quick Actions kecil, icon di atas label, fitur lebih jelas */}
         <View style={s.quickRow}>
-          <TouchableOpacity style={s.quickBtn}>
+          <TouchableOpacity style={s.quickBtn} onPress={() => router.push('/create-order')}>
             <Ionicons name="add-circle" size={26} color={COLORS.yellow} />
             <Text style={s.quickLabel}>Order Baru</Text>
           </TouchableOpacity>
@@ -76,9 +79,9 @@ export default function HomeScreen() {
             <Ionicons name="people" size={24} color={COLORS.yellow} />
             <Text style={s.quickLabel}>Customer</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={s.quickBtn}>
-            <Ionicons name="qr-code" size={24} color={COLORS.yellow} />
-            <Text style={s.quickLabel}>Scan QR</Text>
+          <TouchableOpacity style={s.quickBtn} onPress={() => router.push('/inventory-picker')}>
+            <Ionicons name="archive" size={24} color={COLORS.yellow} />
+            <Text style={s.quickLabel}>Ambil dari Inventory</Text>
           </TouchableOpacity>
         </View>
 
