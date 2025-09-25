@@ -1,36 +1,40 @@
 export const luxuryTheme = {
   colors: {
-    background: "#f7f3ef",
-    surface: "#fff8f1",
-    primary: "#a9824e",        // Gold/Bronze
-    primaryDark: "#6e4c1b",    // Dark brown
-    accent: "#ffe066",         // Yellow accent
-    border: "#dbc3a2",
-    text: "#4e3b23",
-    textSecondary: "#a9824e",
-    error: "#d7263d",
-    white: "#ffffff",
-    disabled: "#d3c3b6",
+    background: '#0d0f12',
+    surface: '#141821',
+    surfaceElevated: '#1b2130',
+    primary: '#D4AF37', // gold
+    primaryAlt: '#C5A028',
+    text: '#EAEFF4',
+    textMuted: '#AEB7C2',
+    border: '#273142',
+    success: '#59d185',
+    warning: '#ffcd63',
+    danger: '#ff6b6b',
+    badgeBg: '#1f2633',
   },
-  font: {
-    family: "Poppins, Inter, System",
-    weightBold: "700",
-    weightMedium: "500",
-    weightRegular: "400",
-  },
+  spacing: (n: number) => n * 8,
   radius: {
-    sm: 8,
-    md: 16,
-    lg: 24,
+    xs: 6,
+    sm: 10,
+    md: 14,
+    lg: 18,
+    xl: 24,
   },
-  spacing: (multiplier = 1) => 8 * multiplier,
   shadow: {
     card: {
-      shadowColor: "#a9824e",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.11,
-      shadowRadius: 6,
-      elevation: 2,
+      shadowColor: '#000',
+      shadowOpacity: 0.25,
+      shadowRadius: 12,
+      elevation: 6,
     },
   },
+  typography: {
+    title: { fontSize: 18, fontWeight: '700' as const, letterSpacing: 0.2 },
+    subtitle: { fontSize: 14, fontWeight: '500' as const, letterSpacing: 0.2 },
+    body: { fontSize: 14, fontWeight: '400' as const },
+    small: { fontSize: 12, fontWeight: '500' as const, letterSpacing: 0.3 },
+  }
 };
+
+export type LuxuryTheme = typeof luxuryTheme;

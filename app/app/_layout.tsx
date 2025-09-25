@@ -5,7 +5,7 @@ import { Stack } from 'expo-router';
 import React from 'react';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { LoginScreen } from '../src/screens/LoginScreen';
+import LoginScreen from '../src/screens/LoginScreen';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
@@ -51,9 +51,33 @@ export default function RootLayout() {
 
 const qc = new QueryClient();
 
+
+import { useState } from 'react';
+
 const Gate: React.FC<{children: React.ReactNode}> = ({ children }) => {
-  const { token } = useAuth();
-  if (!token) return <LoginScreen />;
+  const { token, login } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!token) {
+    return (
+      <LoginScreen
+        onLogin={async (email, password) => {
+          setLoading(true);
+          setError(null);
+          try {
+            await login(email, password);
+          } catch (e: any) {
+            setError(e.message || 'Login gagal');
+          } finally {
+            setLoading(false);
+          }
+        }}
+        loading={loading}
+        error={error}
+      />
+    );
+  }
   return <>{children}</>;
 };
 

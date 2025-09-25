@@ -1,10 +1,17 @@
+
 import React, { useState } from "react";
-import { View, TextInput, Text, Pressable, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import { View, TextInput, Text, Pressable, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
 import { luxuryTheme as t } from "../ui/theme/luxuryTheme";
 import { LogoS } from "../../assets/images/LogoS";
-import Checkbox from "expo-checkbox"; // Make sure expo-checkbox is installed
+import Checkbox from "expo-checkbox";
 
-export default function LoginScreen({ onLogin }: { onLogin?: (email: string, password: string) => void }) {
+interface LoginScreenProps {
+  onLogin?: (email: string, password: string) => void;
+  loading?: boolean;
+  error?: string | null;
+}
+
+export default function LoginScreen({ onLogin, loading = false, error: errorProp }: LoginScreenProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -33,7 +40,7 @@ export default function LoginScreen({ onLogin }: { onLogin?: (email: string, pas
           <TextInput
             style={styles.input}
             placeholder="Email atau Nama Pengguna"
-            placeholderTextColor={t.colors.disabled}
+            placeholderTextColor={t.colors.textMuted}
             autoCapitalize="none"
             keyboardType="email-address"
             value={email}
@@ -42,7 +49,7 @@ export default function LoginScreen({ onLogin }: { onLogin?: (email: string, pas
           <TextInput
             style={styles.input}
             placeholder="Kata Sandi"
-            placeholderTextColor={t.colors.disabled}
+            placeholderTextColor={t.colors.textMuted}
             secureTextEntry
             value={password}
             onChangeText={setPassword}
@@ -56,9 +63,21 @@ export default function LoginScreen({ onLogin }: { onLogin?: (email: string, pas
             />
             <Text style={styles.rememberText}>Ingat Saya</Text>
           </View>
-          {error && <Text style={styles.error}>{error}</Text>}
-          <Pressable style={styles.loginBtn} onPress={handleLogin}>
-            <Text style={styles.loginBtnText}>Masuk</Text>
+          {(errorProp || error) && <Text style={styles.error}>{errorProp || error}</Text>}
+          <Pressable
+            style={({ pressed }) => [
+              styles.loginBtn,
+              loading && { opacity: 0.7 },
+              pressed && !loading && { opacity: 0.85 },
+            ]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color={t.colors.text} />
+            ) : (
+              <Text style={styles.loginBtnText}>Masuk</Text>
+            )}
           </Pressable>
         </View>
       </View>
@@ -79,11 +98,10 @@ const styles = StyleSheet.create({
   },
   appName: {
     marginTop: t.spacing(0.5),
-    fontFamily: t.font.family,
-    fontWeight: t.font.weightBold,
-    fontSize: 21,
-    color: t.colors.primaryDark,
-    letterSpacing: 1,
+  ...t.typography.title,
+  fontSize: 21,
+  color: t.colors.primary,
+  letterSpacing: 1,
   },
   form: {
     width: "100%",
@@ -94,17 +112,16 @@ const styles = StyleSheet.create({
     ...t.shadow.card,
   },
   input: {
-    fontFamily: t.font.family,
-    fontWeight: t.font.weightRegular,
-    fontSize: 16,
-    color: t.colors.text,
-    backgroundColor: t.colors.white,
-    borderRadius: t.radius.md,
-    borderWidth: 1,
-    borderColor: t.colors.border,
-    paddingHorizontal: t.spacing(1.5),
-    paddingVertical: t.spacing(1),
-    marginBottom: t.spacing(1.5),
+  ...t.typography.body,
+  fontSize: 16,
+  color: t.colors.text,
+  backgroundColor: t.colors.surfaceElevated,
+  borderRadius: t.radius.md,
+  borderWidth: 1,
+  borderColor: t.colors.border,
+  paddingHorizontal: t.spacing(1.5),
+  paddingVertical: t.spacing(1),
+  marginBottom: t.spacing(1.5),
   },
   rememberRow: {
     flexDirection: "row",
@@ -112,33 +129,32 @@ const styles = StyleSheet.create({
     marginBottom: t.spacing(1.5),
   },
   rememberText: {
-    fontFamily: t.font.family,
-    fontWeight: t.font.weightMedium,
-    color: t.colors.primaryDark,
-    fontSize: 15,
+  ...t.typography.subtitle,
+  color: t.colors.primary,
+  fontSize: 15,
   },
   error: {
-    color: t.colors.error,
-    marginBottom: t.spacing(1),
-    fontFamily: t.font.family,
+  color: t.colors.danger,
+  marginBottom: t.spacing(1),
+  ...t.typography.body,
   },
   loginBtn: {
-    backgroundColor: t.colors.primary,
-    borderRadius: t.radius.md,
-    paddingVertical: t.spacing(1),
-    alignItems: "center",
-    marginTop: t.spacing(1),
-    shadowColor: t.colors.primary,
-    shadowOpacity: 0.18,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
+  backgroundColor: t.colors.primary,
+  borderRadius: t.radius.md,
+  paddingVertical: t.spacing(1),
+  alignItems: "center",
+  marginTop: t.spacing(1),
+  shadowColor: t.colors.primary,
+  shadowOpacity: 0.18,
+  shadowOffset: { width: 0, height: 2 },
+  shadowRadius: 4,
+  elevation: 2,
   },
   loginBtnText: {
-    color: t.colors.white,
-    fontSize: 17,
-    fontWeight: t.font.weightBold,
-    letterSpacing: 1,
-    fontFamily: t.font.family,
+  color: t.colors.text,
+  fontSize: 17,
+  fontWeight: '700',
+  letterSpacing: 1,
+  ...t.typography.title,
   },
 });
