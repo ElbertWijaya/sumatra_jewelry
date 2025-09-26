@@ -649,10 +649,14 @@ const styles = StyleSheet.create({
   },
   infoOrderMiniLabel: {
     color: COLORS.gold,
-    fontSize: 11,
-    fontWeight: '600',
-    marginBottom: 2,
-    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 0,
+    textAlign: 'left',
+    flexWrap: 'wrap',
+    marginLeft: 6,
+    letterSpacing: 0.2,
+    textTransform: 'capitalize',
   },
   imageIconLabel: {
     color: COLORS.gold,

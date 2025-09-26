@@ -1,41 +1,76 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated } from 'react-native';
+
 
 type Option = { label: string; value: string } | string;
-interface Props { label: string; value: string; options: Option[]; onChange(v:string): void; maxHeight?: number; disabled?: boolean; styleHeader?: any }
+interface Props {
+  label: string;
+  value: string;
+  options: Option[];
+  onChange(v: string): void;
+  maxHeight?: number;
+  disabled?: boolean;
+  styleHeader?: any;
+  open?: boolean;
+  onRequestOpen?: () => void;
+}
 
-export const InlineSelect: React.FC<Props> = ({ label, value, options, onChange, maxHeight = 220, disabled = false, styleHeader }) => {
-  const [open, setOpen] = React.useState(false);
-  React.useEffect(() => { if (disabled && open) setOpen(false); }, [disabled, open]);
+export const InlineSelect: React.FC<Props> = ({ label, value, options, onChange, maxHeight = 220, disabled = false, styleHeader, open: controlledOpen, onRequestOpen }) => {
+  const [internalOpen, setInternalOpen] = React.useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  React.useEffect(() => { if (disabled && open) setInternalOpen(false); }, [disabled, open]);
   const normalized = React.useMemo(() => (
     (options || []).map((opt) => typeof opt === 'string' ? { label: opt, value: opt } : opt)
   ), [options]);
   const selectedLabel = React.useMemo(() => normalized.find(o => o.value === value)?.label || '', [normalized, value]);
+
+  // Animated close
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (open && !disabled) {
+      Animated.timing(anim, { toValue: 1, duration: 180, useNativeDriver: false }).start();
+    } else {
+      Animated.timing(anim, { toValue: 0, duration: 180, useNativeDriver: false }).start();
+    }
+  }, [open, disabled]);
+  const dropdownHeight = anim.interpolate({ inputRange: [0, 1], outputRange: [0, maxHeight] });
+  const dropdownOpacity = anim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
+
+  const handlePress = () => {
+    if (disabled) return;
+    if (onRequestOpen) {
+      onRequestOpen();
+    } else {
+      setInternalOpen(o => !o);
+    }
+  };
+
   return (
     <View style={styles.wrapper}>
-  <TouchableOpacity style={[styles.header, styleHeader, disabled && styles.headerDisabled]} onPress={()=> { if (!disabled) setOpen(o=>!o); }} activeOpacity={disabled ? 1 : 0.7} disabled={disabled}>
+      <TouchableOpacity style={[styles.header, styleHeader, disabled && styles.headerDisabled]} onPress={handlePress} activeOpacity={disabled ? 1 : 0.7} disabled={disabled}>
         <Text style={styles.label}>{label}</Text>
         <View style={styles.valueWrap}>
-      <Text style={[styles.value, disabled && styles.valueDisabled]}>
-        {selectedLabel || 'Pilih'}
-      </Text>
-      <Text style={[styles.arrow, disabled && styles.valueDisabled]}>{open ? '▲' : '▼'}</Text>
+          <Text style={[styles.value, disabled && styles.valueDisabled]}>
+            {selectedLabel || 'Pilih'}
+          </Text>
+          <Text style={[styles.arrow, disabled && styles.valueDisabled]}>{open ? '▲' : '▼'}</Text>
         </View>
       </TouchableOpacity>
-    {open && !disabled && (
-        <View style={styles.dropdown}>
+      <Animated.View style={[styles.dropdown, { height: dropdownHeight, opacity: dropdownOpacity, paddingVertical: open ? 0 : 0, }]}
+        pointerEvents={open && !disabled ? 'auto' : 'none'}>
+        {open && !disabled ? (
           <ScrollView style={{ maxHeight }} nestedScrollEnabled>
             {normalized.map(opt => {
               const active = value === opt.value;
               return (
-                <TouchableOpacity key={opt.value} style={[styles.item, active && styles.itemActive]} onPress={()=>{ onChange(opt.value); setOpen(false); }}>
+                <TouchableOpacity key={opt.value} style={[styles.item, active && styles.itemActive]} onPress={() => { onChange(opt.value); if (controlledOpen === undefined) setInternalOpen(false); }}>
                   <Text style={[styles.itemText, active && styles.itemTextActive]}>{opt.label}</Text>
                 </TouchableOpacity>
               );
             })}
           </ScrollView>
-        </View>
-      )}
+        ) : null}
+      </Animated.View>
     </View>
   );
 };
@@ -52,7 +87,7 @@ const styles = StyleSheet.create({
   dropdown: { marginTop:6, borderWidth:1, borderColor:'#FFD700', borderRadius:12, backgroundColor:'#23201c', overflow:'hidden', shadowColor:'#000', shadowOpacity:0.08, shadowRadius:8, shadowOffset:{ width:0, height:2 }, elevation:3 },
   item: { paddingVertical:12, paddingHorizontal:16, borderBottomWidth:1, borderBottomColor:'#f0f0f0' },
   itemActive: { backgroundColor:'#181512' },
-  itemText: { fontSize:14, color:'#333' },
-  itemTextActive: { color:'#FFD700', fontWeight:'700' },
+  itemText: { fontSize:14, color:'#FFD700' },
+  itemTextActive: { color:'#fff', fontWeight:'700' },
 });
   // ...existing code...

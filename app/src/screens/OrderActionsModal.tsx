@@ -51,6 +51,18 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
   const [showPicker, setShowPicker] = useState<null | { field: 'ready' | 'selesai' | 'ambil'; date: Date }>(null);
   const [liveTasks, setLiveTasks] = useState<any[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  // Dropdown control: only one open at a time
+  const [openDropdown, setOpenDropdown] = useState<string|null>(null);
+
+  // Close dropdown jika user tap di luar atau membuka dropdown lain
+  useEffect(() => {
+    if (!visible) setOpenDropdown(null);
+  }, [visible]);
+
+  // Handler agar hanya satu dropdown yang bisa terbuka
+  const handleOpenDropdown = (key: string) => {
+    setOpenDropdown(prev => (prev === key ? null : key));
+  };
 
   useEffect(() => { if (!visible) return; setTab('assign'); setRole(''); setSelectedStages([]); setSelectedUserId(''); setUsers([]); setValidations([]); setOrderDetail(null); setEdit(false); }, [visible]);
 
@@ -253,7 +265,14 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
                       <Text style={styles.infoValue}>{det.jenisBarang || '-'}</Text>
                     </>
                   ) : (
-                    <InlineSelect label='Jenis Barang' value={fJenisBarang} options={JENIS_BARANG_OPTIONS} onChange={setFJenisBarang} />
+                    <InlineSelect
+                      label='Jenis Barang'
+                      value={fJenisBarang}
+                      options={JENIS_BARANG_OPTIONS}
+                      onChange={setFJenisBarang}
+                      open={openDropdown==='jenisBarang'}
+                      onRequestOpen={()=>handleOpenDropdown('jenisBarang')}
+                    />
                   )}
                 </View>
                 <View style={styles.infoRow}>
@@ -273,7 +292,14 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
                       <Text style={styles.infoValue}>{det.jenisEmas || '-'}</Text>
                     </>
                   ) : (
-                    <InlineSelect label='Jenis Emas' value={fJenisEmas} options={JENIS_EMAS_OPTIONS} onChange={setFJenisEmas} />
+                    <InlineSelect
+                      label='Jenis Emas'
+                      value={fJenisEmas}
+                      options={JENIS_EMAS_OPTIONS}
+                      onChange={setFJenisEmas}
+                      open={openDropdown==='jenisEmas'}
+                      onRequestOpen={()=>handleOpenDropdown('jenisEmas')}
+                    />
                   )}
                 </View>
                 <View style={styles.infoRow}>
@@ -283,7 +309,14 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
                       <Text style={styles.infoValue}>{det.warnaEmas || '-'}</Text>
                     </>
                   ) : (
-                    <InlineSelect label='Warna Emas' value={fWarnaEmas} options={WARNA_EMAS_OPTIONS} onChange={setFWarnaEmas} />
+                    <InlineSelect
+                      label='Warna Emas'
+                      value={fWarnaEmas}
+                      options={WARNA_EMAS_OPTIONS}
+                      onChange={setFWarnaEmas}
+                      open={openDropdown==='warnaEmas'}
+                      onRequestOpen={()=>handleOpenDropdown('warnaEmas')}
+                    />
                   )}
                 </View>
               </View>
@@ -398,7 +431,14 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
                   <Text style={styles.sectionTitle}>Batu</Text>
                   {fStones.map((s, idx) => (
                     <View key={idx} style={{ marginBottom:10 }}>
-                      <InlineSelect label='Bentuk' value={s.bentuk} options={BENTUK_BATU_OPTIONS} onChange={(v)=> setFStones(arr => arr.map((x,i)=> i===idx?{...x,bentuk:v}:x))} />
+                      <InlineSelect
+                        label='Bentuk'
+                        value={s.bentuk}
+                        options={BENTUK_BATU_OPTIONS}
+                        onChange={(v)=> setFStones(arr => arr.map((x,i)=> i===idx?{...x,bentuk:v}:x))}
+                        open={openDropdown===`bentuk${idx}`}
+                        onRequestOpen={()=>handleOpenDropdown(`bentuk${idx}`)}
+                      />
                       <View style={{ flexDirection:'row', alignItems:'center', gap:8 }}>
                         <TextInput placeholder='Jumlah' style={[styles.input, { width:90 }]} value={s.jumlah} onChangeText={(v)=> setFStones(arr => arr.map((x,i)=> i===idx?{...x,jumlah:v}:x))} keyboardType='numeric' />
                         <TextInput placeholder='Berat (gr)' style={[styles.input, { width:110 }]} value={s.berat} onChangeText={(v)=> setFStones(arr => arr.map((x,i)=> i===idx?{...x,berat:v}:x))} keyboardType='numeric' />
@@ -481,8 +521,23 @@ export const OrderActionsModal: React.FC<Props> = ({ visible, order, onClose, on
         if (hasActiveAssignment) return null;
         return (
           <>
-            <InlineSelect label="Role Pekerjaan" value={role} options={(ROLE_OPTIONS as any)} onChange={(r)=> { setRole(r); setSelectedStages([]); setSelectedUserId(''); }} />
-            <InlineSelect label="Pilih Orang" value={selectedUserId} options={users.filter(u => !role || u.jobRole === role).map(u=>({ label: u.fullName, value: u.id }))} onChange={(v)=> setSelectedUserId(v)} disabled={!role} />
+            <InlineSelect
+              label="Role Pekerjaan"
+              value={role}
+              options={(ROLE_OPTIONS as any)}
+              onChange={(r)=> { setRole(r); setSelectedStages([]); setSelectedUserId(''); }}
+              open={openDropdown==='rolePekerjaan'}
+              onRequestOpen={()=>handleOpenDropdown('rolePekerjaan')}
+            />
+            <InlineSelect
+              label="Pilih Staff"
+              value={selectedUserId}
+              options={users.filter(u => !role || u.jobRole === role).map(u=>({ label: u.fullName, value: u.id }))}
+              onChange={(v)=> setSelectedUserId(v)}
+              disabled={!role}
+              open={openDropdown==='pilihStaff'}
+              onRequestOpen={()=>handleOpenDropdown('pilihStaff')}
+            />
             <Text style={styles.section}>Sub-tasks</Text>
             {(ROLE_TEMPLATES[role] || []).map((st) => {
               const active = selectedStages.includes(st);
