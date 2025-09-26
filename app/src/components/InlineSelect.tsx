@@ -24,17 +24,29 @@ export const InlineSelect: React.FC<Props> = ({ label, value, options, onChange,
   ), [options]);
   const selectedLabel = React.useMemo(() => normalized.find(o => o.value === value)?.label || '', [normalized, value]);
 
-  // Animated close
+  // Animated close + scroll up effect + dynamic height
+  const ITEM_HEIGHT = 48;
+  const MAX_VISIBLE = 5;
   const anim = useRef(new Animated.Value(0)).current;
+  const scrollAnim = useRef(new Animated.Value(0)).current;
+  const visibleCount = Math.min(normalized.length, MAX_VISIBLE);
+  const dynamicHeight = visibleCount * ITEM_HEIGHT;
   useEffect(() => {
     if (open && !disabled) {
-      Animated.timing(anim, { toValue: 1, duration: 180, useNativeDriver: false }).start();
+      Animated.parallel([
+        Animated.timing(anim, { toValue: 1, duration: 180, useNativeDriver: false }),
+        Animated.timing(scrollAnim, { toValue: 0, duration: 180, useNativeDriver: false })
+      ]).start();
     } else {
-      Animated.timing(anim, { toValue: 0, duration: 180, useNativeDriver: false }).start();
+      Animated.parallel([
+        Animated.timing(anim, { toValue: 0, duration: 180, useNativeDriver: false }),
+        Animated.timing(scrollAnim, { toValue: -20, duration: 180, useNativeDriver: false })
+      ]).start();
     }
-  }, [open, disabled]);
-  const dropdownHeight = anim.interpolate({ inputRange: [0, 1], outputRange: [0, maxHeight] });
+  }, [open, disabled, normalized.length]);
+  const dropdownHeight = anim.interpolate({ inputRange: [0, 1], outputRange: [0, normalized.length > 0 ? dynamicHeight : 48] });
   const dropdownOpacity = anim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
+  const dropdownTranslateY = scrollAnim.interpolate({ inputRange: [-20, 0], outputRange: [-20, 0] });
 
   const handlePress = () => {
     if (disabled) return;
@@ -57,18 +69,42 @@ export const InlineSelect: React.FC<Props> = ({ label, value, options, onChange,
         </View>
       </TouchableOpacity>
       {open && !disabled ? (
-        <Animated.View style={[styles.dropdown, { height: dropdownHeight, opacity: dropdownOpacity, paddingVertical: 0 }]}
-          pointerEvents={'auto'}>
-          <ScrollView style={{ maxHeight }} nestedScrollEnabled>
-            {normalized.map(opt => {
-              const active = value === opt.value;
-              return (
-                <TouchableOpacity key={opt.value} style={[styles.item, active && styles.itemActive]} onPress={() => { onChange(opt.value); if (controlledOpen === undefined) setInternalOpen(false); }}>
-                  <Text style={[styles.itemText, active && styles.itemTextActive]}>{opt.label}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+        <Animated.View
+          style={[styles.dropdown, {
+            height: dropdownHeight,
+            opacity: dropdownOpacity,
+            transform: [{ translateY: dropdownTranslateY }],
+            minHeight: 0,
+            justifyContent: normalized.length === 0 ? 'center' : undefined,
+            alignItems: normalized.length === 0 ? 'center' : undefined,
+          }]}
+          pointerEvents={'auto'}
+        >
+          {normalized.length > 0 ? (
+            normalized.length > MAX_VISIBLE ? (
+              <ScrollView style={{ maxHeight: MAX_VISIBLE * ITEM_HEIGHT }} nestedScrollEnabled>
+                {normalized.map(opt => {
+                  const active = value === opt.value;
+                  return (
+                    <TouchableOpacity key={opt.value} style={[styles.item, active && styles.itemActive]} onPress={() => { onChange(opt.value); if (controlledOpen === undefined) setInternalOpen(false); }}>
+                      <Text style={[styles.itemText, active && styles.itemTextActive]}>{opt.label}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            ) : (
+              normalized.map(opt => {
+                const active = value === opt.value;
+                return (
+                  <TouchableOpacity key={opt.value} style={[styles.item, active && styles.itemActive]} onPress={() => { onChange(opt.value); if (controlledOpen === undefined) setInternalOpen(false); }}>
+                    <Text style={[styles.itemText, active && styles.itemTextActive]}>{opt.label}</Text>
+                  </TouchableOpacity>
+                );
+              })
+            )
+          ) : (
+            <Text style={{ color: '#FFD700', fontSize: 14, padding: 12 }}>Tidak ada data</Text>
+          )}
         </Animated.View>
       ) : null}
     </View>
