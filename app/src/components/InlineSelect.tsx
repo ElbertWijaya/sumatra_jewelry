@@ -2,9 +2,9 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 
 type Option = { label: string; value: string } | string;
-interface Props { label: string; value: string; options: Option[]; onChange(v:string): void; maxHeight?: number; disabled?: boolean }
+interface Props { label: string; value: string; options: Option[]; onChange(v:string): void; maxHeight?: number; disabled?: boolean; styleHeader?: any }
 
-export const InlineSelect: React.FC<Props> = ({ label, value, options, onChange, maxHeight = 220, disabled = false }) => {
+export const InlineSelect: React.FC<Props> = ({ label, value, options, onChange, maxHeight = 220, disabled = false, styleHeader }) => {
   const [open, setOpen] = React.useState(false);
   React.useEffect(() => { if (disabled && open) setOpen(false); }, [disabled, open]);
   const normalized = React.useMemo(() => (
@@ -13,10 +13,12 @@ export const InlineSelect: React.FC<Props> = ({ label, value, options, onChange,
   const selectedLabel = React.useMemo(() => normalized.find(o => o.value === value)?.label || '', [normalized, value]);
   return (
     <View style={styles.wrapper}>
-    <TouchableOpacity style={[styles.header, disabled && styles.headerDisabled]} onPress={()=> { if (!disabled) setOpen(o=>!o); }} activeOpacity={disabled ? 1 : 0.7} disabled={disabled}>
+  <TouchableOpacity style={[styles.header, styleHeader, disabled && styles.headerDisabled]} onPress={()=> { if (!disabled) setOpen(o=>!o); }} activeOpacity={disabled ? 1 : 0.7} disabled={disabled}>
         <Text style={styles.label}>{label}</Text>
         <View style={styles.valueWrap}>
-      <Text style={[styles.value, disabled && styles.valueDisabled]}>{selectedLabel || 'Pilih'}</Text>
+      <Text style={[styles.value, disabled && styles.valueDisabled]}>
+        {selectedLabel || 'Pilih'}
+      </Text>
       <Text style={[styles.arrow, disabled && styles.valueDisabled]}>{open ? '▲' : '▼'}</Text>
         </View>
       </TouchableOpacity>
@@ -40,16 +42,17 @@ export const InlineSelect: React.FC<Props> = ({ label, value, options, onChange,
 
 const styles = StyleSheet.create({
   wrapper: { marginBottom: 14 },
-  header: { flexDirection:'row', alignItems:'center', backgroundColor:'#fff', borderWidth:1, borderColor:'#ddd', paddingHorizontal:16, paddingVertical:14, borderRadius:12 },
-  label: { flex:1, fontSize:13, fontWeight:'600', color:'#444' },
-  valueWrap: { flexDirection:'row', alignItems:'center' },
-  value: { fontSize:13, color:'#222', marginRight:10, maxWidth:140, textAlign:'right' },
-  valueDisabled: { color:'#aaa' },
-  headerDisabled: { backgroundColor:'#f8f8f8', borderColor:'#eee' },
-  arrow: { fontSize:12, color:'#666' },
-  dropdown: { marginTop:6, borderWidth:1, borderColor:'#ddd', borderRadius:12, backgroundColor:'#fff', overflow:'hidden', shadowColor:'#000', shadowOpacity:0.05, shadowRadius:6, shadowOffset:{ width:0, height:2 }, elevation:2 },
+  header: { flexDirection:'row', alignItems:'center', backgroundColor:'#23201c', borderWidth:1, borderColor:'#FFD700', paddingHorizontal:16, paddingVertical:12, borderRadius:10 },
+  label: { flex:1, fontSize:12, fontWeight:'600', color:'#FFD700', textAlign:'left', flexWrap:'wrap' },
+  valueWrap: { flexDirection:'row', alignItems:'center', flex:1, flexWrap:'wrap' },
+  value: { fontSize:15, color:'#FFD700', textAlign:'right', flex:1, fontWeight:'700', paddingRight:2 },
+  valueDisabled: { color:'#bfae6a' },
+  headerDisabled: { backgroundColor:'#181512', borderColor:'#bfae6a' },
+  arrow: { fontSize:14, color:'#FFD700', fontWeight:'700' },
+  dropdown: { marginTop:6, borderWidth:1, borderColor:'#FFD700', borderRadius:12, backgroundColor:'#23201c', overflow:'hidden', shadowColor:'#000', shadowOpacity:0.08, shadowRadius:8, shadowOffset:{ width:0, height:2 }, elevation:3 },
   item: { paddingVertical:12, paddingHorizontal:16, borderBottomWidth:1, borderBottomColor:'#f0f0f0' },
-  itemActive: { backgroundColor:'#222' },
+  itemActive: { backgroundColor:'#181512' },
   itemText: { fontSize:14, color:'#333' },
-  itemTextActive: { color:'#fff', fontWeight:'600' },
+  itemTextActive: { color:'#FFD700', fontWeight:'700' },
 });
+  // ...existing code...
