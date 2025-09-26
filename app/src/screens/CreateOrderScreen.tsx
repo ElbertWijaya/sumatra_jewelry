@@ -198,6 +198,12 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   const removeStone = (idx: number) => setStones(prev => prev.filter((_,i)=>i!==idx));
   const addStone = () => setStones(prev => [...prev, emptyStone()]);
 
+  // Dropdown control: only one open at a time
+  const [openDropdown, setOpenDropdown] = useState<string|null>(null);
+  const handleOpenDropdown = (key: string) => {
+    setOpenDropdown(prev => (prev === key ? null : key));
+  };
+
   const renderSelectRow = (
     fieldKey: 'jenisBarang' | 'jenisEmas' | 'warnaEmas',
     label: string,
@@ -206,7 +212,15 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
     onChange: (v:string)=>void,
     styleHeader?: any
   ) => (
-    <InlineSelect label={label} value={value} options={options} onChange={onChange} styleHeader={styleHeader} />
+    <InlineSelect
+      label={label}
+      value={value}
+      options={options}
+      onChange={onChange}
+      styleHeader={styleHeader}
+      open={openDropdown === fieldKey}
+      onRequestOpen={() => handleOpenDropdown(fieldKey)}
+    />
   );
 
   const pickDate = (field: 'ready' | 'selesai' | 'ambil') => {

@@ -56,9 +56,9 @@ export const InlineSelect: React.FC<Props> = ({ label, value, options, onChange,
           <Text style={[styles.arrow, disabled && styles.valueDisabled]}>{open ? '▲' : '▼'}</Text>
         </View>
       </TouchableOpacity>
-      <Animated.View style={[styles.dropdown, { height: dropdownHeight, opacity: dropdownOpacity, paddingVertical: open ? 0 : 0, }]}
-        pointerEvents={open && !disabled ? 'auto' : 'none'}>
-        {open && !disabled ? (
+      {open && !disabled ? (
+        <Animated.View style={[styles.dropdown, { height: dropdownHeight, opacity: dropdownOpacity, paddingVertical: 0 }]}
+          pointerEvents={'auto'}>
           <ScrollView style={{ maxHeight }} nestedScrollEnabled>
             {normalized.map(opt => {
               const active = value === opt.value;
@@ -69,8 +69,8 @@ export const InlineSelect: React.FC<Props> = ({ label, value, options, onChange,
               );
             })}
           </ScrollView>
-        ) : null}
-      </Animated.View>
+        </Animated.View>
+      ) : null}
     </View>
   );
 };
