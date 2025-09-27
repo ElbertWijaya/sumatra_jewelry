@@ -46,7 +46,8 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   // Advanced camera modal (Vision Camera)
   const [showCamera, setShowCamera] = useState(false);
-  const cameraRef = useRef<Camera | null>(null);
+  // @ts-ignore: vision-camera Camera type error workaround
+  const cameraRef = useRef<any>(null);
   const deviceBack = useCameraDevice('back');
   const deviceFront = useCameraDevice('front');
   const [cameraType, setCameraType] = useState<'back' | 'front'>('back');
@@ -216,7 +217,10 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       label={label}
       value={value}
       options={options}
-      onChange={onChange}
+      onChange={(v) => {
+        onChange(v);
+        setOpenDropdown(null); // close dropdown after select
+      }}
       styleHeader={styleHeader}
       open={openDropdown === fieldKey}
       onRequestOpen={() => handleOpenDropdown(fieldKey)}
@@ -305,27 +309,42 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
                 <Ionicons name="pricetag" size={16} color={COLORS.gold} style={{marginRight:6}} />
                 <Text style={styles.infoOrderMiniLabel}>Jenis Barang</Text>
               </View>
-              <View style={{flex:1}}>
+            <View style={{width:'100%', maxWidth:320, alignSelf:'center', flexDirection:'row', alignItems:'center'}}>
+              <View style={{flexShrink:1, minWidth:0}}>
+                {/* label dan icon tetap di kiri, tidak perlu diubah */}
+              </View>
+              <View style={{width:150}}>
                 {renderSelectRow('jenisBarang', '', jenisBarang, JENIS_BARANG_OPTIONS, setJenisBarang, styles.selectPremium)}
               </View>
+            </View>
             </View>
             <View style={styles.infoOrderRowHorizontal}>
               <View style={styles.infoOrderLabelWrap}>
                 <Ionicons name="color-palette" size={16} color={COLORS.gold} style={{marginRight:6}} />
                 <Text style={styles.infoOrderMiniLabel}>Jenis Emas</Text>
               </View>
-              <View style={{flex:1}}>
+            <View style={{width:'100%', maxWidth:320, alignSelf:'center', flexDirection:'row', alignItems:'center'}}>
+              <View style={{flexShrink:1, minWidth:0}}>
+                {/* label dan icon tetap di kiri, tidak perlu diubah */}
+              </View>
+              <View style={{width:150}}>
                 {renderSelectRow('jenisEmas', '', jenisEmas, JENIS_EMAS_OPTIONS, setJenisEmas, styles.selectPremium)}
               </View>
+            </View>
             </View>
             <View style={styles.infoOrderRowHorizontal}>
               <View style={styles.infoOrderLabelWrap}>
                 <Ionicons name="color-fill" size={16} color={COLORS.gold} style={{marginRight:6}} />
                 <Text style={styles.infoOrderMiniLabel}>Warna Emas</Text>
               </View>
-              <View style={{flex:1}}>
+            <View style={{width:'100%', maxWidth:320, alignSelf:'center', flexDirection:'row', alignItems:'center'}}>
+              <View style={{flexShrink:1, minWidth:0}}>
+                {/* label dan icon tetap di kiri, tidak perlu diubah */}
+              </View>
+              <View style={{width:150}}>
                 {renderSelectRow('warnaEmas', '', warnaEmas, WARNA_EMAS_OPTIONS, setWarnaEmas, styles.selectPremium)}
               </View>
+            </View>
             </View>
           </View>
         </View>

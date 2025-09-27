@@ -59,15 +59,15 @@ export const InlineSelect: React.FC<Props> = ({ label, value, options, onChange,
 
   return (
     <View style={styles.wrapper}>
-      <TouchableOpacity style={[styles.header, styleHeader, disabled && styles.headerDisabled]} onPress={handlePress} activeOpacity={disabled ? 1 : 0.7} disabled={disabled}>
+      <View style={styles.row}>
         <Text style={styles.label}>{label}</Text>
-        <View style={styles.valueWrap}>
-          <Text style={[styles.value, disabled && styles.valueDisabled]}>
-            {selectedLabel || 'Pilih'}
-          </Text>
-          <Text style={[styles.arrow, disabled && styles.valueDisabled]}>{open ? '▲' : '▼'}</Text>
-        </View>
-      </TouchableOpacity>
+        <TouchableOpacity style={[styles.header, styleHeader, disabled && styles.headerDisabled]} onPress={handlePress} activeOpacity={disabled ? 1 : 0.7} disabled={disabled}>
+          <View style={styles.valueRowWrap}>
+            <Text style={[styles.value, disabled && styles.valueDisabled]}>{selectedLabel || 'Pilih'}</Text>
+            <Text style={[styles.arrow, disabled && styles.valueDisabled]}>{open ? '▲' : '▼'}</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
       {open && !disabled ? (
         <Animated.View
           style={[styles.dropdown, {
@@ -112,14 +112,15 @@ export const InlineSelect: React.FC<Props> = ({ label, value, options, onChange,
 };
 
 const styles = StyleSheet.create({
-  wrapper: { marginBottom: 14 },
-  header: { flexDirection:'row', alignItems:'center', backgroundColor:'#23201c', borderWidth:1, borderColor:'#FFD700', paddingHorizontal:16, paddingVertical:12, borderRadius:10 },
-  label: { flex:1, fontSize:12, fontWeight:'600', color:'#FFD700', textAlign:'left', flexWrap:'wrap' },
-  valueWrap: { flexDirection:'row', alignItems:'center', flex:1, flexWrap:'wrap' },
-  value: { fontSize:15, color:'#FFD700', textAlign:'right', flex:1, fontWeight:'700', paddingRight:2 },
+  wrapper: { marginBottom: 28 },
+  row: { flexDirection: 'row', alignItems: 'center', width: '100%', gap: 24 },
+  label: { fontSize:15, fontWeight:'600', color:'#FFD700', textAlign:'left', marginLeft:2, marginRight:18, flex:1, minWidth:0 },
+  header: { backgroundColor:'#23201c', borderWidth:2.5, borderColor:'#FFD700', borderRadius:22, minHeight:40, justifyContent:'center', paddingLeft:20, paddingRight:10, paddingVertical:0, width:150, alignSelf:'flex-end' },
+  valueRowWrap: { flexDirection:'row', alignItems:'center', justifyContent:'flex-end', minHeight:32 },
+  value: { fontSize:17, color:'#FFD700', fontWeight:'700', textAlign:'right', flexShrink:1, flexGrow:0, paddingRight:12 },
   valueDisabled: { color:'#bfae6a' },
   headerDisabled: { backgroundColor:'#181512', borderColor:'#bfae6a' },
-  arrow: { fontSize:14, color:'#FFD700', fontWeight:'700' },
+  arrow: { fontSize:13, color:'#FFD700', fontWeight:'700', marginLeft:2 },
   dropdown: { marginTop:6, borderWidth:1, borderColor:'#FFD700', borderRadius:12, backgroundColor:'#23201c', overflow:'hidden', shadowColor:'#000', shadowOpacity:0.08, shadowRadius:8, shadowOffset:{ width:0, height:2 }, elevation:3 },
   item: { paddingVertical:12, paddingHorizontal:16, borderBottomWidth:1, borderBottomColor:'#f0f0f0' },
   itemActive: { backgroundColor:'#181512' },
