@@ -205,6 +205,8 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
     setOpenDropdown(prev => (prev === key ? null : key));
   };
 
+  // Track extra margin for each dropdown row (not card)
+  const [dropdownRowMargins, setDropdownRowMargins] = useState<{ [key: string]: number }>({});
   const renderSelectRow = (
     fieldKey: 'jenisBarang' | 'jenisEmas' | 'warnaEmas',
     label: string,
@@ -213,18 +215,29 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
     onChange: (v:string)=>void,
     styleHeader?: any
   ) => (
-    <InlineSelect
-      label={label}
-      value={value}
-      options={options}
-      onChange={(v) => {
-        onChange(v);
-        setOpenDropdown(null); // close dropdown after select
-      }}
-      styleHeader={styleHeader}
-      open={openDropdown === fieldKey}
-      onRequestOpen={() => handleOpenDropdown(fieldKey)}
-    />
+    <View style={{ marginBottom: dropdownRowMargins[fieldKey] || 0, backgroundColor: 'rgba(0,255,0,0.08)' }}>
+      <InlineSelect
+        label={label}
+        value={value}
+        options={options}
+        onChange={(v) => {
+          onChange(v);
+          setOpenDropdown(null); // close dropdown after select
+        }}
+        styleHeader={styleHeader}
+        // open={openDropdown === fieldKey}
+        // onRequestOpen={() => handleOpenDropdown(fieldKey)}
+        onDropdownNeedsSpace={(space, direction) => {
+          setDropdownRowMargins(prev => {
+            if (space > 0 && openDropdown === fieldKey) {
+              return { ...prev, [fieldKey]: space };
+            } else {
+              return { ...prev, [fieldKey]: 0 };
+            }
+          });
+        }}
+      />
+    </View>
   );
 
   const pickDate = (field: 'ready' | 'selesai' | 'ambil') => {
@@ -245,11 +258,11 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
 
   return (
     <>
-      <ScrollView contentContainerStyle={styles.container}>
+  <ScrollView style={{ overflow: 'visible' }} contentContainerStyle={styles.container}>
         <Text style={styles.title}>Order Baru</Text>
 
         {/* Card Section: Informasi Customer (Premium, Fixed) */}
-        <View style={styles.cardSectionPremium}>
+  <View style={styles.cardSectionPremium}>
           <View style={styles.sectionHeaderRow}>
             <Ionicons name="person-circle" size={22} color={COLORS.gold} style={styles.sectionHeaderIcon} />
             <Text style={styles.sectionPremium}>INFORMASI CUSTOMER</Text>
@@ -297,7 +310,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
         </View>
 
         {/* Card Section: Informasi Order (Premium, Carded) */}
-        <View style={styles.cardSectionPremium}>
+  <View style={styles.cardSectionPremium}>
           <View style={styles.sectionHeaderRow}>
             <Ionicons name="cube" size={20} color={COLORS.gold} style={styles.sectionHeaderIcon} />
             <Text style={styles.sectionPremium}>INFORMASI ORDER</Text>
@@ -425,7 +438,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
         </View>
 
         {/* Card Section: Batu / Stone (Premium) */}
-        <View style={styles.cardSectionPremium}>
+  <View style={styles.cardSectionPremium}>
           <View style={styles.sectionHeaderRow}>
             <Ionicons name="diamond" size={20} color={COLORS.gold} style={styles.sectionHeaderIcon} />
             <Text style={styles.sectionPremium}>BATU / STONE</Text>
@@ -744,6 +757,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
+    overflow: 'visible',
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -809,6 +823,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.10,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
+    overflow: 'visible',
   },
   // labelGold sudah didefinisikan sebelumnya, hapus duplikat ini
   container: { padding: 18, backgroundColor: COLORS.dark },
