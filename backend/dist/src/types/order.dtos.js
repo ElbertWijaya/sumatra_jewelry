@@ -100,6 +100,11 @@ __decorate([
     (0, class_transformer_1.Type)(() => StoneDto),
     __metadata("design:type", Array)
 ], CreateOrderDto.prototype, "stones", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateOrderDto.prototype, "ringSize", void 0);
 class StoneDto {
 }
 exports.StoneDto = StoneDto;
@@ -213,4 +218,9 @@ __decorate([
     (0, class_transformer_1.Type)(() => StoneDto),
     __metadata("design:type", Array)
 ], UpdateOrderDto.prototype, "stones", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateOrderDto.prototype, "ringSize", void 0);
 //# sourceMappingURL=order.dtos.js.map

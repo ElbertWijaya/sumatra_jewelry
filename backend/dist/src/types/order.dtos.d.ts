@@ -22,6 +22,7 @@ export declare class CreateOrderDto {
     hargaPerkiraan?: number;
     hargaAkhir?: number;
     stones?: StoneDto[];
+    ringSize?: string;
 }
 export declare class StoneDto {
     bentuk: string;
@@ -48,4 +49,5 @@ export declare class UpdateOrderDto {
     catatan?: string;
     referensiGambarUrls?: string[];
     stones?: StoneDto[];
+    ringSize?: string;
 }

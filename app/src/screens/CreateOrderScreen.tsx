@@ -13,6 +13,7 @@ import { JENIS_BARANG_OPTIONS, JENIS_EMAS_OPTIONS, WARNA_EMAS_OPTIONS, BENTUK_BA
 import { FormSection } from '../components/FormSection';
 import { Field } from '../components/Field';
 import { InlineSelect } from '../components/InlineSelect';
+import { PremiumButton } from '../components/PremiumButton';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Platform } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -56,6 +57,8 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   // (Cropping logic removed per new requirement: now only preview zoom after upload)
   const [catatan, setCatatan] = useState('');
   const [stones, setStones] = useState<StoneFormItem[]>([]);
+  // Ring size state
+  const [ringSize, setRingSize] = useState('');
   // --- Currency helpers (IDR formatting) ---
   const formatIDR = (raw: string) => {
     const digits = (raw || '').replace(/\D/g, '');
@@ -79,29 +82,30 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   const mutation = useMutation({
     mutationFn: () => {
   const payloadRaw: any = {
-      customerName,
-      customerAddress: customerAddress || undefined,
-      customerPhone: customerPhone || undefined,
-      jenisBarang,
-      jenisEmas,
-      warnaEmas,
-  // removed: kadar, beratTarget
-  // ongkos removed
-  dp: parseIDR(dp),
-  hargaEmasPerGram: parseIDR(hargaEmasPerGram),
-  hargaPerkiraan: parseIDR(hargaPerkiraan),
-  hargaAkhir: parseIDR(hargaAkhir),
-  promisedReadyDate: promisedReadyDate || undefined,
-      tanggalSelesai: tanggalSelesai || undefined,
-      tanggalAmbil: tanggalAmbil || undefined,
-  referensiGambarUrls: referensiGambarUrls.length ? referensiGambarUrls : undefined,
-      catatan: catatan || undefined,
-      stones: stones.length ? stones.filter(s => s.bentuk && s.jumlah).map(s => ({
-        bentuk: s.bentuk,
-        jumlah: Number(s.jumlah || 0),
-        berat: s.berat ? Number(s.berat) : undefined,
-      })) : undefined,
-      };
+    customerName,
+    customerAddress: customerAddress || undefined,
+    customerPhone: customerPhone || undefined,
+    jenisBarang,
+    jenisEmas,
+    warnaEmas,
+    // removed: kadar, beratTarget
+    // ongkos removed
+    dp: parseIDR(dp),
+    hargaEmasPerGram: parseIDR(hargaEmasPerGram),
+    hargaPerkiraan: parseIDR(hargaPerkiraan),
+    hargaAkhir: parseIDR(hargaAkhir),
+    promisedReadyDate: promisedReadyDate || undefined,
+    tanggalSelesai: tanggalSelesai || undefined,
+    tanggalAmbil: tanggalAmbil || undefined,
+    referensiGambarUrls: referensiGambarUrls.length ? referensiGambarUrls : undefined,
+    catatan: catatan || undefined,
+    stones: stones.length ? stones.filter(s => s.bentuk && s.jumlah).map(s => ({
+      bentuk: s.bentuk,
+      jumlah: Number(s.jumlah || 0),
+      berat: s.berat ? Number(s.berat) : undefined,
+    })) : undefined,
+    ringSize: (jenisBarang === 'Women Ring' || jenisBarang === 'Men Ring') && ringSize ? ringSize : undefined,
+  };
       // Filter undefined to avoid them being stripped weirdly
       const payload: any = {};
       Object.entries(payloadRaw).forEach(([k,v])=>{
@@ -114,7 +118,22 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
       qc.invalidateQueries({ queryKey: ['orders'] });
       onCreated && onCreated();
       Alert.alert('Sukses', 'Order dibuat');
-      setCustomerName(''); setCustomerAddress(''); setCustomerPhone(''); setJenisBarang(''); setJenisEmas(''); setWarnaEmas(''); setDp(''); setHargaEmasPerGram(''); setHargaPerkiraan(''); setHargaAkhir(''); setPromisedReadyDate(''); setTanggalSelesai(''); setTanggalAmbil(''); setReferensiGambarUrls([]); setCatatan(''); setStones([]); setLocalImageName(null);
+  setCustomerName(''); setCustomerAddress(''); setCustomerPhone(''); setJenisBarang(''); setJenisEmas(''); setWarnaEmas(''); setDp(''); setHargaEmasPerGram(''); setHargaPerkiraan(''); setHargaAkhir(''); setPromisedReadyDate(''); setTanggalSelesai(''); setTanggalAmbil(''); setReferensiGambarUrls([]); setCatatan(''); setStones([]); setRingSize(''); setLocalImageName(null);
+        {/* Ring Size Field (conditional) */}
+        {(jenisBarang === 'Women Ring' || jenisBarang === 'Men Ring') && (
+          <View style={styles.inputWrapView}>
+            <Ionicons name="resize" size={18} color={COLORS.gold} style={styles.inputIconText} />
+            <TextInput
+              style={styles.inputPremiumText}
+              placeholder="Ukuran Cincin (Ring Size)"
+              placeholderTextColor="#ffe082"
+              value={ringSize}
+              onChangeText={setRingSize}
+              keyboardType="default"
+              autoCapitalize="none"
+            />
+          </View>
+        )}
   setTimeout(() => { router.replace('/home'); }, 500);
     },
     onError: (e: any) => Alert.alert('Error', e.message || 'Gagal membuat order'),
@@ -215,7 +234,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
     onChange: (v:string)=>void,
     styleHeader?: any
   ) => (
-    <View style={{ marginBottom: dropdownRowMargins[fieldKey] || 0, backgroundColor: 'rgba(0,255,0,0.08)' }}>
+  <View style={{ marginBottom: dropdownRowMargins[fieldKey] || 0 }}>
       <InlineSelect
         label={label}
         value={value}
@@ -359,6 +378,30 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
               </View>
             </View>
             </View>
+
+            {/* Input Ring Size, hanya tampil jika jenisBarang Women Ring/Men Ring */}
+            {(jenisBarang === 'Women Ring' || jenisBarang === 'Men Ring') && (
+              <View style={styles.infoOrderRowHorizontal}>
+                <View style={styles.infoOrderLabelWrap}>
+                  <Ionicons name="resize" size={16} color={COLORS.gold} style={{marginRight:6}} />
+                  <Text style={styles.infoOrderMiniLabel}>Ukuran Cincin</Text>
+                </View>
+                <View style={{width:'100%', maxWidth:320, alignSelf:'center', flexDirection:'row', alignItems:'center'}}>
+                  <View style={{flexShrink:1, minWidth:0}} />
+                  <View style={{width:150}}>
+                    <TextInput
+                      style={styles.inputPremiumText}
+                      placeholder="Ukuran Cincin (Ring Size)"
+                      placeholderTextColor="#ffe082"
+                      value={ringSize}
+                      onChangeText={setRingSize}
+                      keyboardType="default"
+                      autoCapitalize="none"
+                    />
+                  </View>
+                </View>
+              </View>
+            )}
           </View>
         </View>
 
@@ -386,7 +429,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
               );
             })}
             {referensiGambarUrls.length > 4 && (
-              <View style={[styles.imageThumbWrap, {justifyContent:'center',alignItems:'center',backgroundColor:'rgba(255,215,0,0.08)'}]}>
+              <View style={[styles.imageThumbWrap, {justifyContent:'center',alignItems:'center'}]}>
                 <Text style={{color:COLORS.gold, fontWeight:'700'}}>+{referensiGambarUrls.length-4}</Text>
               </View>
             )}
@@ -437,39 +480,61 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
           </View>
         </View>
 
-        {/* Card Section: Batu / Stone (Premium) */}
-  <View style={styles.cardSectionPremium}>
+        {/* Card Section: Batu / Stone (Premium, Grid) */}
+        <View style={styles.cardSectionPremium}>
           <View style={styles.sectionHeaderRow}>
             <Ionicons name="diamond" size={20} color={COLORS.gold} style={styles.sectionHeaderIcon} />
             <Text style={styles.sectionPremium}>BATU / STONE</Text>
           </View>
           <View style={styles.dividerGold} />
+          {/* Header Grid */}
+          <View style={{flexDirection:'row', alignItems:'center', backgroundColor:'#2a2320', borderRadius:8, paddingVertical:6, marginBottom:4}}>
+            <Text style={{flex:2, color:COLORS.gold, fontWeight:'bold', textAlign:'left', paddingLeft:8}}>Bentuk</Text>
+            <Text style={{flex:1, color:COLORS.gold, fontWeight:'bold', textAlign:'left', paddingLeft:8}}>Jumlah</Text>
+            <Text style={{flex:1, color:COLORS.gold, fontWeight:'bold', textAlign:'left', paddingLeft:8}}>Berat</Text>
+            <Text style={{width:32}}></Text>
+          </View>
+          {/* Data Rows */}
           {stones.map((s,idx)=>(
-            <View key={idx} style={styles.stoneRowWrapper}>
-              <View style={styles.stoneRow}> 
-                <TouchableOpacity style={[styles.inputPremiumText, styles.stoneInput, styles.stoneSelect]} onPress={()=> setExpandedStoneIndex(expandedStoneIndex === idx ? null : idx)}>
-                  <Text style={styles.stoneSelectText}>{s.bentuk || 'Bentuk Batu'}</Text>
-                  <Text style={styles.selectHeaderArrow}>{expandedStoneIndex === idx ? '▲' : '▼'}</Text>
+            <React.Fragment key={idx}>
+              <View style={{flexDirection:'row', alignItems:'center', marginBottom:4, borderRadius:8, paddingVertical:4}}>
+                {/* Bentuk Batu Dropdown */}
+                <TouchableOpacity style={{flex:2, marginHorizontal:4, paddingVertical:6, borderRadius:6, borderWidth:1, borderColor:'#FFD700', backgroundColor:'#23201c', flexDirection:'row', alignItems:'center', justifyContent:'flex-start', paddingLeft:8}} onPress={()=> setExpandedStoneIndex(expandedStoneIndex === idx ? null : idx)}>
+                  <Text style={{color:'#ffe082', fontWeight:'600', textAlign:'left'}}>{s.bentuk || 'Bentuk Batu'}</Text>
+                  <Text style={{marginLeft:6, color:'#ffe082'}}>{expandedStoneIndex === idx ? '▲' : '▼'}</Text>
                 </TouchableOpacity>
-                <TextInput placeholder='Jumlah' style={[styles.inputPremiumText,styles.stoneInput]} placeholderTextColor="#ffe082" value={s.jumlah} onChangeText={v=>updateStone(idx,{jumlah:v})} keyboardType='numeric' />
-                <TextInput placeholder='Berat' style={[styles.inputPremiumText,styles.stoneInput]} placeholderTextColor="#ffe082" value={s.berat} onChangeText={v=>updateStone(idx,{berat:v})} keyboardType='numeric' />
-                <TouchableOpacity onPress={()=>removeStone(idx)} style={styles.removeBtn}><Text style={{color:'#fff'}}>X</Text></TouchableOpacity>
+                {/* Jumlah */}
+                <TextInput placeholder='Jumlah' style={{flex:1, marginHorizontal:4, color:'#ffe082', backgroundColor:'#23201c', borderRadius:6, borderWidth:1, borderColor:'#FFD700', textAlign:'left', fontWeight:'600', height:36, paddingLeft:8}} placeholderTextColor="#ffe082" value={s.jumlah} onChangeText={v=>updateStone(idx,{jumlah:v})} keyboardType='numeric' />
+                {/* Berat */}
+                <TextInput placeholder='Berat' style={{flex:1, marginHorizontal:4, color:'#ffe082', backgroundColor:'#23201c', borderRadius:6, borderWidth:1, borderColor:'#FFD700', textAlign:'left', fontWeight:'600', height:36, paddingLeft:8}} placeholderTextColor="#ffe082" value={s.berat} onChangeText={v=>updateStone(idx,{berat:v})} keyboardType='numeric' />
+                {/* Hapus */}
+                <TouchableOpacity onPress={()=>removeStone(idx)} style={{width:32, alignItems:'center', justifyContent:'center'}}>
+                  <Ionicons name="close-circle" size={22} color="#b22" />
+                </TouchableOpacity>
               </View>
+              {/* Dropdown Pilihan Bentuk */}
               {expandedStoneIndex === idx && (
-                <View style={styles.stoneDropdown}> 
-                  {BENTUK_BATU_OPTIONS.map(opt => {
-                    const active = s.bentuk === opt;
-                    return (
-                      <TouchableOpacity key={opt} onPress={()=>{ updateStone(idx,{bentuk:opt}); setExpandedStoneIndex(null); }} style={[styles.stoneItem, active && styles.stoneItemActive]}>
-                        <Text style={[styles.stoneItemText, active && styles.stoneItemTextActive]}>{opt}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+                <View style={{marginBottom:8, marginLeft:4, marginRight:4, backgroundColor:'#23201c', borderRadius:8, borderWidth:1, borderColor:'#FFD700', padding:6}}>
+                  <View style={{flexDirection:'row', flexWrap:'wrap'}}>
+                    {BENTUK_BATU_OPTIONS.map(opt => {
+                      const active = s.bentuk === opt;
+                      return (
+                        <TouchableOpacity key={opt} onPress={()=>{ updateStone(idx,{bentuk:opt}); setExpandedStoneIndex(null); }} style={{paddingVertical:6, paddingHorizontal:12, borderRadius:6, margin:4, backgroundColor:active ? COLORS.gold : '#181512'}}>
+                          <Text style={{color:active ? '#181512' : '#ffe082', fontWeight:'600'}}>{opt}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
                 </View>
               )}
-            </View>
+            </React.Fragment>
           ))}
-          <Button title='Tambah Batu' onPress={addStone} />
+          <PremiumButton
+            title="TAMBAH BATU"
+            onPress={addStone}
+            style={{ alignSelf:'flex-end', marginTop:8, minWidth:160 }}
+            textStyle={{ fontSize:16 }}
+          />
         </View>
 
         {/* Card Section: Pembayaran (Premium) */}
@@ -570,22 +635,51 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
             <Text style={styles.sectionPremium}>CATATAN</Text>
           </View>
           <View style={styles.dividerGold} />
-          <TextInput
-            placeholder='Catatan'
-            style={[styles.inputPremiumText,{height:90}]}
-            placeholderTextColor="#ffe082"
-            value={catatan}
-            onChangeText={setCatatan}
-            multiline
-          />
+          <View style={{
+            borderWidth:2,
+            borderColor:COLORS.gold,
+            borderRadius:16,
+            backgroundColor:'#fff',
+            padding:14,
+            marginTop:8,
+            marginBottom:8,
+            shadowColor:'#FFD700',
+            shadowOffset:{width:0,height:2},
+            shadowOpacity:0.08,
+            shadowRadius:6,
+            elevation:2,
+          }}>
+            <TextInput
+              placeholder='Tulis catatan di sini...'
+              style={{
+                minHeight:64,
+                color:'#181512',
+                fontSize:16,
+                fontWeight:'500',
+                textAlignVertical:'top',
+                backgroundColor:'transparent',
+                padding:0,
+              }}
+              placeholderTextColor="#bfae6a"
+              value={catatan}
+              onChangeText={setCatatan}
+              multiline
+              underlineColorAndroid="transparent"
+            />
+          </View>
         </View>
 
         {!canCreate ? (
           <Text style={{ color:'#c62828', marginBottom:8 }}>Akun Anda tidak memiliki izin untuk membuat order. Silakan login sebagai Sales atau Admin.</Text>
         ) : null}
-        <View style={{ paddingHorizontal:4, marginTop:10 }}>
-          <Button title={mutation.isPending ? 'Menyimpan...' : 'Simpan'} disabled={disabled} onPress={() => mutation.mutate()} />
-        </View>
+        <PremiumButton
+          title={mutation.isPending ? 'MENYIMPAN...' : 'SIMPAN'}
+          onPress={() => mutation.mutate()}
+          disabled={disabled}
+          loading={mutation.isPending}
+          style={{ marginTop:18, marginHorizontal:8 }}
+          textStyle={{ fontSize:18 }}
+        />
         <View style={{ height: Platform.OS==='web' ? 40 : 120 }} />
       </ScrollView>
       {/* Advanced Camera Modal (Vision Camera) */}

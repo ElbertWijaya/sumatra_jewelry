@@ -28,6 +28,7 @@ export class CreateOrderDto {
   @IsOptional() @IsNumber() hargaPerkiraan?: number;
   @IsOptional() @IsNumber() hargaAkhir?: number;
   @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => StoneDto) stones?: StoneDto[];
+  @IsOptional() @IsString() ringSize?: string;
 }
 
 export class StoneDto {
@@ -57,4 +58,5 @@ export class UpdateOrderDto {
   @IsOptional() @IsString() catatan?: string;
   @IsOptional() @IsArray() @IsString({ each: true }) referensiGambarUrls?: string[];
   @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => StoneDto) stones?: StoneDto[];
+  @IsOptional() @IsString() ringSize?: string;
 }
