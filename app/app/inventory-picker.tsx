@@ -6,7 +6,7 @@ const FILTER_OPTIONS = [
   { key: 'category', label: 'Jenis Barang', values: ['Cincin', 'Gelang', 'Kalung', 'Liontin', 'Anting', 'Lainnya'] },
 ];
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../src/context/AuthContext';
+import { useAuth } from '@lib/context/AuthContext';
 import { api } from '../src/api/client';
 
 const COLORS = {

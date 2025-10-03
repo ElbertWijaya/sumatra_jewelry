@@ -3,9 +3,9 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import React from 'react';
-import { AuthProvider, useAuth } from '../src/context/AuthContext';
+import { AuthProvider, useAuth } from '@lib/context/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import LoginScreen from '../src/screens/LoginScreen';
+import { LoginScreen } from '@features/auth/screens/LoginScreen';
 import * as SplashScreen from 'expo-splash-screen';
 // import { useEffect } from 'react';
 import 'react-native-reanimated';

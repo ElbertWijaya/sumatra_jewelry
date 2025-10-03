@@ -1,5 +1,6 @@
 import React from 'react';
-import { CreateOrderScreen } from '../src/screens/CreateOrderScreen';
+// Updated to feature-based path
+import { CreateOrderScreen } from '../src/features/orders/screens/CreateOrderScreen';
 
 export default function CreateOrder() {
   return <CreateOrderScreen />;

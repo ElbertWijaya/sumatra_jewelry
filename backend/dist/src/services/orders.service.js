@@ -29,6 +29,7 @@ let OrdersService = class OrdersService {
                     jenisBarang: dto.jenisBarang,
                     jenisEmas: dto.jenisEmas,
                     warnaEmas: dto.warnaEmas,
+                    ringSize: dto.ringSize,
                     hargaEmasPerGram: dto.hargaEmasPerGram,
                     hargaPerkiraan: dto.hargaPerkiraan,
                     hargaAkhir: dto.hargaAkhir,
@@ -159,6 +160,7 @@ let OrdersService = class OrdersService {
                 jenisBarang: dto.jenisBarang ?? order.jenisBarang,
                 jenisEmas: dto.jenisEmas ?? order.jenisEmas,
                 warnaEmas: dto.warnaEmas ?? order.warnaEmas,
+                ringSize: dto.ringSize ?? order.ringSize,
                 dp: dto.dp ?? order.dp,
                 hargaEmasPerGram: dto.hargaEmasPerGram ?? order.hargaEmasPerGram,
                 hargaPerkiraan: dto.hargaPerkiraan ?? order.hargaPerkiraan,
@@ -175,7 +177,7 @@ let OrdersService = class OrdersService {
             }
             catch { }
             const updated = await tx.order.update({ where: { id }, data });
-            const fields = ['customerName', 'customerAddress', 'customerPhone', 'jenisBarang', 'jenisEmas', 'warnaEmas', 'dp', 'hargaEmasPerGram', 'hargaPerkiraan', 'hargaAkhir', 'promisedReadyDate', 'tanggalSelesai', 'tanggalAmbil', 'catatan', 'referensiGambarUrls'];
+            const fields = ['customerName', 'customerAddress', 'customerPhone', 'jenisBarang', 'jenisEmas', 'warnaEmas', 'ringSize', 'dp', 'hargaEmasPerGram', 'hargaPerkiraan', 'hargaAkhir', 'promisedReadyDate', 'tanggalSelesai', 'tanggalAmbil', 'catatan', 'referensiGambarUrls'];
             const prevPatch = {};
             const nextPatch = {};
             for (const k of fields) {

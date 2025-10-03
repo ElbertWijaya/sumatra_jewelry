@@ -21,6 +21,8 @@ export class OrdersService {
           jenisBarang: dto.jenisBarang,
           jenisEmas: dto.jenisEmas,
           warnaEmas: dto.warnaEmas,
+          // Persist ring size when provided (e.g. Women Ring / Men Ring)
+          ringSize: dto.ringSize,
           hargaEmasPerGram: dto.hargaEmasPerGram,
           hargaPerkiraan: dto.hargaPerkiraan,
           hargaAkhir: dto.hargaAkhir,
@@ -162,6 +164,7 @@ export class OrdersService {
         jenisBarang: dto.jenisBarang ?? order.jenisBarang,
         jenisEmas: dto.jenisEmas ?? order.jenisEmas,
         warnaEmas: dto.warnaEmas ?? order.warnaEmas,
+        ringSize: dto.ringSize ?? (order as any).ringSize,
         dp: (dto.dp as any) ?? order.dp,
         hargaEmasPerGram: (dto.hargaEmasPerGram as any) ?? order.hargaEmasPerGram,
         hargaPerkiraan: (dto.hargaPerkiraan as any) ?? order.hargaPerkiraan,
@@ -177,7 +180,7 @@ export class OrdersService {
       const updated = await tx.order.update({ where: { id }, data });
 
       // compute prev/next patches for history
-      const fields = ['customerName','customerAddress','customerPhone','jenisBarang','jenisEmas','warnaEmas','dp','hargaEmasPerGram','hargaPerkiraan','hargaAkhir','promisedReadyDate','tanggalSelesai','tanggalAmbil','catatan','referensiGambarUrls'] as const;
+  const fields = ['customerName','customerAddress','customerPhone','jenisBarang','jenisEmas','warnaEmas','ringSize','dp','hargaEmasPerGram','hargaPerkiraan','hargaAkhir','promisedReadyDate','tanggalSelesai','tanggalAmbil','catatan','referensiGambarUrls'] as const;
       const prevPatch: Record<string, unknown> = {};
       const nextPatch: Record<string, unknown> = {};
       for (const k of fields) {

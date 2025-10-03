@@ -35,14 +35,14 @@ CREATE TABLE IF NOT EXISTS `appuser` (
 
 -- Dumping data for table sumatra_jewelry.appuser: ~8 rows (approximately)
 INSERT INTO `appuser` (`id`, `email`, `fullName`, `password`, `createdAt`, `job_role`) VALUES
-	('0ee65c77-641d-496f-9388-2a84f2232615', 'finisher@tokomas.local', 'Ayu', '$argon2id$v=19$m=65536,t=3,p=4$m0OrXYIxeUhgABR2Bt+7zQ$qaAaUhY+L8jk5322mgq/V6asewDt/yAAhmC0GUBb7FE', '2025-09-17 06:27:50.097', 'FINISHER'),
-	('468786c9-6b2f-4ce7-9779-0cfcd50b14eb', 'inventory@tokomas.local', 'Suk Mai D', '$argon2id$v=19$m=65536,t=3,p=4$iEFqzUEhjL623Vu16l8F2w$Lcdbo/CfnmAbx46Cz6XOzY3wVqXxmOQjw9Ovp1T1PxQ', '2025-09-17 06:27:50.147', 'INVENTORY'),
-	('5a777bc1-b320-4314-bde0-328053ce6036', 'designer@tokomas.local', 'Elbert Wijaya', '$argon2id$v=19$m=65536,t=3,p=4$qq6fNgS0jSFeZcpoJixTCg$XRJQrQorUYzNqUeUTCj3QMtft9qjIRYAWw8A/3oyxzk', '2025-09-17 06:27:49.901', 'DESIGNER'),
-	('6dc4f807-b52d-492b-91c1-686d621bc17f', 'caster@tokomas.local', 'Hanpin', '$argon2id$v=19$m=65536,t=3,p=4$MjZNB1z/gFJ+rcYAuSZoqA$L4gIFbVBvzUAQht3MmHkkY4C89zSytZXlJII6tK4v50', '2025-09-17 06:27:49.998', 'CASTER'),
-	('c6d05a93-b5d1-4050-8c55-cb5c33ed1ee7', 'carver@tokomas.local', 'Acai', '$argon2id$v=19$m=65536,t=3,p=4$UnxsIPh7cJ7W5nGnyr9pnQ$4QcXKaxxHR8sXw7zSbTwIjOKJNrtxqw/dytac+syr20', '2025-09-17 06:27:49.948', 'CARVER'),
-	('d88f4937-05f5-4950-9a0b-79a4cc6d6e33', 'admin@tokomas.local', 'Aceng', '$argon2id$v=19$m=65536,t=3,p=4$fz9xFlk4q9n7xgCxvMkg4g$iWVYw0QjZjMGMBl4dmS8f7JLBtZRJebNx/lJTiLxK8I', '2025-09-17 06:27:49.789', 'ADMINISTRATOR'),
-	('ea914c3e-a6b3-4145-a4f8-a1debe43135e', 'diamond@tokomas.local', 'Yanti Atas', '$argon2id$v=19$m=65536,t=3,p=4$O0bZPi5Wen78e3XEwKgj3g$FtUzPmy0M+Qm6rHOAbSWIuMw/7f47arkNdc1n7nk4rM', '2025-09-17 06:27:50.048', 'DIAMOND_SETTER'),
-	('fc65225c-d2a2-4741-a5c7-f05a0337722d', 'sales@tokomas.local', 'Yanti', '$argon2id$v=19$m=65536,t=3,p=4$7Q+RFv2cwTmv8l3+Yk7SXg$Ab+gCAxHUGavabvtbPGHWtWBQC7PwM2jYeClim8TUVA', '2025-09-17 06:27:49.851', 'SALES');
+	('023af1dc-e8be-4089-a403-af996ef7e42e', 'admin@tokomas.local', 'Aceng', '$argon2id$v=19$m=65536,t=3,p=4$TTxODsmdK3ij2tvHiwkgxQ$HoyYwXilFm9IA/MLvUNsvJOC4rie+UvbKpc5kKcHbOs', '2025-10-02 04:44:40.629', 'ADMINISTRATOR'),
+	('08997e4b-cda0-4e21-8a8d-322a879f701e', 'finisher@tokomas.local', 'Ayu', '$argon2id$v=19$m=65536,t=3,p=4$oQSsgtDfSn2mBCrq60KWXw$pgbIghcMCTb0aVqHbs0Qf9clgkqeRto3ukm+w4sk7ag', '2025-10-02 04:44:40.869', 'FINISHER'),
+	('7607c2f7-36fa-4c65-9fad-8fb1da7afd65', 'caster@tokomas.local', 'Hanpin', '$argon2id$v=19$m=65536,t=3,p=4$ix44xqompHUvxpjFisb5kg$0HSxzh3AqQgosyWgkw3Vx+wkILU0Ez6cy6TwRKG7x6c', '2025-10-02 04:44:40.794', 'CASTER'),
+	('c6914807-0bcb-43e8-bf8e-5a14545bb60d', 'carver@tokomas.local', 'Acai', '$argon2id$v=19$m=65536,t=3,p=4$HoE3aLglqmYGlu+FBFSjXg$Gr5a+NXIszxymy4QXugSsAakC8S13rnRemWUqzGWoSk', '2025-10-02 04:44:40.755', 'CARVER'),
+	('d5af97c6-48b3-46de-b3f6-b9a599967433', 'sales@tokomas.local', 'Yanti', '$argon2id$v=19$m=65536,t=3,p=4$B+b+fArUlXuleXI5WiYipA$E2gnlKrLc8/Jh/B1umPsK1ZKUlkthxtp2ZFR0t/nyeE', '2025-10-02 04:44:40.678', 'SALES'),
+	('da870108-ce4f-41ed-b9d4-071dc04ab8eb', 'designer@tokomas.local', 'Elbert Wijaya', '$argon2id$v=19$m=65536,t=3,p=4$fnV9+DV2OFECfEeNOSLaNQ$jiPEASWRtVpO4gOUaqvIEenyzL9AbWr8E3+alJbZHIY', '2025-10-02 04:44:40.716', 'DESIGNER'),
+	('dadddb93-eee4-4b11-b1a5-0133e09dd129', 'inventory@tokomas.local', 'Suk Mai D', '$argon2id$v=19$m=65536,t=3,p=4$O6lIB8w8mp1YDvaYvW+Lbw$VdTFPYcl2kplEqgEn/TqYiuWzNOKJX2oC4KkaUv4WXc', '2025-10-02 04:44:40.908', 'INVENTORY'),
+	('f303e7ff-a2e3-46e9-8d83-a382946c583d', 'diamond@tokomas.local', 'Yanti Atas', '$argon2id$v=19$m=65536,t=3,p=4$K5W9v3udti6vf/vmFnLMtA$Q2e2VI2aujeWzAORrzJJmXOLU77Xi9gZEC0WAmygh5Y', '2025-10-02 04:44:40.831', 'DIAMOND_SETTER');
 
 -- Dumping structure for table sumatra_jewelry.inventoryitem
 DROP TABLE IF EXISTS `inventoryitem`;
@@ -117,13 +117,14 @@ CREATE TABLE IF NOT EXISTS `order` (
   `promised_ready_date` datetime(3) DEFAULT NULL,
   `stone_count` int(11) NOT NULL DEFAULT 0,
   `total_stone_weight` decimal(10,2) DEFAULT NULL,
+  `ring_size` varchar(191) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `Order_code_key` (`code`),
   KEY `Order_created_by_id_fkey` (`created_by_id`),
   KEY `Order_updated_by_id_fkey` (`updated_by_id`),
   CONSTRAINT `Order_created_by_id_fkey` FOREIGN KEY (`created_by_id`) REFERENCES `appuser` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `Order_updated_by_id_fkey` FOREIGN KEY (`updated_by_id`) REFERENCES `appuser` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for table sumatra_jewelry.order: ~0 rows (approximately)
 
@@ -155,7 +156,7 @@ CREATE TABLE IF NOT EXISTS `orderhistory` (
   KEY `OrderHistory_userId_idx` (`userId`),
   CONSTRAINT `OrderHistory_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `order` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `OrderHistory_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `appuser` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for table sumatra_jewelry.orderhistory: ~0 rows (approximately)
 
@@ -172,7 +173,7 @@ CREATE TABLE IF NOT EXISTS `orderstone` (
   KEY `OrderStone_orderId_idx` (`orderId`),
   KEY `OrderStone_bentuk_idx` (`bentuk`),
   CONSTRAINT `OrderStone_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `order` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for table sumatra_jewelry.orderstone: ~0 rows (approximately)
 
@@ -203,7 +204,7 @@ CREATE TABLE IF NOT EXISTS `ordertask` (
   CONSTRAINT `OrderTask_checked_by_id_fkey` FOREIGN KEY (`checked_by_id`) REFERENCES `appuser` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `OrderTask_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `order` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `OrderTask_validated_by_id_fkey` FOREIGN KEY (`validated_by_id`) REFERENCES `appuser` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for table sumatra_jewelry.ordertask: ~0 rows (approximately)
 
@@ -223,30 +224,30 @@ CREATE TABLE IF NOT EXISTS `_prisma_migrations` (
 
 -- Dumping data for table sumatra_jewelry._prisma_migrations: ~24 rows (approximately)
 INSERT INTO `_prisma_migrations` (`id`, `checksum`, `finished_at`, `migration_name`, `logs`, `rolled_back_at`, `started_at`, `applied_steps_count`) VALUES
-	('00f1ed10-19da-4a1f-9ece-1048e7df4d43', '3beef5e3637164a78f7919bb3278a64a8685587f2077069633c68870b7ec6bf2', '2025-09-15 09:06:57.982', '20250908160334_', NULL, NULL, '2025-09-15 09:06:57.837', 1),
-	('0a689246-1bc2-4d66-9aa2-70e4f5434d50', '80ef64b926f9dd23c251879bf7a096275160245cf704f6d1afd8f14f900419db', '2025-09-15 09:06:56.162', '20250903112235_init', NULL, NULL, '2025-09-15 09:06:55.817', 1),
-	('0edb7ea1-16bb-4efa-b7e9-7e91a67a019f', 'a69ca05e3ce50a71d3197efabeb090679ed4de0455887bdb76d514a978db6c8f', '2025-09-15 09:06:57.385', '20250908111050_add_order_tasks', NULL, NULL, '2025-09-15 09:06:57.129', 1),
-	('1904513b-8f6a-4b5a-801f-13adbee691a9', '505450aac8703ac8d2b73d6fc2542c8938f6123343fd2e0ed78cd5c1e3539eda', '2025-09-15 09:06:56.928', '20250908070000_order_stone_indexes_and_summary', NULL, NULL, '2025-09-15 09:06:56.874', 1),
-	('28b1e3f6-8806-471d-aaf5-9017ab43d9c4', '7a969a4b0ee33eea54ea73740de9885ccacd48e5be73168a99f824f50a5d28e1', '2025-09-15 09:06:58.544', '20250915090525_', NULL, NULL, '2025-09-15 09:06:58.486', 1),
-	('52b2071a-8ed8-441f-ac6f-9e8931699e77', '1f6fc0b6dba2d18eb87904e4541e81c5df9c495b24eeb9ec54fcdf512d33bd78', '2025-09-15 09:06:58.038', '20250908163313_', NULL, NULL, '2025-09-15 09:06:57.986', 1),
-	('54a1c9cb-117e-4ae3-b16b-1cebb40fc6b1', '42b976dee4e81bddb03404c00feaaa26dde7a7bcd352bcad95e5d758c0b880cf', '2025-09-15 09:06:58.167', '20250915051632_add_task_checklist', NULL, NULL, '2025-09-15 09:06:58.042', 1),
-	('6158ea7a-68d4-46a0-b3da-8a170410ef82', '11255bc68a424926908de4c7de9886ba62a3fed4d97c9c221c49cb75ac81ce7d', '2025-09-15 09:06:58.472', '20250915085516_', NULL, NULL, '2025-09-15 09:06:58.172', 1),
-	('6e85e155-e9b6-48c8-86c1-fca21febc629', '9a6964649d345e7ea17a705f7ef75dd1e56610c5e953fc54f0c7d7f3f2a975b0', '2025-09-23 04:37:18.972', '20250923043523_orderhistory_rich_audit', '', NULL, '2025-09-23 04:37:18.972', 0),
-	('6f13edd5-dd43-4807-a6f9-db3a6b94032b', 'f959cd4d745e45a46eba9c540390233f1b9eefb05ba6666eeccde8f88eb8992d', '2025-09-15 09:06:56.302', '20250903133411_extend_order_fields', NULL, NULL, '2025-09-15 09:06:56.166', 1),
-	('7c232db2-5e24-4ffc-85e1-89ba6922cb85', 'e92f69999320a232ea759095f6be593203b2ce7420f2d4680a86e8e28de3ac49', '2025-09-15 09:06:57.116', '20250908080000_drop_final_weight_and_dp_nullable', NULL, NULL, '2025-09-15 09:06:56.990', 1),
-	('7f9eb842-d1a4-4126-8670-19b72c4d10ce', '192e84e71a2fcbfd3a17b62f4a77433a666cd23f9a0a9a1eb5f9fdeca79cfa16', '2025-09-15 09:06:58.483', '20250915090438_', NULL, NULL, '2025-09-15 09:06:58.476', 1),
-	('81be6e31-b83b-4885-8abb-38932710499a', '3a003b2840584cd0d9c3d10429d1c9e3476dcd727277eac1de21466cdaf8df8d', '2025-09-15 09:06:56.356', '20250903145107_add_multiple_images', NULL, NULL, '2025-09-15 09:06:56.306', 1),
-	('843e5ac4-2cba-487b-a421-e088011bef34', 'dbbc01d1e2361bbd246a5238a98f1a3f3779d3b7dbb33d5dfb6ae561e000e0c3', NULL, '20250923043523_orderhistory_rich_audit', 'A migration failed to apply. New migrations cannot be applied before the error is recovered from. Read more about how to resolve migration issues in a production database: https://pris.ly/d/migrate-resolve\n\nMigration name: 20250923043523_orderhistory_rich_audit\n\nDatabase error code: 1091\n\nDatabase error:\nCan\'t DROP INDEX `OrderHistory_userId_fkey`; check that it exists\n\nPlease check the query number 6 from the migration file.\n\n   0: sql_schema_connector::apply_migration::apply_script\n           with migration_name="20250923043523_orderhistory_rich_audit"\n             at schema-engine\\connectors\\sql-schema-connector\\src\\apply_migration.rs:106\n   1: schema_core::commands::apply_migrations::Applying migration\n           with migration_name="20250923043523_orderhistory_rich_audit"\n             at schema-engine\\core\\src\\commands\\apply_migrations.rs:91\n   2: schema_core::state::ApplyMigrations\n             at schema-engine\\core\\src\\state.rs:226', '2025-09-23 04:37:18.966', '2025-09-23 04:35:23.817', 0),
-	('9cc7ba65-92ce-4ce6-aa0c-40ace8e2a84a', 'b8a50838cf002e65525ad5af725fb6ef89733fe9dba2ebd4691b153b8a0d0f94', '2025-09-15 09:06:57.833', '20250908151733_add_user_job_role', NULL, NULL, '2025-09-15 09:06:57.785', 1),
-	('9ff93804-aeb7-4e81-b840-ec6e3e09ce9b', '13e2d3bef2445dae3140e430efe1dee6e3ded6b4fea906b463ad0d3ac06be1ca', '2025-09-15 09:06:57.126', '20250908090000_tasks_assignment_and_requests', NULL, NULL, '2025-09-15 09:06:57.119', 1),
-	('a3c50286-d75d-4a11-992f-6f34f45ac54f', 'c9d303ee5f818c947a0a5b6fb5f3dedf1e8bf54833939f917edde41260868905', '2025-09-15 09:06:56.987', '20250908074114_order_stone_indexes_and_summary', NULL, NULL, '2025-09-15 09:06:56.932', 1),
-	('a59d30cc-269d-43c0-b0a8-b370ed5655ce', '1ba9f6fe6fa37be315b95d4a7b3c85024c57ef6846f974335a78318a5bf425e6', '2025-09-15 09:06:56.752', '20250903161757_rename_promised_ready_date', NULL, NULL, '2025-09-15 09:06:56.697', 1),
-	('abb30afd-6d48-4349-be1a-1539db0ef534', '14574a67d770271e2005678af92ff5e199f7b83b6353814b7f20b8d4a42119c8', '2025-09-15 09:06:56.870', '20250903162432_drop_single_reference_image_url', NULL, NULL, '2025-09-15 09:06:56.814', 1),
-	('b091da20-26a0-43f8-b46d-00b2ad1bf8dd', '884f7ceb605b89ffc599a24f9d2774d0c5890b5973c2843dbf13e053d2b5bcde', '2025-09-15 09:06:56.411', '20250903153139_drop_legacy_kadar_berat_target', NULL, NULL, '2025-09-15 09:06:56.360', 1),
-	('c9ff0be2-6b21-485d-8db1-91e0230939f1', 'fb8ee026963b5b62556c74fd97fccb39b2643484a7c9c95eb556a238051fa3e8', '2025-09-15 09:06:56.810', '20250903161943_drop_ongkos_column', NULL, NULL, '2025-09-15 09:06:56.756', 1),
-	('e5b7c655-bcc4-45f3-b26d-6deba4549ae3', '2c264520a996df132ea47f63619e6d269d1288d4119c8c74377e9f9f9b790211', '2025-09-15 09:06:57.730', '20250908112503_', NULL, NULL, '2025-09-15 09:06:57.389', 1),
-	('e7d88a86-66f3-4377-b6d2-40b53f2614b2', 'de889cfa2c937541ecf91aad32acbf9040e32968fbdcdcde905b98782ad75180', '2025-09-15 09:06:57.781', '20250908145850_add_task_job_role', NULL, NULL, '2025-09-15 09:06:57.734', 1),
-	('f3ff2569-0ad0-4fef-8040-11f2cbfa7cc5', '554c315091eaf9b4f76337e5003cf4fbf0bbee65d6ccbfe236326977336d798b', '2025-09-15 09:06:56.694', '20250903153633_snake_case_order_fields', NULL, NULL, '2025-09-15 09:06:56.415', 1);
+	('0da62676-7b79-4529-8afb-4ae59739ae89', 'daaeecb48b816ad1a1b68e54427827178afef143e0e244d9ad2e85076da9c82e', '2025-09-30 06:41:50.411', '20250915085516_', NULL, NULL, '2025-09-30 06:41:50.147', 1),
+	('17c3c4bb-641a-4e03-8425-388af010512a', 'c43c69d836759cd781457ef7ceb9d212e213a3bccdde1f2e2f018d30f8301bf9', '2025-09-30 06:41:50.144', '20250915051632_add_task_checklist', NULL, NULL, '2025-09-30 06:41:50.034', 1),
+	('1adb4fc6-db28-497e-8a31-b9d52dfd9afb', '3ccdea592a8c0e2c9b819666b4dfbb87f6c3e6476a61e0694170d95ba85bfcb2', '2025-09-30 06:41:50.420', '20250915090438_', NULL, NULL, '2025-09-30 06:41:50.414', 1),
+	('20091dd7-e328-44a0-90d4-b08b11f2b580', '14574a67d770271e2005678af92ff5e199f7b83b6353814b7f20b8d4a42119c8', '2025-09-30 06:41:48.981', '20250903162432_drop_single_reference_image_url', NULL, NULL, '2025-09-30 06:41:48.931', 1),
+	('27740319-e989-4c02-9dc9-f5f071944595', 'e92f69999320a232ea759095f6be593203b2ce7420f2d4680a86e8e28de3ac49', '2025-09-30 06:41:49.210', '20250908080000_drop_final_weight_and_dp_nullable', NULL, NULL, '2025-09-30 06:41:49.097', 1),
+	('40968547-b114-4802-82d3-df0436b2278f', '1f6fc0b6dba2d18eb87904e4541e81c5df9c495b24eeb9ec54fcdf512d33bd78', '2025-09-30 06:41:50.031', '20250908163313_', NULL, NULL, '2025-09-30 06:41:49.983', 1),
+	('5c2375a6-d0c6-456e-bf9f-afd646704ae0', 'b8a50838cf002e65525ad5af725fb6ef89733fe9dba2ebd4691b153b8a0d0f94', '2025-09-30 06:41:49.850', '20250908151733_add_user_job_role', NULL, NULL, '2025-09-30 06:41:49.804', 1),
+	('5c4815b9-9537-487d-a5e0-f4c50137498e', 'de889cfa2c937541ecf91aad32acbf9040e32968fbdcdcde905b98782ad75180', '2025-09-30 06:41:49.801', '20250908145850_add_task_job_role', NULL, NULL, '2025-09-30 06:41:49.754', 1),
+	('68a178f0-fac7-4c76-8338-e9a02c4dd745', '2c264520a996df132ea47f63619e6d269d1288d4119c8c74377e9f9f9b790211', '2025-09-30 06:41:49.751', '20250908112503_', NULL, NULL, '2025-09-30 06:41:49.455', 1),
+	('718b1e51-2385-499d-9437-85993949bf22', '80ef64b926f9dd23c251879bf7a096275160245cf704f6d1afd8f14f900419db', '2025-09-30 06:41:48.331', '20250903112235_init', NULL, NULL, '2025-09-30 06:41:48.019', 1),
+	('7d0bca72-d875-41e5-9288-17ab51462cc9', '505450aac8703ac8d2b73d6fc2542c8938f6123343fd2e0ed78cd5c1e3539eda', '2025-09-30 06:41:49.036', '20250908070000_order_stone_indexes_and_summary', NULL, NULL, '2025-09-30 06:41:48.984', 1),
+	('9b0f1929-16ba-411c-bb3d-1d4da955ee7e', 'c9d303ee5f818c947a0a5b6fb5f3dedf1e8bf54833939f917edde41260868905', '2025-09-30 06:41:49.094', '20250908074114_order_stone_indexes_and_summary', NULL, NULL, '2025-09-30 06:41:49.039', 1),
+	('9db637e6-be04-4649-8657-ad689e47ace6', '1ba9f6fe6fa37be315b95d4a7b3c85024c57ef6846f974335a78318a5bf425e6', '2025-09-30 06:41:48.873', '20250903161757_rename_promised_ready_date', NULL, NULL, '2025-09-30 06:41:48.823', 1),
+	('a1b334a2-6886-494e-b8c1-3bc9b6904000', 'a69ca05e3ce50a71d3197efabeb090679ed4de0455887bdb76d514a978db6c8f', '2025-09-30 06:41:49.452', '20250908111050_add_order_tasks', NULL, NULL, '2025-09-30 06:41:49.222', 1),
+	('a873fddf-5c2e-4167-b581-d1e8d4d0d768', 'fb8ee026963b5b62556c74fd97fccb39b2643484a7c9c95eb556a238051fa3e8', '2025-09-30 06:41:48.928', '20250903161943_drop_ongkos_column', NULL, NULL, '2025-09-30 06:41:48.876', 1),
+	('b1a1f8aa-ec60-4333-b7b3-c866b41d637e', 'f959cd4d745e45a46eba9c540390233f1b9eefb05ba6666eeccde8f88eb8992d', '2025-09-30 06:41:48.462', '20250903133411_extend_order_fields', NULL, NULL, '2025-09-30 06:41:48.334', 1),
+	('bd3d12c0-89c0-4a1d-a100-924f217b37e5', 'acbcc5f5f98ff21501f9d32d5b1e5823579e6427f60638e64805e19a14c568a8', '2025-09-30 06:41:50.478', '20250915090525_', NULL, NULL, '2025-09-30 06:41:50.423', 1),
+	('cadfb455-1b27-4e3f-822c-c001403d1c32', '554c315091eaf9b4f76337e5003cf4fbf0bbee65d6ccbfe236326977336d798b', '2025-09-30 06:41:48.820', '20250903153633_snake_case_order_fields', NULL, NULL, '2025-09-30 06:41:48.570', 1),
+	('d1542322-1e06-4de1-858f-195eae643103', '3beef5e3637164a78f7919bb3278a64a8685587f2077069633c68870b7ec6bf2', '2025-09-30 06:41:49.980', '20250908160334_', NULL, NULL, '2025-09-30 06:41:49.853', 1),
+	('d6fa4ffb-e2d0-4999-9f04-ed85658206d5', '13e2d3bef2445dae3140e430efe1dee6e3ded6b4fea906b463ad0d3ac06be1ca', '2025-09-30 06:41:49.219', '20250908090000_tasks_assignment_and_requests', NULL, NULL, '2025-09-30 06:41:49.213', 1),
+	('d944e8a1-0860-459f-a731-83cb8bee694f', '9a6964649d345e7ea17a705f7ef75dd1e56610c5e953fc54f0c7d7f3f2a975b0', '2025-09-30 06:41:50.722', '20250923043523_orderhistory_rich_audit', NULL, NULL, '2025-09-30 06:41:50.481', 1),
+	('e66c75f5-df04-49b1-b116-36386874dcd3', '884f7ceb605b89ffc599a24f9d2774d0c5890b5973c2843dbf13e053d2b5bcde', '2025-09-30 06:41:48.567', '20250903153139_drop_legacy_kadar_berat_target', NULL, NULL, '2025-09-30 06:41:48.517', 1),
+	('f7b0bc57-8f69-4f66-a7fb-2b804074d5f5', '3a003b2840584cd0d9c3d10429d1c9e3476dcd727277eac1de21466cdaf8df8d', '2025-09-30 06:41:48.514', '20250903145107_add_multiple_images', NULL, NULL, '2025-09-30 06:41:48.465', 1),
+	('fb40e61f-258f-4000-b9dd-ec02d6cd1960', '6bd9e40875ffebc833b70d7608bd4f01325297341563ebfca810ab05697bb638', '2025-09-30 06:41:55.934', '20250930064155_add_ring_size', NULL, NULL, '2025-09-30 06:41:55.886', 1);
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

@@ -3,7 +3,7 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity, View, Text, StyleSheet, Platform } from 'react-native';
-import { useAuth } from '../../src/context/AuthContext';
+import { useAuth } from '@lib/context/AuthContext';
 
 const COLORS = {
   gold: '#bfa76a',

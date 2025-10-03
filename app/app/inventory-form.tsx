@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useAuth } from '../src/context/AuthContext';
+import { useAuth } from '@lib/context/AuthContext';
 import { api } from '../src/api/client';
 
 export default function InventoryFormScreen() {
