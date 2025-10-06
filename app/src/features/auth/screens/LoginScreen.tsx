@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, TextInput, Text, Pressable, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import Checkbox from 'expo-checkbox';
 import { luxuryTheme as t } from '@ui/theme/luxuryTheme';
-import { LogoS } from '@/assets/images/LogoS';
+import { LogoS } from '../../../../assets/images/LogoS';
 
 interface LoginScreenProps { onLogin?: (email: string, password: string) => void; loading?: boolean; error?: string | null; }
 

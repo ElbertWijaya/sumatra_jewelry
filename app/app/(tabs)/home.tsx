@@ -71,7 +71,7 @@ export default function HomeScreen() {
             <Ionicons name="add-circle" size={26} color={COLORS.yellow} />
             <Text style={s.quickLabel}>Order Baru</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={s.quickBtn}>
+          <TouchableOpacity style={s.quickBtn} onPress={() => router.push('/my-orders')}>
             <Ionicons name="list" size={24} color={COLORS.yellow} />
             <Text style={s.quickLabel}>Order Saya</Text>
           </TouchableOpacity>
