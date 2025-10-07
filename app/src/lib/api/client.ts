@@ -99,6 +99,14 @@ export const api = {
     start: (token: string, id: number) => request(`/tasks/${id}/start`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }),
     check: (token: string, id: number) => request(`/tasks/${id}/check`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }),
   },
+  users: {
+    list: (token: string, opts?: { jobRole?: string }) => {
+      const params: string[] = [];
+      if (opts?.jobRole) params.push(`jobRole=${encodeURIComponent(opts.jobRole)}`);
+      const q = params.length ? `?${params.join('&')}` : '';
+      return request(`/users${q}`, { headers: { Authorization: `Bearer ${token}` } });
+    }
+  },
   files: {
     upload: (token: string, form: FormData) => fetch(`${getApiBase()}/files/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form }).then(r=> r.ok ? r.json() : r.text().then(t=>{ throw new Error(t); }))
   }
