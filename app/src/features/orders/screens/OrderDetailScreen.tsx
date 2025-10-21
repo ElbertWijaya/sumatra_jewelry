@@ -117,6 +117,18 @@ export const OrderDetailScreen: React.FC = () => {
     enabled: !!token && !!orderId,
     refetchInterval: 12000,
   });
+  const { data: tasksByOrder } = useQuery({
+    queryKey: ['tasks','order', orderId],
+    queryFn: () => api.tasks.listByOrder(token || '', orderId),
+    enabled: !!token && !!orderId,
+    refetchInterval: 12000,
+  });
+  const activeAssignee = React.useMemo(() => {
+    const list = Array.isArray(tasksByOrder) ? tasksByOrder : [];
+    // Consider a task with assignedToName and status not DONE as active
+    const active = list.find((t:any) => t.assignedToName && String(t.status).toUpperCase() !== 'DONE');
+    return active ? { name: active.assignedToName, userId: active.assignedToId } : null;
+  }, [tasksByOrder]);
   const validateTask = useMutation({
     mutationFn: async (taskId: number) => api.tasks.validate(token || '', taskId),
     onSuccess: () => { refetchVerif(); queryClient.invalidateQueries({ queryKey: ['orders','inprogress'] }); },
@@ -186,10 +198,17 @@ export const OrderDetailScreen: React.FC = () => {
         {tab === 'detail' && (
         <>
         <View style={styles.assignWrap}>
-          <TouchableOpacity onPress={() => setAssignOpen(true)} style={styles.assignBtn}>
-            <MaterialCommunityIcons name="account-plus-outline" size={16} color={COLORS.gold} style={{ marginRight:6 }} />
-            <Text style={styles.assignBtnText}>Assign Pekerjaan</Text>
-          </TouchableOpacity>
+          {activeAssignee ? (
+            <View style={styles.assigneeInfo}>
+              <MaterialCommunityIcons name="account-hard-hat-outline" size={16} color={'#1b1b1b'} style={{ marginRight:6 }} />
+              <Text style={styles.assigneeText}>Sedang dikerjakan oleh {activeAssignee.name}</Text>
+            </View>
+          ) : (
+            <TouchableOpacity onPress={() => setAssignOpen(true)} style={styles.assignBtnPrimary}>
+              <MaterialCommunityIcons name="account-plus-outline" size={16} color={'#1b1b1b'} style={{ marginRight:6 }} />
+              <Text style={styles.assignBtnTextDark}>Assign Pekerjaan</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.card}>
@@ -206,6 +225,12 @@ export const OrderDetailScreen: React.FC = () => {
           <Text style={styles.row}><Text style={styles.key}>Jenis Emas:</Text> <Text style={styles.val}>{det.jenisEmas || '-'}</Text></Text>
           <Text style={styles.row}><Text style={styles.key}>Warna:</Text> <Text style={styles.val}>{det.warnaEmas || '-'}</Text></Text>
           {det.ringSize ? <Text style={styles.row}><Text style={styles.key}>Ukuran Cincin:</Text> <Text style={styles.val}>{det.ringSize}</Text></Text> : null}
+          {activeAssignee && (
+            <View style={{ marginTop: 8, backgroundColor:'#2b2522', borderRadius:8, padding:8, borderWidth:1, borderColor: COLORS.border }}>
+              <Text style={{ color: COLORS.gold, fontWeight:'800' }}>Status Pengerjaan</Text>
+              <Text style={{ color: COLORS.yellow, fontWeight:'700', marginTop:4 }}>Sedang dikerjakan oleh {activeAssignee.name}</Text>
+            </View>
+          )}
         </View>
         <View style={styles.card}>
           <Text style={styles.title}>Tanggal</Text>
@@ -363,14 +388,14 @@ export const OrderDetailScreen: React.FC = () => {
             <Text style={styles.inputLabel}>User</Text>
             <TouchableOpacity onPress={()=>setUserOpen(v=>!v)} style={[styles.input, { flexDirection:'row', alignItems:'center', justifyContent:'space-between' }]}>
               <Text style={{ color: assignUserId ? COLORS.yellow : '#9f8f5a' }}>
-                {selectedUser ? `${selectedUser.fullName || selectedUser.name || selectedUser.email || selectedUser.id}${selectedUser.jobRole ? ` (${selectedUser.jobRole})` : ''}` : 'Pilih user'}
+                {selectedUser ? `${selectedUser.fullName || selectedUser.name || selectedUser.email || selectedUser.id}` : 'Pilih user'}
               </Text>
               <Ionicons name={userOpen ? 'chevron-up' : 'chevron-down'} color={COLORS.gold} />
             </TouchableOpacity>
             {userOpen && (
               <View style={styles.dropdown}>
                 {users.map((u:any) => {
-                  const label = `${u.fullName || u.name || u.email || u.id}${u.jobRole ? ` (${u.jobRole})` : ''}`;
+                  const label = `${u.fullName || u.name || u.email || u.id}`;
                   return (
                     <TouchableOpacity key={u.id} onPress={()=>{ setAssignUserId(String(u.id)); setUserOpen(false); }} style={styles.dropdownItem}>
                       <Text style={styles.dropdownText}>{label}</Text>
@@ -380,6 +405,9 @@ export const OrderDetailScreen: React.FC = () => {
               </View>
             )}
             <Text style={[styles.inputLabel,{ marginBottom:6 }]}>Sub Tasks</Text>
+            {activeAssignee && (
+              <Text style={[styles.rowMuted, { marginBottom: 6 }]}>Pesanan sedang dikerjakan oleh {activeAssignee.name}. Tidak bisa assign lagi sebelum verifikasi disetujui.</Text>
+            )}
             {assignRole ? (
               <>
                 <View style={{ flexDirection:'row', flexWrap:'wrap' }}>
@@ -408,7 +436,7 @@ export const OrderDetailScreen: React.FC = () => {
             )}
             <View style={{ flexDirection:'row', justifyContent:'flex-end', marginTop: 12 }}>
               <TouchableOpacity onPress={()=>setAssignOpen(false)} style={[styles.modalBtn, styles.btnGhost]}><Text style={styles.modalBtnText}>Batal</Text></TouchableOpacity>
-              <TouchableOpacity disabled={!assignRole || !assignUserId || selectedSubtasks.length===0} onPress={()=>assignTasks.mutate()} style={[styles.modalBtn, styles.btnPrimary, (!assignRole || !assignUserId || selectedSubtasks.length===0) && { opacity:0.6 }]}>
+              <TouchableOpacity disabled={!!activeAssignee || !assignRole || !assignUserId || selectedSubtasks.length===0} onPress={()=>assignTasks.mutate()} style={[styles.modalBtn, styles.btnPrimary, (!!activeAssignee || !assignRole || !assignUserId || selectedSubtasks.length===0) && { opacity:0.6 }]}>
                 <Text style={styles.modalBtnTextDark}>{assignTasks.isPending ? 'Mengirim...' : 'Assign'}</Text>
               </TouchableOpacity>
             </View>
@@ -439,9 +467,11 @@ const styles = StyleSheet.create({
   tabItemActive: { backgroundColor:'#2b2522' },
   tabText: { color:'#bfae6a', fontWeight:'700' },
   tabTextActive: { color:COLORS.gold },
-  assignWrap: { marginBottom: 12, alignItems:'flex-start' },
-  assignBtn: { flexDirection:'row', alignItems:'center', backgroundColor:'#2b2522', paddingHorizontal:12, paddingVertical:8, borderRadius:10, borderWidth:1, borderColor:COLORS.border },
-  assignBtnText: { color: COLORS.gold, fontWeight:'700' },
+  assignWrap: { marginBottom: 12, alignItems:'stretch' },
+  assignBtnPrimary: { flexDirection:'row', alignItems:'center', backgroundColor: COLORS.gold, paddingHorizontal:14, paddingVertical:10, borderRadius:10 },
+  assignBtnTextDark: { color: '#1b1b1b', fontWeight:'800' },
+  assigneeInfo: { flexDirection:'row', alignItems:'center', backgroundColor:'#ffe082', paddingHorizontal:12, paddingVertical:8, borderRadius:10 },
+  assigneeText: { color: '#1b1b1b', fontWeight:'800' },
   modalBackdrop: { flex:1, backgroundColor:'rgba(0,0,0,0.5)', justifyContent:'center', padding:16 },
   modalCard: { backgroundColor: COLORS.card, borderRadius: 14, padding: 14, borderWidth:1, borderColor: COLORS.border },
   modalTitle: { color: COLORS.gold, fontSize:16, fontWeight:'700', marginBottom:8 },

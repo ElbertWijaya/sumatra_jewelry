@@ -144,6 +144,18 @@ export class TasksService {
     const user = await this.prisma.appUser.findUnique({ where: { id: params.userId } });
     if (!user) throw new NotFoundException('User not found');
 
+    // Business rule: block new assignment if the order already has any active tasks (assigned/in_progress/awaiting_validation)
+    const blockingStatuses = ['ASSIGNED','IN_PROGRESS','AWAITING_VALIDATION'];
+    const existingActive = await (this.prisma as any).orderTask.findMany({
+      where: { orderId: params.orderId, status: { in: blockingStatuses as any }, assignedToId: { not: null } },
+      include: { assignedTo: true },
+    });
+    if (existingActive && existingActive.length > 0) {
+      const names = Array.from(new Set(existingActive.map((t:any)=> t.assignedTo?.fullName || t.assignedToId))).filter(Boolean);
+      const who = names.length ? ` (${names.join(', ')})` : '';
+      throw new BadRequestException(`Pesanan sedang dikerjakan${who}. Tidak bisa assign lagi sebelum verifikasi disetujui.`);
+    }
+
     // Create multiple tasks with given stages/notes, assigned to the selected user
     const creates = params.subtasks.map(st => (this.prisma as any).orderTask.create({
       data: {

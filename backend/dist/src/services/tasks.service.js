@@ -158,6 +158,16 @@ let TasksService = TasksService_1 = class TasksService {
         const user = await this.prisma.appUser.findUnique({ where: { id: params.userId } });
         if (!user)
             throw new common_1.NotFoundException('User not found');
+        const blockingStatuses = ['ASSIGNED', 'IN_PROGRESS', 'AWAITING_VALIDATION'];
+        const existingActive = await this.prisma.orderTask.findMany({
+            where: { orderId: params.orderId, status: { in: blockingStatuses }, assignedToId: { not: null } },
+            include: { assignedTo: true },
+        });
+        if (existingActive && existingActive.length > 0) {
+            const names = Array.from(new Set(existingActive.map((t) => t.assignedTo?.fullName || t.assignedToId))).filter(Boolean);
+            const who = names.length ? ` (${names.join(', ')})` : '';
+            throw new common_1.BadRequestException(`Pesanan sedang dikerjakan${who}. Tidak bisa assign lagi sebelum verifikasi disetujui.`);
+        }
         const creates = params.subtasks.map(st => this.prisma.orderTask.create({
             data: {
                 orderId: params.orderId,

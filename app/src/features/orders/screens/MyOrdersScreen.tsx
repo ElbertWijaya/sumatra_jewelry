@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, TextInput, ScrollView, Image } from 'react-native';
+import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, TextInput, ScrollView, Image, Modal } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -39,9 +39,12 @@ export const MyOrdersScreen: React.FC = () => {
     refetchInterval: 12000,
     refetchOnWindowFocus: true,
   });
-  const list = (Array.isArray(data) ? data : []).filter(o => isActiveStatus(o.status));
+  const allOrders = Array.isArray(data) ? data : [];
 
   const [query, setQuery] = React.useState('');
+  const [filterOpen, setFilterOpen] = React.useState(false);
+  type StatusFilter = 'SEMUA' | 'AKTIF' | 'SELESAI' | 'BATAL';
+  const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('AKTIF');
   const normalized = (s: string) => (s || '').toLowerCase().trim();
   const matchesQuery = (o: Order) => {
     const q = normalized(query);
@@ -50,7 +53,15 @@ export const MyOrdersScreen: React.FC = () => {
     return hay.includes(q);
   };
 
-  const filtered = list
+  const filtered = allOrders
+    .filter(o => {
+      if (statusFilter === 'SEMUA') return true;
+      if (statusFilter === 'AKTIF') return isActiveStatus(o.status);
+      const s = String(o.status || '').toUpperCase();
+      if (statusFilter === 'SELESAI') return s === 'DONE' || s === 'SELESAI';
+      if (statusFilter === 'BATAL') return s === 'CANCELLED' || s === 'CANCELED' || s === 'DELETED' || s === 'DIBATALKAN';
+      return true;
+    })
     .filter(matchesQuery)
     .sort((a,b) => {
       const va = Date.parse(String(a.updatedAt || a.createdAt || ''));
@@ -132,6 +143,9 @@ export const MyOrdersScreen: React.FC = () => {
           onChangeText={setQuery}
           returnKeyType="search"
         />
+        <TouchableOpacity style={styles.filterBtn} onPress={() => setFilterOpen(true)}>
+          <Ionicons name="filter" size={18} color={COLORS.gold} />
+        </TouchableOpacity>
         <TouchableOpacity style={styles.filterBtn} onPress={() => { setQuery(''); }}>
           <Ionicons name="close-circle" size={16} color={COLORS.gold} />
         </TouchableOpacity>
@@ -226,6 +240,25 @@ export const MyOrdersScreen: React.FC = () => {
         onClose={() => { setOpen(false); setSelected(null); }}
         onChanged={() => refetch()}
       />
+
+      <Modal visible={filterOpen} transparent animationType="fade" onRequestClose={() => setFilterOpen(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Filter</Text>
+            <Text style={styles.filterLabel}>Status</Text>
+            {(['SEMUA','AKTIF','SELESAI','BATAL'] as StatusFilter[]).map((s) => (
+              <TouchableOpacity key={s} style={styles.filterItem} onPress={() => setStatusFilter(s)}>
+                <View style={[styles.radio, statusFilter===s && styles.radioActive]} />
+                <Text style={styles.filterText}>{s}</Text>
+              </TouchableOpacity>
+            ))}
+            <View style={{ flexDirection:'row', justifyContent:'flex-end', marginTop: 12 }}>
+              <TouchableOpacity onPress={() => setFilterOpen(false)} style={[styles.modalBtn, styles.btnGhost]}><Text style={styles.modalBtnText}>Tutup</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => setFilterOpen(false)} style={[styles.modalBtn, styles.btnPrimary]}><Text style={styles.modalBtnTextDark}>Terapkan</Text></TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -237,6 +270,19 @@ const styles = StyleSheet.create({
   searchWrap: { flexDirection:'row', alignItems:'center', backgroundColor: COLORS.card, borderRadius: 14, marginBottom: 10, height: 40, borderWidth:1, borderColor: COLORS.border },
   searchInput: { flex:1, color: COLORS.yellow, paddingVertical: 8, paddingRight: 10, backgroundColor:'transparent' },
   filterBtn: { paddingHorizontal: 10, paddingVertical: 6 },
+  modalBackdrop: { flex:1, backgroundColor:'rgba(0,0,0,0.5)', justifyContent:'center', padding:16 },
+  modalCard: { backgroundColor: COLORS.card, borderRadius: 14, padding: 14, borderWidth:1, borderColor: COLORS.border },
+  modalTitle: { color: COLORS.gold, fontSize:16, fontWeight:'700', marginBottom:8 },
+  modalBtn: { paddingHorizontal:14, paddingVertical:10, borderRadius:10, marginLeft: 8 },
+  btnPrimary: { backgroundColor: COLORS.gold },
+  btnGhost: { borderWidth:1, borderColor: COLORS.border },
+  modalBtnText: { color: COLORS.yellow, fontWeight:'700' },
+  modalBtnTextDark: { color: '#1b1b1b', fontWeight:'700' },
+  filterLabel: { color: COLORS.gold, fontWeight:'700', marginBottom:6 },
+  filterItem: { flexDirection:'row', alignItems:'center', paddingVertical:8 },
+  radio: { width:16, height:16, borderRadius:8, borderWidth:2, borderColor: COLORS.border, marginRight:10 },
+  radioActive: { borderColor: COLORS.gold, backgroundColor: COLORS.gold },
+  filterText: { color: COLORS.yellow, fontWeight:'700' },
   badgeBase: { paddingVertical:4, paddingHorizontal:8, borderRadius:12, borderWidth:1 },
   badgeTextBase: { fontSize:11, fontWeight:'700' },
   badgeNeutral: { backgroundColor:'#2b2522', borderColor:COLORS.border },

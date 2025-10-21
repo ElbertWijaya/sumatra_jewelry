@@ -4,7 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system/legacy';
-import { Camera, useCameraDevice } from 'react-native-vision-camera';
 import { api, API_URL } from '@lib/api/client';
 import { useAuth } from '@lib/context/AuthContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -38,13 +37,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   const [uploading, setUploading] = useState(false);
   const [localImageName, setLocalImageName] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [showCamera, setShowCamera] = useState(false);
-  const cameraRef = useRef<any>(null);
-  const deviceBack = useCameraDevice('back');
-  const deviceFront = useCameraDevice('front');
-  const [cameraType, setCameraType] = useState<'back' | 'front'>('back');
-  const device = cameraType === 'back' ? deviceBack : deviceFront;
-  const [camGranted, setCamGranted] = useState(false);
+  // Removed react-native-vision-camera to support Expo Go. We use Expo ImagePicker for camera capture instead.
   const [catatan, setCatatan] = useState('');
   const [stones, setStones] = useState<StoneFormItem[]>([]);
   const [ringSize, setRingSize] = useState('');
@@ -326,7 +319,23 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
             </View>
             <View style={{alignItems:'center', marginRight:8}}>
               <TouchableOpacity style={styles.imageIconBtn} onPress={async ()=>{
-                try { const status = await Camera.requestCameraPermission(); if (status !== 'granted') { Alert.alert('Izin kamera ditolak'); return; } setCamGranted(true); setShowCamera(true); } catch(e:any){ Alert.alert('Gagal buka kamera', e.message || 'Error'); } }}>
+                if(uploading) return; if(!token){ Alert.alert('Tidak ada token','Silakan login ulang.'); return; }
+                try {
+                  setUploading(true);
+                  const perm = await ImagePicker.requestCameraPermissionsAsync();
+                  if(!perm.granted){ Alert.alert('Izin kamera ditolak'); return; }
+                  const result = await ImagePicker.launchCameraAsync({ quality: 0.85, exif: true, allowsEditing: false });
+                  if(result.canceled) return;
+                  let asset = await normalizeOrientation(result.assets[0]);
+                  const uploaded = await handleUploadAsset(token || '', asset.uri, asset.fileName || 'camera.jpg', asset.mimeType || 'image/jpeg');
+                  setReferensiGambarUrls(prev => [...prev, uploaded.url]);
+                  setLocalImageName(asset.fileName || 'camera.jpg');
+                } catch(e:any){
+                  Alert.alert('Gagal ambil foto', e.message || 'Error');
+                } finally {
+                  setUploading(false);
+                }
+               }}>
                 <Ionicons name="camera" size={22} color={COLORS.gold} />
               </TouchableOpacity>
               <Text style={styles.imageIconLabel}>Foto</Text>
@@ -362,7 +371,10 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
                   <Text style={{marginLeft:6, color:'#ffe082'}}>{expandedStoneIndex === idx ? '▲' : '▼'}</Text>
                 </TouchableOpacity>
                 <TextInput placeholder='Jumlah' style={{flex:1, marginHorizontal:4, color:'#ffe082', backgroundColor:'#23201c', borderRadius:6, borderWidth:1, borderColor:'#FFD700', textAlign:'left', fontWeight:'600', height:36, paddingLeft:8}} placeholderTextColor="#ffe082" value={s.jumlah} onChangeText={v=>updateStone(idx,{jumlah:v})} keyboardType='numeric' />
-                <TextInput placeholder='Berat' style={{flex:1, marginHorizontal:4, color:'#ffe082', backgroundColor:'#23201c', borderRadius:6, borderWidth:1, borderColor:'#FFD700', textAlign:'left', fontWeight:'600', height:36, paddingLeft:8}} placeholderTextColor="#ffe082" value={s.berat} onChangeText={v=>updateStone(idx,{berat:v})} keyboardType='numeric' />
+                <View style={{flex:1, marginHorizontal:4, flexDirection:'row', alignItems:'center', backgroundColor:'#23201c', borderRadius:6, borderWidth:1, borderColor:'#FFD700', height:36, paddingLeft:8}}>
+                  <TextInput placeholder='Berat' style={{flex:1, color:'#ffe082', fontWeight:'600', padding:0}} placeholderTextColor="#ffe082" value={s.berat} onChangeText={v=>updateStone(idx,{berat:v})} keyboardType='numeric' />
+                  <Text style={{ color:'#ffe082', fontWeight:'800', paddingHorizontal:8 }}>Gr</Text>
+                </View>
                 <TouchableOpacity onPress={()=>removeStone(idx)} style={{width:32, alignItems:'center', justifyContent:'center'}}>
                   <Ionicons name="close-circle" size={22} color="#b22" />
                 </TouchableOpacity>
@@ -421,23 +433,52 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
           </View>
           <View style={styles.dividerGold} />
           <View style={styles.dateRowCompact}>
-            <TouchableOpacity style={styles.dateMiniCard} onPress={()=>pickDate('ready')}>
+            <View style={{ flex:1, position:'relative' }}>
+              <TouchableOpacity style={styles.dateMiniCard} onPress={()=>pickDate('ready')}>
               <Ionicons name="alarm" size={16} color={COLORS.gold} style={{marginBottom:2}} />
               <Text style={styles.dateMiniLabel}>Perkiraan Siap</Text>
               <Text style={styles.dateMiniValue}>{promisedReadyDate || '-'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.dateMiniCard} onPress={()=>pickDate('selesai')}>
+              </TouchableOpacity>
+              {!!promisedReadyDate && (
+                <TouchableOpacity onPress={()=>setPromisedReadyDate('')} style={{ position:'absolute', right: 6, top: 6 }}>
+                  <Ionicons name="close-circle" size={16} color="#b22" />
+                </TouchableOpacity>
+              )}
+            </View>
+            <View style={{ flex:1, position:'relative' }}>
+              <TouchableOpacity style={styles.dateMiniCard} onPress={()=>pickDate('selesai')}>
               <Ionicons name="checkmark-done" size={16} color={COLORS.gold} style={{marginBottom:2}} />
               <Text style={styles.dateMiniLabel}>Selesai</Text>
               <Text style={styles.dateMiniValue}>{tanggalSelesai || '-'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.dateMiniCard} onPress={()=>pickDate('ambil')}>
+              </TouchableOpacity>
+              {!!tanggalSelesai && (
+                <TouchableOpacity onPress={()=>setTanggalSelesai('')} style={{ position:'absolute', right: 6, top: 6 }}>
+                  <Ionicons name="close-circle" size={16} color="#b22" />
+                </TouchableOpacity>
+              )}
+            </View>
+            <View style={{ flex:1, position:'relative' }}>
+              <TouchableOpacity style={styles.dateMiniCard} onPress={()=>pickDate('ambil')}>
               <Ionicons name="archive" size={16} color={COLORS.gold} style={{marginBottom:2}} />
               <Text style={styles.dateMiniLabel}>Ambil</Text>
               <Text style={styles.dateMiniValue}>{tanggalAmbil || '-'}</Text>
-            </TouchableOpacity>
+              </TouchableOpacity>
+              {!!tanggalAmbil && (
+                <TouchableOpacity onPress={()=>setTanggalAmbil('')} style={{ position:'absolute', right: 6, top: 6 }}>
+                  <Ionicons name="close-circle" size={16} color="#b22" />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
-          {showPicker && (<DateTimePicker value={showPicker.date} mode='date' display='default' onChange={onDateChange} />)}
+          {showPicker && (
+            <DateTimePicker
+              value={showPicker.date}
+              mode='date'
+              display='default'
+              minimumDate={new Date()}
+              onChange={onDateChange}
+            />
+          )}
         </View>
         {/* CATATAN */}
         <View style={styles.cardSectionPremium}>
@@ -457,34 +498,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
         <PremiumButton title={mutation.isPending ? 'MENYIMPAN...' : 'SIMPAN'} onPress={() => mutation.mutate()} disabled={disabled} loading={mutation.isPending} style={{ marginTop:18, marginHorizontal:8 }} textStyle={{ fontSize:18 }} />
         <View style={{ height: Platform.OS==='web' ? 40 : 120 }} />
       </ScrollView>
-      <Modal visible={showCamera} animationType='slide' onRequestClose={()=>setShowCamera(false)}>
-        <View style={{ flex:1, backgroundColor:'#000' }}>
-          <View style={{ flex:1 }}>
-            {device && camGranted ? (
-              <Camera ref={(r: any)=> { cameraRef.current = r as any; }} style={{ flex:1 }} device={device} isActive={true} photo={true} enableZoomGesture />
-            ) : (
-              <View style={{ flex:1, alignItems:'center', justifyContent:'center' }}><Text style={{ color:'#fff' }}>Memuat kamera...</Text></View>
-            )}
-            <View style={{ position:'absolute', top:40, left:20 }}>
-              <TouchableOpacity onPress={()=>setShowCamera(false)} style={{ backgroundColor:'rgba(0,0,0,0.5)', padding:10, borderRadius:30 }}>
-                <Text style={{ color:'#fff' }}>Tutup</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={{ position:'absolute', bottom:40, width:'100%', flexDirection:'row', justifyContent:'space-around', alignItems:'center' }}>
-              <TouchableOpacity onPress={()=> setCameraType(p=> p === 'back' ? 'front' : 'back')} style={{ backgroundColor:'rgba(255,255,255,0.2)', padding:14, borderRadius:40 }}>
-                <Text style={{ color:'#fff' }}>Flip</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={async ()=>{
-                const cam = cameraRef.current; if(!cam || !device) return;
-                try { setUploading(true); const photo = await (cam as any).takePhoto({ qualityPrioritization: 'quality', flash: 'off' }); const uri = Platform.OS === 'android' ? `file://${photo.path}` : photo.path; const normalized = await normalizeOrientation({ uri, width: photo.width, height: photo.height, exif: {} as any } as any); const uploaded = await handleUploadAsset(token || '', normalized.uri, 'camera.jpg', 'image/jpeg'); setReferensiGambarUrls(prev => [...prev, uploaded.url]); setLocalImageName('camera.jpg'); setShowCamera(false); } catch(e:any){ Alert.alert('Gagal ambil foto', e.message || 'Error'); } finally { setUploading(false); }
-              }} style={{ width:80, height:80, borderRadius:40, backgroundColor:'#fff', justifyContent:'center', alignItems:'center' }}>
-                <Text style={{ fontWeight:'600' }}>Foto</Text>
-              </TouchableOpacity>
-              <View style={{ width:80 }} />
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* Removed Vision Camera modal to support Expo Go */}
       {previewUrl && <ImagePreviewModal url={previewUrl} onClose={()=> setPreviewUrl(null)} />}
     </>
   );
