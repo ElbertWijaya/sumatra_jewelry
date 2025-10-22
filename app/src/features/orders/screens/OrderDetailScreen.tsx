@@ -125,9 +125,16 @@ export const OrderDetailScreen: React.FC = () => {
   });
   const activeAssignee = React.useMemo(() => {
     const list = Array.isArray(tasksByOrder) ? tasksByOrder : [];
-    // Consider a task with assignedToName and status not DONE as active
-    const active = list.find((t:any) => t.assignedToName && String(t.status).toUpperCase() !== 'DONE');
-    return active ? { name: active.assignedToName, userId: active.assignedToId } : null;
+    // Active if the task has an assignee and status not DONE
+    const active = list.find((t: any) => {
+      const s = String(t?.status || '').toUpperCase();
+      const hasAssignee = !!(t?.assignedTo || t?.assignedToId || t?.assignedToName);
+      return hasAssignee && s !== 'DONE' && s !== 'CANCELLED' && s !== 'CANCELED';
+    });
+    if (!active) return null;
+    const name = active.assignedTo?.fullName || active.assignedToName || active.assignedTo?.email || active.assignedToId || 'Pengguna';
+    const userId = active.assignedTo?.id || active.assignedToId || null;
+    return { name, userId } as any;
   }, [tasksByOrder]);
   const validateTask = useMutation({
     mutationFn: async (taskId: number) => api.tasks.validate(token || '', taskId),
@@ -225,12 +232,6 @@ export const OrderDetailScreen: React.FC = () => {
           <Text style={styles.row}><Text style={styles.key}>Jenis Emas:</Text> <Text style={styles.val}>{det.jenisEmas || '-'}</Text></Text>
           <Text style={styles.row}><Text style={styles.key}>Warna:</Text> <Text style={styles.val}>{det.warnaEmas || '-'}</Text></Text>
           {det.ringSize ? <Text style={styles.row}><Text style={styles.key}>Ukuran Cincin:</Text> <Text style={styles.val}>{det.ringSize}</Text></Text> : null}
-          {activeAssignee && (
-            <View style={{ marginTop: 8, backgroundColor:'#2b2522', borderRadius:8, padding:8, borderWidth:1, borderColor: COLORS.border }}>
-              <Text style={{ color: COLORS.gold, fontWeight:'800' }}>Status Pengerjaan</Text>
-              <Text style={{ color: COLORS.yellow, fontWeight:'700', marginTop:4 }}>Sedang dikerjakan oleh {activeAssignee.name}</Text>
-            </View>
-          )}
         </View>
         <View style={styles.card}>
           <Text style={styles.title}>Tanggal</Text>

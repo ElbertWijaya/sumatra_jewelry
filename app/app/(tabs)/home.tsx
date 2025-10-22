@@ -25,6 +25,8 @@ const COLORS = {
 
 
 export default function HomeScreen() {
+        {/* Divider solid gold */}
+        <View style={s.statusDividerSolid} />
   const { user } = useAuth();
   const { width, height } = Dimensions.get('window');
   const router = useRouter();
@@ -37,68 +39,61 @@ export default function HomeScreen() {
         style={[StyleSheet.absoluteFill, {zIndex:-1}]}
       />
       <ScrollView style={s.container} contentContainerStyle={{paddingBottom: 32}} showsVerticalScrollIndicator={false}>
-        {/* Search Bar gentle dark */}
-        <View style={s.searchWrap}>
-          <Ionicons name="search" size={18} color={COLORS.gold} style={{marginLeft: 10, marginRight: 6}} />
-          <TextInput placeholder="Cari order..." style={s.searchInput} placeholderTextColor={COLORS.gold} />
-          <TouchableOpacity style={s.filterBtn}>
-            <Ionicons name="filter" size={20} color={COLORS.gold} />
+        {/* Greeting */}
+        <View style={s.greetingWrap}>
+          <Text style={s.greetingText}>Selamat datang,</Text>
+          <Text style={s.greetingName}>{user?.fullName || 'User'}</Text>
+        </View>
+
+        {/* Indikator status minimalis */}
+        <View style={s.indicatorMinimalRow}>
+          <View style={s.indicatorMinimalItem}>
+            <MaterialCommunityIcons name="diamond-stone" size={22} color={COLORS.gold} />
+            <Text style={s.indicatorMinimalNum}>5</Text>
+          </View>
+          <View style={s.indicatorMinimalItem}>
+            <MaterialCommunityIcons name="account-tie" size={22} color={COLORS.gold} />
+            <Text style={s.indicatorMinimalNum}>7</Text>
+          </View>
+          <View style={s.indicatorMinimalItem}>
+            <MaterialCommunityIcons name="check-circle-outline" size={22} color={COLORS.gold} />
+            <Text style={s.indicatorMinimalNum}>12</Text>
+          </View>
+        </View>
+        <View style={s.indicatorMinimalLabelRow}>
+          <Text style={s.indicatorMinimalLabel}>Aktif</Text>
+          <Text style={s.indicatorMinimalLabel}>Ditugaskan</Text>
+          <Text style={s.indicatorMinimalLabel}>Selesai</Text>
+        </View>
+
+        {/* Quick Actions besar */}
+        <View style={s.quickRowCompact}>
+          <TouchableOpacity style={s.quickBtnCompact} onPress={() => router.push('/create-order')}>
+            <View style={s.quickIconCircleCompact}><Ionicons name="add-circle" size={22} color={COLORS.yellow} /></View>
+            <Text style={s.quickLabelCompact}>Order Baru</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.quickBtnCompact} onPress={() => router.push('/my-orders')}>
+            <View style={s.quickIconCircleCompact}><Ionicons name="list" size={20} color={COLORS.yellow} /></View>
+            <Text style={s.quickLabelCompact}>Order Saya</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.quickBtnCompact} onPress={() => router.push('/inventory-picker')}>
+            <View style={s.quickIconCircleCompact}><Ionicons name="archive" size={20} color={COLORS.yellow} /></View>
+            <Text style={s.quickLabelCompact}>Ambil dari Inventory</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Ringkasan Order dengan card gelap dan accent gold */}
-        <View style={s.summaryRow}>
-          <View style={s.darkCard}>
-            <MaterialCommunityIcons name="diamond-stone" size={22} color={COLORS.gold} style={{marginBottom:2}} />
-            <Text style={s.summaryNum}>5</Text>
-            <Text style={s.summaryLabel}>Aktif</Text>
-          </View>
-          <View style={s.darkCard}>
-            <MaterialCommunityIcons name="account-tie" size={22} color={COLORS.gold} style={{marginBottom:2}} />
-            <Text style={s.summaryNum}>7</Text>
-            <Text style={s.summaryLabel}>Ditugaskan</Text>
-          </View>
-          <View style={s.darkCard}>
-            <MaterialCommunityIcons name="check-circle-outline" size={22} color={COLORS.gold} style={{marginBottom:2}} />
-            <Text style={s.summaryNum}>12</Text>
-            <Text style={s.summaryLabel}>Selesai</Text>
-          </View>
-        </View>
-
-        {/* Quick Actions kecil, icon di atas label, fitur lebih jelas */}
-        <View style={s.quickRow}>
-          <TouchableOpacity style={s.quickBtn} onPress={() => router.push('/create-order')}>
-            <Ionicons name="add-circle" size={26} color={COLORS.yellow} />
-            <Text style={s.quickLabel}>Order Baru</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.quickBtn} onPress={() => router.push('/my-orders')}>
-            <Ionicons name="list" size={24} color={COLORS.yellow} />
-            <Text style={s.quickLabel}>Order Saya</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.quickBtn}>
-            <Ionicons name="people" size={24} color={COLORS.yellow} />
-            <Text style={s.quickLabel}>Customer</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.quickBtn} onPress={() => router.push('/inventory-picker')}>
-            <Ionicons name="archive" size={24} color={COLORS.yellow} />
-            <Text style={s.quickLabel}>Ambil dari Inventory</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Notifikasi gentle dark */}
-        <View style={s.notifCard}>
-          <Ionicons name="notifications-outline" size={18} color={COLORS.gold} style={{marginRight:6}} />
+        {/* Notifikasi dan tips clean */}
+        <View style={s.notifCardModern}>
+          <Ionicons name="notifications-outline" size={20} color={COLORS.gold} style={{marginRight:10}} />
           <View style={{flex:1}}>
             {MOCK_NOTIF.map(n => (
-              <Text key={n.id} style={s.notifText}>{n.text}</Text>
+              <Text key={n.id} style={s.notifTextModern}>{n.text}</Text>
             ))}
           </View>
         </View>
-
-        {/* Tips/Promo exotic dark */}
-        <View style={s.tipsCard}>
-          <MaterialCommunityIcons name="lightbulb-on-outline" size={18} color={COLORS.gold} style={{marginRight:6}} />
-          <Text style={s.tipsText}>Tips: Follow up customer secara rutin!</Text>
+        <View style={s.tipsCardModern}>
+          <MaterialCommunityIcons name="lightbulb-on-outline" size={20} color={COLORS.gold} style={{marginRight:10}} />
+          <Text style={s.tipsTextModern}>Tips: Follow up customer secara rutin!</Text>
         </View>
       </ScrollView>
     </View>
@@ -107,18 +102,21 @@ export default function HomeScreen() {
 
 const s = StyleSheet.create({
   container: { flex: 1, padding: 18 },
-  searchWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#23201c', borderRadius: 18, marginBottom: 22, height: 44, shadowColor:'#000', shadowOpacity:0.10, shadowRadius:8, shadowOffset:{width:0,height:2}, borderWidth:1, borderColor:'#4e3f2c' },
-  searchInput: { flex: 1, fontSize: 16, color: '#ffe082', fontWeight:'500', backgroundColor:'transparent', borderWidth:0 },
-  filterBtn: { padding: 8, borderRadius: 12 },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
-  darkCard: { flex:1, alignItems:'center', marginHorizontal: 6, paddingVertical: 18, borderRadius: 18, backgroundColor: '#23201c', borderWidth:1, borderColor:'#4e3f2c', shadowColor:'#000', shadowOpacity:0.12, shadowRadius:10, shadowOffset:{width:0,height:4} },
-  summaryNum: { fontWeight: '700', fontSize: 22, color:'#ffe082', marginBottom:2 },
-  summaryLabel: { color:'#bfa76a', fontSize: 13, fontWeight:'500' },
-  quickRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24, gap: 6 },
-  quickBtn: { flex:1, backgroundColor: '#3e2723', borderRadius: 12, alignItems: 'center', paddingVertical: 10, marginHorizontal: 2, shadowColor:'#000', shadowOpacity:0.08, shadowRadius:6, shadowOffset:{width:0,height:2}, minWidth: 60 },
-  quickLabel: { color: '#ffe082', fontSize: 11, marginTop: 2, fontWeight:'600', textAlign:'center' },
-  notifCard: { flexDirection:'row', alignItems:'flex-start', backgroundColor: '#23201c', borderRadius: 14, padding: 14, marginBottom: 18, borderWidth:1, borderColor:'#4e3f2c', shadowColor:'#000', shadowOpacity:0.08, shadowRadius:6, shadowOffset:{width:0,height:2} },
-  notifText: { color: '#ffe082', fontSize: 13, marginBottom: 2 },
-  tipsCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#23201c', borderRadius: 12, padding: 12, marginBottom: 8, borderWidth:1, borderColor:'#4e3f2c' },
-  tipsText: { color: '#bfa76a', fontSize: 13, flex:1, fontStyle:'italic' },
+  greetingWrap: { marginBottom: 18 },
+  greetingText: { color: COLORS.gold, fontSize: 16, fontWeight:'500', marginBottom:2 },
+  greetingName: { color: COLORS.yellow, fontSize: 22, fontWeight:'700', marginBottom:2 },
+  indicatorMinimalRow: { flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginBottom:2, marginTop:2, paddingHorizontal:2 },
+  indicatorMinimalItem: { alignItems:'center', flex:1 },
+  indicatorMinimalNum: { fontWeight:'bold', fontSize:22, color:COLORS.gold, marginTop:2 },
+  indicatorMinimalLabelRow: { flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginBottom:18, marginTop:0, paddingHorizontal:2 },
+  indicatorMinimalLabel: { color:COLORS.yellow, fontSize:12, fontWeight:'500', textAlign:'center', flex:1 },
+  statusDividerSolid: { height: 3, backgroundColor: COLORS.gold, borderRadius: 2, marginVertical: 14, marginHorizontal: 8 },
+  quickRowCompact: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 18, gap: 6 },
+  quickBtnCompact: { flex:1, backgroundColor: COLORS.brown, borderRadius: 14, alignItems: 'center', paddingVertical: 10, marginHorizontal: 1, shadowColor:'#000', shadowOpacity:0.08, shadowRadius:4, shadowOffset:{width:0,height:1}, minWidth: 60 },
+  quickIconCircleCompact: { backgroundColor: COLORS.card, borderRadius: 24, padding: 7, marginBottom: 4, borderWidth:1, borderColor:COLORS.border },
+  quickLabelCompact: { color: COLORS.yellow, fontSize: 11, fontWeight:'600', textAlign:'center', marginTop: 1 },
+  notifCardModern: { flexDirection:'row', alignItems:'center', backgroundColor: COLORS.card, borderRadius: 16, padding: 16, marginBottom: 18, borderWidth:1, borderColor:COLORS.border, shadowColor:'#000', shadowOpacity:0.08, shadowRadius:6, shadowOffset:{width:0,height:2} },
+  notifTextModern: { color: COLORS.yellow, fontSize: 14, marginBottom: 2 },
+  tipsCardModern: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.card, borderRadius: 14, padding: 14, marginBottom: 8, borderWidth:1, borderColor:COLORS.border },
+  tipsTextModern: { color: COLORS.gold, fontSize: 14, flex:1, fontStyle:'italic' },
 });
