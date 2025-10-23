@@ -105,7 +105,8 @@ export const api = {
       if (opts?.jobRole) params.push(`jobRole=${encodeURIComponent(opts.jobRole)}`);
       const q = params.length ? `?${params.join('&')}` : '';
       return request(`/users${q}`, { headers: { Authorization: `Bearer ${token}` } });
-    }
+    },
+    updateMe: (token: string, data: { avatar?: string; phone?: string; address?: string; branchName?: string; branchAddress?: string }) => request('/users/me', { method: 'PUT', body: JSON.stringify(data), headers: { Authorization: `Bearer ${token}` } }),
   },
   files: {
     upload: (token: string, form: FormData) => fetch(`${getApiBase()}/files/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form }).then(r=> r.ok ? r.json() : r.text().then(t=>{ throw new Error(t); }))

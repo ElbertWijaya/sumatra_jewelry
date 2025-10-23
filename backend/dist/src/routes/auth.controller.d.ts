@@ -18,12 +18,16 @@ export declare class AuthController {
             id: string;
             email: string;
             fullName: string;
-            jobRole: any;
+            jobRole: string;
+            phone: string | null;
+            address: string | null;
+            branchId: number;
+            createdAt: Date;
         };
     }>;
     register(dto: RegisterDto): Promise<{
-        id: any;
-        email: any;
+        id: string;
+        email: string;
     }>;
 }
 export {};

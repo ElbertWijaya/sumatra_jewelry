@@ -1,3 +1,32 @@
+// ...existing code...
+
+model account {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  fullName  String
+  job_role  String
+  password  String
+  branch_id Int
+  phone     String?
+  address   String?
+  created_at DateTime @default(now())
+  branch    branch   @relation(fields: [branch_id], references: [id])
+  ordersCreated Order[] @relation("OrderCreatedBy")
+  ordersUpdated Order[] @relation("OrderUpdatedBy")
+  orderTasksAssigned OrderTask[] @relation("OrderTaskAssignedTo")
+  orderTasksValidated OrderTask[] @relation("OrderTaskValidatedBy")
+  orderTasksChecked OrderTask[] @relation("OrderTaskCheckedBy")
+  inventoryItemsCreated InventoryItem[] @relation("InventoryItemCreatedBy")
+  inventoryItemsUpdated InventoryItem[] @relation("InventoryItemUpdatedBy")
+  orderHistories OrderHistory[]
+}
+
+model branch {
+  id      Int      @id @default(autoincrement())
+  name    String
+  address String?
+  accounts account[]
+}
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,22 +36,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model AppUser {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  fullName  String
-  jobRole   TaskJobRole? @map("job_role")
-  password  String
-  createdAt DateTime @default(now())
-  ordersCreated Order[] @relation("OrdersCreated")
-  ordersUpdated Order[] @relation("OrdersUpdated")
-  histories OrderHistory[]
-  tasksAssigned OrderTask[] @relation("TaskAssignedTo")
-  tasksValidated OrderTask[] @relation("TaskValidatedBy")
-  tasksChecked  OrderTask[]
-  inventoryCreated InventoryItem[] @relation("InventoryItemCreatedBy")
-  inventoryUpdated InventoryItem[] @relation("InventoryItemUpdatedBy")
-}
 
 model Order {
   id           Int       @id @default(autoincrement()) @map("id")
@@ -50,8 +63,8 @@ model Order {
   status        OrderStatus @default(DRAFT) @map("status")
   createdById   String? @map("created_by_id")
   updatedById   String? @map("updated_by_id")
-  createdBy    AppUser? @relation("OrdersCreated", fields: [createdById], references: [id])
-  updatedBy    AppUser? @relation("OrdersUpdated", fields: [updatedById], references: [id])
+  createdBy    account? @relation("OrderCreatedBy", fields: [createdById], references: [id])
+  updatedBy    account? @relation("OrderUpdatedBy", fields: [updatedById], references: [id])
   histories    OrderHistory[]
   stones       OrderStone[]
   tasks        OrderTask[]
@@ -77,7 +90,7 @@ model OrderHistory {
   order      Order    @relation(fields: [orderId], references: [id])
   orderId    Int
   changedAt  DateTime @default(now())
-  user       AppUser? @relation(fields: [userId], references: [id])
+  user       account? @relation(fields: [userId], references: [id])
   userId     String?
   changeSummary String?
   diff       Json?
@@ -116,18 +129,18 @@ model OrderTask {
   orderId       Int
   stage         String?   @map("stage")
   status        TaskStatus @default(OPEN) @map("status")
-  assignedTo    AppUser?  @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
+  assignedTo    account?  @relation("OrderTaskAssignedTo", fields: [assignedToId], references: [id])
   assignedToId  String?   @map("assigned_to_id")
   jobRole       TaskJobRole? @map("job_role")
   requestedDoneAt DateTime? @map("requested_done_at")
-  validatedBy   AppUser?  @relation("TaskValidatedBy", fields: [validatedById], references: [id])
+  validatedBy   account?  @relation("OrderTaskValidatedBy", fields: [validatedById], references: [id])
   validatedById String?   @map("validated_by_id")
   validatedAt   DateTime? @map("validated_at")
   notes         String?   @map("notes")
   // Progress check by assignee
   isChecked     Boolean   @default(false) @map("is_checked")
   checkedAt     DateTime? @map("checked_at")
-  checkedBy     AppUser?  @relation(fields: [checkedById], references: [id])
+  checkedBy     account?  @relation("OrderTaskCheckedBy", fields: [checkedById], references: [id])
   checkedById   String?   @map("checked_by_id")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
@@ -163,9 +176,9 @@ model InventoryItem {
   notes        String?   @map("notes")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
-  createdBy    AppUser?  @relation("InventoryItemCreatedBy", fields: [createdById], references: [id])
+  createdBy    account?  @relation("InventoryItemCreatedBy", fields: [createdById], references: [id])
   createdById  String?   @map("created_by_id")
-  updatedBy    AppUser?  @relation("InventoryItemUpdatedBy", fields: [updatedById], references: [id])
+  updatedBy    account?  @relation("InventoryItemUpdatedBy", fields: [updatedById], references: [id])
   updatedById  String?   @map("updated_by_id")
 
   @@index([orderId])

@@ -7,7 +7,12 @@ import { PrismaClient } from '@prisma/client';
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor() {
     super({
-      log: process.env.NODE_ENV === 'production' ? [] : ['warn', 'error']
+  log: process.env.NODE_ENV === 'production' ? [] : ['warn', 'error'],
+  datasources: {
+        db: {
+          url: process.env.DATABASE_URL,
+        },
+      },
     });
   }
   async onModuleInit() {

@@ -21,7 +21,7 @@ let AuthService = class AuthService {
         this.jwt = jwt;
     }
     async validateUser(email, password) {
-        const user = await this.prisma.appUser.findUnique({ where: { email } });
+        const user = await this.prisma.account.findUnique({ where: { email } });
         if (!user)
             throw new common_1.UnauthorizedException('Invalid credentials');
         const hash = user.password || '';
@@ -52,18 +52,27 @@ let AuthService = class AuthService {
     }
     async login(email, password) {
         const user = await this.validateUser(email, password);
-        const payload = { sub: user.id, jobRole: user.jobRole ?? null, email: user.email };
+        const payload = { sub: user.id, jobRole: user.job_role ?? null, email: user.email };
         const accessToken = await this.jwt.signAsync(payload);
         console.log('[LOGIN] user:', user.email, 'jobRole:', user.jobRole, 'token:', accessToken);
         return {
             accessToken,
-            user: { id: user.id, email: user.email, fullName: user.fullName, jobRole: user.jobRole ?? null },
+            user: {
+                id: user.id,
+                email: user.email,
+                fullName: user.fullName,
+                jobRole: user.job_role ?? null,
+                phone: user.phone ?? null,
+                address: user.address ?? null,
+                branchId: user.branch_id ?? null,
+                createdAt: user.created_at ?? null,
+            },
         };
     }
     async register(data) {
         const hash = await argon2.hash(data.password);
-        const user = await this.prisma.appUser.create({
-            data: { email: data.email, password: hash, fullName: data.fullName, jobRole: data.jobRole },
+        const user = await this.prisma.account.create({
+            data: { email: data.email, password: hash, fullName: data.fullName, job_role: data.jobRole },
         });
         return { id: user.id, email: user.email };
     }

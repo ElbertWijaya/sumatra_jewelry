@@ -8,9 +8,12 @@ export declare class AuthService {
         id: string;
         email: string;
         fullName: string;
-        jobRole: import(".prisma/client").$Enums.TaskJobRole | null;
+        job_role: string;
         password: string;
-        createdAt: Date;
+        branch_id: number;
+        phone: string | null;
+        address: string | null;
+        created_at: Date;
     }>;
     login(email: string, password: string): Promise<{
         accessToken: string;
@@ -18,7 +21,11 @@ export declare class AuthService {
             id: string;
             email: string;
             fullName: string;
-            jobRole: any;
+            jobRole: string;
+            phone: string | null;
+            address: string | null;
+            branchId: number;
+            createdAt: Date;
         };
     }>;
     register(data: {
@@ -27,7 +34,7 @@ export declare class AuthService {
         fullName: string;
         jobRole?: string | null;
     }): Promise<{
-        id: any;
-        email: any;
+        id: string;
+        email: string;
     }>;
 }

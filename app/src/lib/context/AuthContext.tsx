@@ -7,6 +7,7 @@ interface AuthState {
   user: any | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  setUser: (user: any) => void;
 }
 
 const AuthCtx = createContext<AuthState | undefined>(undefined);
@@ -28,7 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await SecureStore.deleteItemAsync('token');
   }, []);
 
-  return <AuthCtx.Provider value={{ token, user, login, logout }}>{children}</AuthCtx.Provider>;};
+  return <AuthCtx.Provider value={{ token, user, login, logout, setUser }}>{children}</AuthCtx.Provider>;}
 
 export function useAuth() {
   const ctx = useContext(AuthCtx);

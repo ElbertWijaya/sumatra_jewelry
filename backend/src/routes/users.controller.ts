@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Put, Body, Query, UseGuards, Request } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtAuthGuard } from '../security/jwt-auth.guard';
 import { RolesGuard } from '../security/roles.guard';
@@ -12,8 +12,24 @@ export class UsersController {
   @Get()
   @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
   async list(@Query('jobRole') jobRole?: string) {
-    const where: any = {};
-    if (jobRole) where.jobRole = jobRole;
-    return (this.prisma as any).appUser.findMany({ where: Object.keys(where).length ? where : undefined, select: { id: true, fullName: true, email: true, jobRole: true } });
+  const where: any = {};
+  if (jobRole) where.job_role = jobRole;
+  return this.prisma.account.findMany({ where: Object.keys(where).length ? where : undefined, select: { id: true, fullName: true, email: true, job_role: true, branch_id: true } });
+  }
+
+  @Put('me')
+  @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
+  async updateMe(@Request() req: any, @Body() body: { avatar?: string; phone?: string; address?: string; branchName?: string; branchAddress?: string }) {
+    const userId = req.user.sub;
+    const updateData: any = {};
+    if (body.phone !== undefined) updateData.phone = body.phone;
+    if (body.address !== undefined) updateData.address = body.address;
+    // Untuk update branch, gunakan branch_id
+    if (body.branch_id !== undefined) updateData.branch_id = body.branch_id;
+    return this.prisma.account.update({
+      where: { id: userId },
+      data: updateData,
+      select: { id: true, email: true, fullName: true, job_role: true, phone: true, address: true, branch_id: true, created_at: true }
+    });
   }
 }

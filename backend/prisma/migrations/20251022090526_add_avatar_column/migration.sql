@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE `appuser` ADD COLUMN `address` VARCHAR(191) NULL,
+    ADD COLUMN `avatar` VARCHAR(191) NULL,
+    ADD COLUMN `branch_address` VARCHAR(191) NULL,
+    ADD COLUMN `branch_name` VARCHAR(191) NULL,
+    ADD COLUMN `joined_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    ADD COLUMN `phone` VARCHAR(191) NULL;

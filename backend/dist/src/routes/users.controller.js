@@ -25,8 +25,23 @@ let UsersController = class UsersController {
     async list(jobRole) {
         const where = {};
         if (jobRole)
-            where.jobRole = jobRole;
-        return this.prisma.appUser.findMany({ where: Object.keys(where).length ? where : undefined, select: { id: true, fullName: true, email: true, jobRole: true } });
+            where.job_role = jobRole;
+        return this.prisma.account.findMany({ where: Object.keys(where).length ? where : undefined, select: { id: true, fullName: true, email: true, job_role: true, branch_id: true } });
+    }
+    async updateMe(req, body) {
+        const userId = req.user.sub;
+        const updateData = {};
+        if (body.phone !== undefined)
+            updateData.phone = body.phone;
+        if (body.address !== undefined)
+            updateData.address = body.address;
+        if (body.branch_id !== undefined)
+            updateData.branch_id = body.branch_id;
+        return this.prisma.account.update({
+            where: { id: userId },
+            data: updateData,
+            select: { id: true, email: true, fullName: true, job_role: true, phone: true, address: true, branch_id: true, created_at: true }
+        });
     }
 };
 exports.UsersController = UsersController;
@@ -38,6 +53,15 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "list", null);
+__decorate([
+    (0, common_1.Put)('me'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES', 'DESIGNER', 'CASTER', 'CARVER', 'DIAMOND_SETTER', 'FINISHER', 'INVENTORY'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "updateMe", null);
 exports.UsersController = UsersController = __decorate([
     (0, common_1.Controller)('users'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
