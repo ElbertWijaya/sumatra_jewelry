@@ -61,7 +61,7 @@ export class OrdersService {
 
       // History: CREATED
       try {
-        const user = await this.prisma.appUser.findUnique({ where: { id: userId }, select: { fullName: true, jobRole: true } });
+  const user = await this.prisma.account.findUnique({ where: { id: userId }, select: { fullName: true, job_role: true } });
         await tx.orderHistory.create({
           data: ({
             orderId: order.id,
@@ -114,7 +114,7 @@ export class OrdersService {
         updatedById: userId,
       },
     });
-    const user = await this.prisma.appUser.findUnique({ where: { id: userId }, select: { fullName: true, jobRole: true } });
+  const user = await this.prisma.account.findUnique({ where: { id: userId }, select: { fullName: true, job_role: true } });
     await this.prisma.orderHistory.create({
       data: ({
         orderId: id,
@@ -137,7 +137,7 @@ export class OrdersService {
     await this.findById(id);
     const records = await this.prisma.orderHistory.findMany({
       where: { orderId: id },
-      include: { user: { select: { id: true, fullName: true, jobRole: true } } },
+  include: { user: { select: { id: true, fullName: true, job_role: true } } },
       orderBy: { changedAt: 'asc' }
     });
     return records.map((r) => ({
@@ -210,7 +210,7 @@ export class OrdersService {
       }
 
       try {
-        const user = await this.prisma.appUser.findUnique({ where: { id: userId }, select: { fullName: true, jobRole: true } });
+  const user = await this.prisma.account.findUnique({ where: { id: userId }, select: { fullName: true, job_role: true } });
         const groupId = randomUUID();
         await tx.orderHistory.create({
           data: ({

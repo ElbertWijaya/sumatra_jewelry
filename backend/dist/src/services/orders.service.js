@@ -62,7 +62,7 @@ let OrdersService = class OrdersService {
             catch (e) {
             }
             try {
-                const user = await this.prisma.appUser.findUnique({ where: { id: userId }, select: { fullName: true, jobRole: true } });
+                const user = await this.prisma.account.findUnique({ where: { id: userId }, select: { fullName: true, job_role: true } });
                 await tx.orderHistory.create({
                     data: ({
                         orderId: order.id,
@@ -113,7 +113,7 @@ let OrdersService = class OrdersService {
                 updatedById: userId,
             },
         });
-        const user = await this.prisma.appUser.findUnique({ where: { id: userId }, select: { fullName: true, jobRole: true } });
+        const user = await this.prisma.account.findUnique({ where: { id: userId }, select: { fullName: true, job_role: true } });
         await this.prisma.orderHistory.create({
             data: ({
                 orderId: id,
@@ -205,7 +205,7 @@ let OrdersService = class OrdersService {
                 nextPatch['totalBerat'] = totalBerat;
             }
             try {
-                const user = await this.prisma.appUser.findUnique({ where: { id: userId }, select: { fullName: true, jobRole: true } });
+                const user = await this.prisma.account.findUnique({ where: { id: userId }, select: { fullName: true, job_role: true } });
                 const groupId = (0, crypto_1.randomUUID)();
                 await tx.orderHistory.create({
                     data: ({

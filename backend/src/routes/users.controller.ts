@@ -24,8 +24,8 @@ export class UsersController {
     const updateData: any = {};
     if (body.phone !== undefined) updateData.phone = body.phone;
     if (body.address !== undefined) updateData.address = body.address;
-    // Untuk update branch, gunakan branch_id
-    if (body.branch_id !== undefined) updateData.branch_id = body.branch_id;
+  // Untuk update branch, gunakan branch_id
+  if ((body as any).branch_id !== undefined) updateData.branch_id = (body as any).branch_id;
     return this.prisma.account.update({
       where: { id: userId },
       data: updateData,

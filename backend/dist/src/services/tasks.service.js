@@ -128,7 +128,7 @@ let TasksService = TasksService_1 = class TasksService {
             throw new common_1.BadRequestException('Order sudah nonaktif (history).');
         const ops = [];
         if (task.order && task.order.status === 'DRAFT') {
-            const actor = actorUserId ? await this.prisma.appUser.findUnique({ where: { id: actorUserId }, select: { fullName: true, jobRole: true } }) : null;
+            const actor = actorUserId ? await this.prisma.account.findUnique({ where: { id: actorUserId }, select: { fullName: true, job_role: true } }) : null;
             ops.push(this.prisma.order.update({ where: { id: task.orderId }, data: { status: 'DITERIMA' } }));
             ops.push(this.prisma.orderHistory.create({
                 data: ({
@@ -155,7 +155,7 @@ let TasksService = TasksService_1 = class TasksService {
             throw new common_1.NotFoundException('Order not found');
         if (!this.isOrderActive(order.status))
             throw new common_1.BadRequestException('Order sudah nonaktif (history).');
-        const user = await this.prisma.appUser.findUnique({ where: { id: params.userId } });
+        const user = await this.prisma.account.findUnique({ where: { id: params.userId } });
         if (!user)
             throw new common_1.NotFoundException('User not found');
         const blockingStatuses = ['ASSIGNED', 'IN_PROGRESS', 'AWAITING_VALIDATION'];
@@ -180,7 +180,7 @@ let TasksService = TasksService_1 = class TasksService {
         }));
         const updates = [];
         if (order.status === 'DRAFT') {
-            const actor = params.actorUserId ? await this.prisma.appUser.findUnique({ where: { id: params.actorUserId }, select: { fullName: true, jobRole: true } }) : null;
+            const actor = params.actorUserId ? await this.prisma.account.findUnique({ where: { id: params.actorUserId }, select: { fullName: true, job_role: true } }) : null;
             updates.push(this.prisma.order.update({ where: { id: params.orderId }, data: { status: 'DITERIMA' } }));
             updates.push(this.prisma.orderHistory.create({
                 data: ({
@@ -230,7 +230,7 @@ let TasksService = TasksService_1 = class TasksService {
         try {
             const res = await this.prisma.orderTask.update({ where: { id }, data: { notes: notes ?? task.notes, requestedDoneAt: new Date(), status: task_dtos_1.TaskStatus.AWAITING_VALIDATION } });
             try {
-                const actor = await this.prisma.appUser.findUnique({ where: { id: requesterUserId }, select: { fullName: true, jobRole: true } });
+                const actor = await this.prisma.account.findUnique({ where: { id: requesterUserId }, select: { fullName: true, job_role: true } });
                 await this.prisma.orderHistory.create({
                     data: ({
                         orderId: task.orderId,
@@ -261,7 +261,7 @@ let TasksService = TasksService_1 = class TasksService {
             throw new common_1.BadRequestException('Order sudah nonaktif (history).');
         const updated = await this.prisma.orderTask.update({ where: { id }, data: { validatedById: validatorUserId, validatedAt: new Date(), notes: notes ?? task.notes, status: task_dtos_1.TaskStatus.DONE } });
         try {
-            const actor = await this.prisma.appUser.findUnique({ where: { id: validatorUserId }, select: { fullName: true, jobRole: true } });
+            const actor = await this.prisma.account.findUnique({ where: { id: validatorUserId }, select: { fullName: true, job_role: true } });
             await this.prisma.orderHistory.create({
                 data: ({
                     orderId: task.orderId,
@@ -296,7 +296,7 @@ let TasksService = TasksService_1 = class TasksService {
         }));
         await this.prisma.$transaction(ops);
         try {
-            const actor = await this.prisma.appUser.findUnique({ where: { id: validatorUserId }, select: { fullName: true, jobRole: true } });
+            const actor = await this.prisma.account.findUnique({ where: { id: validatorUserId }, select: { fullName: true, job_role: true } });
             await this.prisma.orderHistory.create({
                 data: ({
                     orderId,
@@ -334,7 +334,7 @@ let TasksService = TasksService_1 = class TasksService {
             const updates = ids.map(id => this.prisma.orderTask.update({ where: { id }, data: { notes, requestedDoneAt: new Date(), status: task_dtos_1.TaskStatus.AWAITING_VALIDATION } }));
             await this.prisma.$transaction(updates);
             try {
-                const actor = await this.prisma.appUser.findUnique({ where: { id: requesterUserId }, select: { fullName: true, jobRole: true } });
+                const actor = await this.prisma.account.findUnique({ where: { id: requesterUserId }, select: { fullName: true, job_role: true } });
                 await this.prisma.orderHistory.create({
                     data: ({
                         orderId,
@@ -390,7 +390,7 @@ let TasksService = TasksService_1 = class TasksService {
             throw new common_1.BadRequestException('Hanya yang ditugaskan yang bisa memulai');
         const ops = [];
         if (task.order && (task.order.status === 'DRAFT' || task.order.status === 'DITERIMA')) {
-            const actor = await this.prisma.appUser.findUnique({ where: { id: actorUserId }, select: { fullName: true, jobRole: true } });
+            const actor = await this.prisma.account.findUnique({ where: { id: actorUserId }, select: { fullName: true, job_role: true } });
             ops.push(this.prisma.order.update({ where: { id: task.orderId }, data: { status: 'DALAM_PROSES' } }));
             ops.push(this.prisma.orderHistory.create({
                 data: ({
@@ -426,7 +426,7 @@ let TasksService = TasksService_1 = class TasksService {
             throw new common_1.BadRequestException('Tidak ada tugas ASSIGNED untuk diterima');
         const ops = tasks.map(t => this.prisma.orderTask.update({ where: { id: t.id }, data: { status: task_dtos_1.TaskStatus.IN_PROGRESS } }));
         if (order.status === 'DRAFT' || order.status === 'DITERIMA') {
-            const actor = await this.prisma.appUser.findUnique({ where: { id: actorUserId }, select: { fullName: true, jobRole: true } });
+            const actor = await this.prisma.account.findUnique({ where: { id: actorUserId }, select: { fullName: true, job_role: true } });
             ops.unshift(this.prisma.order.update({ where: { id: orderId }, data: { status: 'DALAM_PROSES' } }));
             ops.unshift(this.prisma.orderHistory.create({
                 data: ({
