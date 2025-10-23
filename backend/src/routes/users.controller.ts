@@ -24,12 +24,23 @@ export class UsersController {
     const updateData: any = {};
     if (body.phone !== undefined) updateData.phone = body.phone;
     if (body.address !== undefined) updateData.address = body.address;
-  // Untuk update branch, gunakan branch_id
-  if ((body as any).branch_id !== undefined) updateData.branch_id = (body as any).branch_id;
-    return this.prisma.account.update({
+    // Untuk update branch, gunakan branch_id
+    if ((body as any).branch_id !== undefined) updateData.branch_id = (body as any).branch_id;
+    const updated = await this.prisma.account.update({
       where: { id: userId },
       data: updateData,
-      select: { id: true, email: true, fullName: true, job_role: true, phone: true, address: true, branch_id: true, created_at: true }
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        job_role: true,
+        phone: true,
+        address: true,
+        branch_id: true,
+        created_at: true,
+        branch: { select: { name: true, address: true } }
+      }
     });
+    return updated;
   }
 }

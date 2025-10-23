@@ -134,7 +134,7 @@ let OrdersService = class OrdersService {
         await this.findById(id);
         const records = await this.prisma.orderHistory.findMany({
             where: { orderId: id },
-            include: { user: { select: { id: true, fullName: true, jobRole: true } } },
+            include: { user: { select: { id: true, fullName: true, job_role: true } } },
             orderBy: { changedAt: 'asc' }
         });
         return records.map((r) => ({

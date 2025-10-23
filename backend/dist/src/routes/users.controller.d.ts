@@ -24,5 +24,9 @@ export declare class UsersController {
         phone: string | null;
         address: string | null;
         created_at: Date;
+        branch: {
+            address: string | null;
+            name: string;
+        };
     }>;
 }

@@ -37,11 +37,22 @@ let UsersController = class UsersController {
             updateData.address = body.address;
         if (body.branch_id !== undefined)
             updateData.branch_id = body.branch_id;
-        return this.prisma.account.update({
+        const updated = await this.prisma.account.update({
             where: { id: userId },
             data: updateData,
-            select: { id: true, email: true, fullName: true, job_role: true, phone: true, address: true, branch_id: true, created_at: true }
+            select: {
+                id: true,
+                email: true,
+                fullName: true,
+                job_role: true,
+                phone: true,
+                address: true,
+                branch_id: true,
+                created_at: true,
+                branch: { select: { name: true, address: true } }
+            }
         });
+        return updated;
     }
 };
 exports.UsersController = UsersController;

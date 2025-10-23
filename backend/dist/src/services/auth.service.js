@@ -52,27 +52,36 @@ let AuthService = class AuthService {
     }
     async login(email, password) {
         const user = await this.validateUser(email, password);
-        const payload = { sub: user.id, jobRole: user.job_role ?? null, email: user.email };
+        const payload = { sub: user.id, job_role: user.job_role ?? null, email: user.email };
         const accessToken = await this.jwt.signAsync(payload);
-        console.log('[LOGIN] user:', user.email, 'jobRole:', user.jobRole, 'token:', accessToken);
+        console.log('[LOGIN] user:', user.email, 'job_role:', user.job_role, 'token:', accessToken);
         return {
             accessToken,
             user: {
                 id: user.id,
                 email: user.email,
                 fullName: user.fullName,
-                jobRole: user.job_role ?? null,
+                job_role: user.job_role ?? null,
                 phone: user.phone ?? null,
                 address: user.address ?? null,
-                branchId: user.branch_id ?? null,
-                createdAt: user.created_at ?? null,
+                branch_id: user.branch_id ?? null,
+                created_at: user.created_at ?? null,
             },
         };
     }
     async register(data) {
         const hash = await argon2.hash(data.password);
+        const defaultBranch = await this.prisma.branch.findFirst();
+        if (!defaultBranch)
+            throw new common_1.UnauthorizedException('Branch belum tersedia, hubungi admin.');
         const user = await this.prisma.account.create({
-            data: { email: data.email, password: hash, fullName: data.fullName, job_role: data.jobRole },
+            data: {
+                email: data.email,
+                password: hash,
+                fullName: data.fullName,
+                job_role: data.jobRole,
+                branch: { connect: { id: defaultBranch.id } }
+            },
         });
         return { id: user.id, email: user.email };
     }

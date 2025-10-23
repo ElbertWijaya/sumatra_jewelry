@@ -19,26 +19,36 @@ async function main() {
       { email: 'inventory@tokomas.local', fullName: 'Suk Mai D', jobRole: 'INVENTORY', password: 'Password123!' },
     ];
 
+    const defaultBranch = await prisma.branch.findFirst();
+    if (!defaultBranch) throw new Error('Branch belum tersedia, hubungi admin.');
     for (const u of expected) {
-      const existing = await prisma.appUser.findUnique({ where: { email: u.email } });
+      const existing = await prisma.account.findUnique({ where: { email: u.email } });
       if (!existing) {
         const hash = await argon2.hash(u.password || 'Password123!');
-        await prisma.appUser.create({ data: { email: u.email, fullName: u.fullName, jobRole: u.jobRole, password: hash } });
+        await prisma.account.create({
+          data: {
+            email: u.email,
+            fullName: u.fullName,
+            job_role: u.jobRole || '',
+            password: hash,
+            branch: { connect: { id: defaultBranch.id } }
+          }
+        });
         console.log('Created missing user:', u.email);
       } else {
         let needsUpdate = false;
         const updateData: any = {};
         if (existing.fullName !== u.fullName) { updateData.fullName = u.fullName; needsUpdate = true; }
-        // jobRole might be null in existing
-        if ((existing as any).jobRole !== u.jobRole) { updateData.jobRole = u.jobRole; needsUpdate = true; }
+        // job_role might be null in existing
+        if ((existing as any).job_role !== u.jobRole) { updateData.job_role = u.jobRole; needsUpdate = true; }
         if (needsUpdate) {
-          await prisma.appUser.update({ where: { email: u.email }, data: updateData });
+          await prisma.account.update({ where: { email: u.email }, data: updateData });
           console.log('Updated user metadata:', u.email, updateData);
         }
       }
     }
 
-    const count = await prisma.appUser.count();
+  const count = await prisma.account.count();
     console.log(`Done. Total users now: ${count}`);
   } catch (err) {
     console.error('Error restoring users', err);

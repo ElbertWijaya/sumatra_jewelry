@@ -4,18 +4,32 @@ const client_1 = require("@prisma/client");
 const argon2 = require("argon2");
 const prisma = new client_1.PrismaClient();
 async function main() {
+    const branchesToSeed = [
+        { name: 'Asia', address: 'Jl. Asia No.170 B, Sei Rengas II, Kec. Medan Area, Kota Medan, Sumatera Utara 20211' },
+        { name: 'Sun Plaza', address: 'Mall Jl. KH. Zainul Arifin No.7, Madras Hulu, Kec. Medan Polonia, Kota Medan, Sumatera Utara 20152' }
+    ];
+    for (const b of branchesToSeed) {
+        const exists = await prisma.branch.findFirst({ where: { name: b.name } });
+        if (!exists) {
+            await prisma.branch.create({ data: b });
+            console.log(`Branch seeded: ${b.name}`);
+        }
+    }
     const adminEmail = 'admin@tokomas.local';
-    const exists = await prisma.appUser.findUnique({ where: { email: adminEmail } });
+    const defaultBranch = await prisma.branch.findFirst();
+    if (!defaultBranch)
+        throw new Error('Branch belum tersedia, hubungi admin.');
+    const exists = await prisma.account.findUnique({ where: { email: adminEmail } });
     if (!exists) {
         const hash = await argon2.hash('Admin123!');
-        await prisma.appUser.create({
-            data: { email: adminEmail, fullName: 'Aceng', jobRole: 'ADMINISTRATOR', password: hash },
+        await prisma.account.create({
+            data: { email: adminEmail, fullName: 'Aceng', job_role: 'ADMINISTRATOR', password: hash, branch: { connect: { id: defaultBranch.id } } },
         });
         console.log('Seeded admin user: admin@tokomas.local / Admin123! (Aceng)');
     }
     else {
         if (exists.fullName !== 'Aceng') {
-            await prisma.appUser.update({ where: { email: adminEmail }, data: { fullName: 'Aceng' } });
+            await prisma.account.update({ where: { email: adminEmail }, data: { fullName: 'Aceng' } });
             console.log('Updated admin fullName to Aceng');
         }
         else {
@@ -32,19 +46,27 @@ async function main() {
         { email: 'inventory@tokomas.local', fullName: 'Suk Mai D', jobRole: 'INVENTORY' },
     ];
     for (const u of usersToSeed) {
-        const existU = await prisma.appUser.findUnique({ where: { email: u.email } });
+        const existU = await prisma.account.findUnique({ where: { email: u.email } });
         if (!existU) {
             const hash = await argon2.hash('Password123!');
-            await prisma.appUser.create({ data: { email: u.email, fullName: u.fullName, jobRole: u.jobRole, password: hash } });
+            await prisma.account.create({
+                data: {
+                    email: u.email,
+                    fullName: u.fullName,
+                    job_role: u.jobRole || '',
+                    password: hash,
+                    branch: { connect: { id: defaultBranch.id } }
+                }
+            });
             console.log(`Seeded user: ${u.email} / Password123!`);
         }
         else {
-            if (u.jobRole && existU.jobRole !== u.jobRole) {
-                await prisma.appUser.update({ where: { email: u.email }, data: { jobRole: u.jobRole } });
-                console.log(`Updated jobRole for ${u.email} -> ${u.jobRole}`);
+            if (u.jobRole && existU.job_role !== u.jobRole) {
+                await prisma.account.update({ where: { email: u.email }, data: { job_role: u.jobRole } });
+                console.log(`Updated job_role for ${u.email} -> ${u.jobRole}`);
             }
             if (existU.fullName !== u.fullName) {
-                await prisma.appUser.update({ where: { email: u.email }, data: { fullName: u.fullName } });
+                await prisma.account.update({ where: { email: u.email }, data: { fullName: u.fullName } });
                 console.log(`Updated fullName for ${u.email} -> ${u.fullName}`);
             }
         }
