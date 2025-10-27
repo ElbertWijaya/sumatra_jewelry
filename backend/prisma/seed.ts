@@ -38,18 +38,29 @@ async function main() {
 
   // Sales (kasir) account
   type JobRole = 'ADMINISTRATOR'|'SALES'|'DESIGNER'|'CASTER'|'CARVER'|'DIAMOND_SETTER'|'FINISHER'|'INVENTORY';
-  const usersToSeed: Array<{ email: string; fullName: string; jobRole?: JobRole }> = [
-    { email: 'sales@tokomas.local', fullName: 'Yanti', jobRole: 'SALES' },
-    { email: 'designer@tokomas.local', fullName: 'Elbert Wijaya', jobRole: 'DESIGNER' },
-    { email: 'carver@tokomas.local', fullName: 'Acai', jobRole: 'CARVER' },
-    { email: 'caster@tokomas.local', fullName: 'Hanpin', jobRole: 'CASTER' },
-    { email: 'diamond@tokomas.local', fullName: 'Yanti Atas', jobRole: 'DIAMOND_SETTER' },
-    { email: 'finisher@tokomas.local', fullName: 'Ayu', jobRole: 'FINISHER' },
-    { email: 'inventory@tokomas.local', fullName: 'Suk Mai D', jobRole: 'INVENTORY' },
+  type UserSeed = {
+    email: string;
+    fullName: string;
+    jobRole?: JobRole;
+    phone?: string;
+    address?: string;
+    branchIndex?: number;
+  };
+  const usersToSeed: Array<UserSeed> = [
+  { email: 'sales@tokomas.local', fullName: 'Yanti', jobRole: 'SALES', phone: '081234567890', address: 'Jl. Asia No.170 B', branchIndex: 0 },
+  { email: 'designer@tokomas.local', fullName: 'Elbert Wijaya', jobRole: 'DESIGNER', phone: '081234567891', address: 'Jl. Sun Plaza', branchIndex: 1 },
+  { email: 'carver@tokomas.local', fullName: 'Acai', jobRole: 'CARVER', phone: '081234567892', address: 'Jl. Asia No.170 B', branchIndex: 0 },
+  { email: 'caster@tokomas.local', fullName: 'Hanpin', jobRole: 'CASTER', phone: '081234567893', address: 'Jl. Sun Plaza', branchIndex: 1 },
+  { email: 'diamond@tokomas.local', fullName: 'Yanti Atas', jobRole: 'DIAMOND_SETTER', phone: '081234567894', address: 'Jl. Asia No.170 B', branchIndex: 0 },
+  { email: 'finisher@tokomas.local', fullName: 'Ayu', jobRole: 'FINISHER', phone: '081234567895', address: 'Jl. Sun Plaza', branchIndex: 1 },
+  { email: 'inventory@tokomas.local', fullName: 'Suk Mai D', jobRole: 'INVENTORY', phone: '081234567896', address: 'Jl. Asia No.170 B', branchIndex: 0 },
   ];
 
   for (const u of usersToSeed) {
     const existU = await prisma.account.findUnique({ where: { email: u.email } });
+    // Ambil branch sesuai index
+    const branches = await prisma.branch.findMany({ orderBy: { id: 'asc' } });
+    const branch = branches[u.branchIndex || 0];
     if (!existU) {
       const hash = await argon2.hash('Password123!');
       await prisma.account.create({
@@ -58,19 +69,23 @@ async function main() {
           fullName: u.fullName,
           job_role: u.jobRole || '',
           password: hash,
-          branch: { connect: { id: defaultBranch.id } }
+          phone: u.phone || null,
+          address: u.address || null,
+          branch: { connect: { id: branch.id } }
         }
       });
       console.log(`Seeded user: ${u.email} / Password123!`);
     } else {
-      // ensure job_role up to date if missing
-      if (u.jobRole && (existU as any).job_role !== u.jobRole) {
-        await prisma.account.update({ where: { email: u.email }, data: { job_role: u.jobRole } });
-        console.log(`Updated job_role for ${u.email} -> ${u.jobRole}`);
-      }
-      if (existU.fullName !== u.fullName) {
-        await prisma.account.update({ where: { email: u.email }, data: { fullName: u.fullName } });
-        console.log(`Updated fullName for ${u.email} -> ${u.fullName}`);
+      // ensure job_role, fullName, phone, address, branch up to date
+      const updateData: any = {};
+      if (u.jobRole && (existU as any).job_role !== u.jobRole) updateData.job_role = u.jobRole;
+      if (existU.fullName !== u.fullName) updateData.fullName = u.fullName;
+      if ((existU as any).phone !== u.phone) updateData.phone = u.phone;
+      if ((existU as any).address !== u.address) updateData.address = u.address;
+      if ((existU as any).branch_id !== branch.id) updateData.branch = { connect: { id: branch.id } };
+      if (Object.keys(updateData).length) {
+        await prisma.account.update({ where: { email: u.email }, data: updateData });
+        console.log(`Updated user: ${u.email}`);
       }
     }
   }

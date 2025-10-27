@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Body, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Put, Body, Query, UseGuards, Req } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtAuthGuard } from '../security/jwt-auth.guard';
 import { RolesGuard } from '../security/roles.guard';
@@ -8,6 +8,26 @@ import { Roles } from '../security/roles.decorator';
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
   constructor(private prisma: PrismaService) {}
+
+  @Get('me')
+  @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
+  async getProfile(@Req() req: any) {
+    const userId = req.user.sub;
+    const user = await this.prisma.account.findUnique({
+      where: { id: userId },
+      select: {
+        phone: true,
+        address: true,
+        branch: { select: { name: true, address: true } }
+      }
+    });
+    return {
+      phone: user?.phone || '',
+      address: user?.address || '',
+      branchName: user?.branch?.name || '',
+      branchAddress: user?.branch?.address || ''
+    };
+  }
 
   @Get()
   @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
@@ -19,7 +39,7 @@ export class UsersController {
 
   @Put('me')
   @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
-  async updateMe(@Request() req: any, @Body() body: { avatar?: string; phone?: string; address?: string; branchName?: string; branchAddress?: string }) {
+  async updateMe(@Req() req: any, @Body() body: { avatar?: string; phone?: string; address?: string; branchName?: string; branchAddress?: string }) {
     const userId = req.user.sub;
     const updateData: any = {};
     if (body.phone !== undefined) updateData.phone = body.phone;

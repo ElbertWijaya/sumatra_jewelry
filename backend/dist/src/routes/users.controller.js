@@ -22,6 +22,25 @@ let UsersController = class UsersController {
     constructor(prisma) {
         this.prisma = prisma;
     }
+    async getProfile(req) {
+        const userId = req.user.sub;
+        const user = await this.prisma.account.findUnique({
+            where: { id: userId },
+            select: {
+                phone: true,
+                address: true,
+                created_at: true,
+                branch: { select: { name: true, address: true } }
+            }
+        });
+        return {
+            phone: user?.phone || '',
+            address: user?.address || '',
+            branchName: user?.branch?.name || '',
+            branchAddress: user?.branch?.address || '',
+            joinedAt: user?.created_at || ''
+        };
+    }
     async list(jobRole) {
         const where = {};
         if (jobRole)
@@ -57,6 +76,14 @@ let UsersController = class UsersController {
 };
 exports.UsersController = UsersController;
 __decorate([
+    (0, common_1.Get)('me'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES', 'DESIGNER', 'CASTER', 'CARVER', 'DIAMOND_SETTER', 'FINISHER', 'INVENTORY'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "getProfile", null);
+__decorate([
     (0, common_1.Get)(),
     (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES', 'DESIGNER', 'CASTER', 'CARVER', 'DIAMOND_SETTER', 'FINISHER', 'INVENTORY'),
     __param(0, (0, common_1.Query)('jobRole')),
@@ -67,7 +94,7 @@ __decorate([
 __decorate([
     (0, common_1.Put)('me'),
     (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES', 'DESIGNER', 'CASTER', 'CARVER', 'DIAMOND_SETTER', 'FINISHER', 'INVENTORY'),
-    __param(0, (0, common_1.Request)()),
+    __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, Object]),

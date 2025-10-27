@@ -2,6 +2,13 @@ import { PrismaService } from '../prisma/prisma.service';
 export declare class UsersController {
     private prisma;
     constructor(prisma: PrismaService);
+    getProfile(req: any): Promise<{
+        phone: string;
+        address: string;
+        branchName: string;
+        branchAddress: string;
+        joinedAt: string | Date;
+    }>;
     list(jobRole?: string): Promise<{
         id: string;
         email: string;
