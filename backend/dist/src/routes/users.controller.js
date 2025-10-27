@@ -23,7 +23,7 @@ let UsersController = class UsersController {
         this.prisma = prisma;
     }
     async getProfile(req) {
-        const userId = req.user.sub;
+        const userId = req.user.userId;
         const user = await this.prisma.account.findUnique({
             where: { id: userId },
             select: {
@@ -51,7 +51,7 @@ let UsersController = class UsersController {
         return this.prisma.account.findMany({ where: Object.keys(where).length ? where : undefined, select: { id: true, fullName: true, email: true, job_role: true, branch_id: true } });
     }
     async updateMe(req, body) {
-        const userId = req.user.sub;
+        const userId = req.user.userId;
         const updateData = {};
         if (body.phone !== undefined)
             updateData.phone = body.phone;
@@ -82,7 +82,7 @@ let UsersController = class UsersController {
         };
     }
     async changePassword(req, body) {
-        const userId = req.user.sub;
+        const userId = req.user.userId;
         const user = await this.prisma.account.findUnique({ where: { id: userId } });
         if (!user)
             throw new Error('User not found');

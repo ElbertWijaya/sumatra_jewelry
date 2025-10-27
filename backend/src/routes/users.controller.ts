@@ -12,7 +12,7 @@ export class UsersController {
   @Get('me')
   @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
   async getProfile(@Req() req: any) {
-    const userId = req.user.sub;
+    const userId = req.user.userId;
     const user = await this.prisma.account.findUnique({
       where: { id: userId },
       select: {
@@ -45,7 +45,7 @@ export class UsersController {
   @Put('me')
   @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
   async updateMe(@Req() req: any, @Body() body: { avatar?: string; phone?: string; address?: string; branchName?: string; branchAddress?: string }) {
-    const userId = req.user.sub;
+    const userId = req.user.userId;
     const updateData: any = {};
     if (body.phone !== undefined) updateData.phone = body.phone;
     if (body.address !== undefined) updateData.address = body.address;
@@ -77,7 +77,7 @@ export class UsersController {
   @Put('me/password')
   @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
   async changePassword(@Req() req: any, @Body() body: { oldPassword: string; newPassword: string }) {
-    const userId = req.user.sub;
+    const userId = req.user.userId;
     const user = await this.prisma.account.findUnique({ where: { id: userId } });
     if (!user) throw new Error('User not found');
 

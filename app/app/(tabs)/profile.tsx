@@ -18,7 +18,7 @@ const COLORS = {
 };
 
 export default function ProfileScreen() {
-  const { user, setUser } = useAuth();
+  const { token, user, setUser } = useAuth();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [oldPassword, setOldPassword] = useState('');
@@ -73,17 +73,25 @@ export default function ProfileScreen() {
   };
 
   const handleSaveProfile = async () => {
+    if (!token) {
+      Alert.alert('Error', 'Token tidak ditemukan. Silakan login ulang.');
+      return;
+    }
     try {
-      const updated = await api.users.updateMe(user?.token || '', {
+      const updated = await api.users.updateMe(token, {
         phone: editPhone,
         address: editAddress
       });
       setUser({ ...user, phone: updated.phone, address: updated.address });
       setShowEditModal(false);
       Alert.alert('Berhasil', 'Profil berhasil diperbarui!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Update profile error:', error);
-      Alert.alert('Error', 'Gagal memperbarui profil. Coba lagi.');
+      if (error.message?.includes('Unauthorized')) {
+        Alert.alert('Error', 'Sesi login telah berakhir. Silakan login ulang.');
+      } else {
+        Alert.alert('Error', error.message || 'Gagal memperbarui profil. Coba lagi.');
+      }
     }
   };
 
@@ -195,23 +203,29 @@ export default function ProfileScreen() {
         <View style={s.modalOverlay}>
           <View style={s.modalCard}>
             <Text style={s.modalTitle}>Edit Profil</Text>
-            <TextInput
-              style={s.modalInput}
-              placeholder="No. HP"
-              placeholderTextColor={COLORS.brown}
-              value={editPhone}
-              onChangeText={setEditPhone}
-              keyboardType="phone-pad"
-            />
-            <TextInput
-              style={s.modalInput}
-              placeholder="Alamat"
-              placeholderTextColor={COLORS.brown}
-              value={editAddress}
-              onChangeText={setEditAddress}
-              multiline
-              numberOfLines={3}
-            />
+            <View style={s.modalInputRow}>
+              <Text style={s.modalLabel}>No. HP</Text>
+              <TextInput
+                style={s.modalInput}
+                placeholder="Masukkan No. HP"
+                placeholderTextColor={COLORS.brown}
+                value={editPhone}
+                onChangeText={setEditPhone}
+                keyboardType="phone-pad"
+              />
+            </View>
+            <View style={s.modalInputRow}>
+              <Text style={s.modalLabel}>Alamat</Text>
+              <TextInput
+                style={s.modalInput}
+                placeholder="Masukkan Alamat"
+                placeholderTextColor={COLORS.brown}
+                value={editAddress}
+                onChangeText={setEditAddress}
+                multiline
+                numberOfLines={3}
+              />
+            </View>
             <View style={{flexDirection:'row', justifyContent:'flex-end', gap:10, marginTop:10}}>
               <TouchableOpacity onPress={() => setShowEditModal(false)} style={s.modalBtnCancel}><Text style={s.modalBtnCancelText}>Batal</Text></TouchableOpacity>
               <TouchableOpacity onPress={handleSaveProfile} style={s.modalBtnSave}><Text style={s.modalBtnSaveText}>Simpan</Text></TouchableOpacity>
@@ -248,7 +262,9 @@ const s = StyleSheet.create({
   modalOverlay: { position:'absolute', top:0, left:0, right:0, bottom:0, backgroundColor:'#181512cc', justifyContent:'center', alignItems:'center', zIndex:99 },
   modalCard: { backgroundColor:COLORS.card, borderRadius:18, padding:22, minWidth:280, borderWidth:1, borderColor:COLORS.gold, shadowColor:'#000', shadowOpacity:0.12, shadowRadius:10, shadowOffset:{width:0,height:2} },
   modalTitle: { color:COLORS.gold, fontSize:18, fontWeight:'700', marginBottom:12, textAlign:'center' },
-  modalInput: { backgroundColor:COLORS.white, borderRadius:8, borderWidth:1, borderColor:COLORS.gold, padding:10, marginBottom:8, color:COLORS.dark, fontSize:14 },
+  modalInputRow: { flexDirection:'row', alignItems:'center', marginBottom:8 },
+  modalLabel: { color:COLORS.gold, fontWeight:'600', fontSize:14, width:60, marginRight:10 },
+  modalInput: { backgroundColor:COLORS.white, borderRadius:8, borderWidth:1, borderColor:COLORS.gold, padding:10, color:COLORS.dark, fontSize:14, flex:1 },
   modalBtnCancel: { paddingVertical:8, paddingHorizontal:16, borderRadius:8, backgroundColor:COLORS.brown },
   modalBtnCancelText: { color:COLORS.gold, fontWeight:'700', fontSize:14 },
   modalBtnSave: { paddingVertical:8, paddingHorizontal:16, borderRadius:8, backgroundColor:COLORS.gold },
