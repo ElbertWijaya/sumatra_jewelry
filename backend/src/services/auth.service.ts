@@ -34,21 +34,28 @@ export class AuthService {
 
   async login(email: string, password: string) {
   const user = await this.validateUser(email, password);
-  const payload = { sub: user.id, jobRole: user.job_role ?? null, email: user.email };
+  const fullUser = await this.prisma.account.findUnique({
+    where: { id: user.id },
+    include: { branch: { select: { name: true, address: true } } }
+  });
+  if (!fullUser) throw new UnauthorizedException('User not found');
+  const payload = { sub: fullUser.id, jobRole: fullUser.job_role ?? null, email: fullUser.email };
     const accessToken = await this.jwt.signAsync(payload);
     // DEBUG: print token to terminal (hapus setelah selesai)
-  console.log('[LOGIN] user:', user.email, 'job_role:', user.job_role, 'token:', accessToken);
+  console.log('[LOGIN] user:', fullUser.email, 'job_role:', fullUser.job_role, 'token:', accessToken);
     return {
       accessToken,
       user: {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-        job_role: user.job_role ?? null,
-        phone: user.phone ?? null,
-        address: user.address ?? null,
-        branch_id: user.branch_id ?? null,
-        created_at: user.created_at ?? null,
+        id: fullUser.id,
+        email: fullUser.email,
+        fullName: fullUser.fullName,
+        job_role: fullUser.job_role ?? null,
+        phone: fullUser.phone ?? null,
+        address: fullUser.address ?? null,
+        branch_id: fullUser.branch_id ?? null,
+        branchName: fullUser.branch?.name ?? null,
+        branchAddress: fullUser.branch?.address ?? null,
+        joinedAt: fullUser.created_at ?? null,
       },
     };
   }

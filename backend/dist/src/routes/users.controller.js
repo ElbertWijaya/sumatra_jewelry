@@ -36,9 +36,12 @@ let UsersController = class UsersController {
         return {
             phone: user?.phone || '',
             address: user?.address || '',
+            cabang: user?.branch?.name || '',
+            alamatCabang: user?.branch?.address || '',
+            tanggalGabung: user?.created_at ? user.created_at.toISOString().split('T')[0] : '',
             branchName: user?.branch?.name || '',
             branchAddress: user?.branch?.address || '',
-            joinedAt: user?.created_at || ''
+            joinedAt: user?.created_at ? user.created_at.toISOString().split('T')[0] : ''
         };
     }
     async list(jobRole) {

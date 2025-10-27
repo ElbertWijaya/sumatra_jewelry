@@ -5,9 +5,12 @@ export declare class UsersController {
     getProfile(req: any): Promise<{
         phone: string;
         address: string;
+        cabang: string;
+        alamatCabang: string;
+        tanggalGabung: string;
         branchName: string;
         branchAddress: string;
-        joinedAt: string | Date;
+        joinedAt: string;
     }>;
     list(jobRole?: string): Promise<{
         id: string;

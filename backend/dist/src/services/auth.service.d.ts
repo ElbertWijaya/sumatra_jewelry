@@ -25,7 +25,9 @@ export declare class AuthService {
             phone: string | null;
             address: string | null;
             branch_id: number;
-            created_at: Date;
+            branchName: string;
+            branchAddress: string | null;
+            joinedAt: Date;
         };
     }>;
     register(data: {

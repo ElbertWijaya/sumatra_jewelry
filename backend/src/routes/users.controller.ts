@@ -25,9 +25,12 @@ export class UsersController {
     return {
       phone: user?.phone || '',
       address: user?.address || '',
+      cabang: user?.branch?.name || '', // field lebih eksplisit sesuai frontend
+      alamatCabang: user?.branch?.address || '',
+      tanggalGabung: user?.created_at ? user.created_at.toISOString().split('T')[0] : '', // format YYYY-MM-DD
       branchName: user?.branch?.name || '',
       branchAddress: user?.branch?.address || '',
-      joinedAt: user?.created_at || ''
+      joinedAt: user?.created_at ? user.created_at.toISOString().split('T')[0] : ''
     };
   }
 

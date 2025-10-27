@@ -22,7 +22,9 @@ export declare class AuthController {
             phone: string | null;
             address: string | null;
             branch_id: number;
-            created_at: Date;
+            branchName: string;
+            branchAddress: string | null;
+            joinedAt: Date;
         };
     }>;
     register(dto: RegisterDto): Promise<{
