@@ -66,6 +66,47 @@ export class UsersController {
         branch: { select: { name: true, address: true } }
       }
     });
-    return updated;
+    return {
+      ...updated,
+      branchName: updated.branch?.name || '',
+      branchAddress: updated.branch?.address || '',
+      joinedAt: updated.created_at ? updated.created_at.toISOString().split('T')[0] : ''
+    };
+  }
+
+  @Put('me/password')
+  @Roles('ADMINISTRATOR','SALES','DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY')
+  async changePassword(@Req() req: any, @Body() body: { oldPassword: string; newPassword: string }) {
+    const userId = req.user.sub;
+    const user = await this.prisma.account.findUnique({ where: { id: userId } });
+    if (!user) throw new Error('User not found');
+
+    // Validate old password
+    const hash = user.password || '';
+    let match = false;
+    try {
+      if (hash.startsWith('$2a$') || hash.startsWith('$2b$') || hash.startsWith('$2y$')) {
+        const bcrypt = require('bcrypt');
+        match = await bcrypt.compare(body.oldPassword, hash);
+      } else {
+        const argon2 = require('argon2');
+        match = await argon2.verify(hash, body.oldPassword);
+      }
+    } catch {
+      throw new Error('Invalid old password');
+    }
+    if (!match) throw new Error('Invalid old password');
+
+    // Hash new password
+    const argon2 = require('argon2');
+    const newHash = await argon2.hash(body.newPassword);
+
+    // Update password
+    await this.prisma.account.update({
+      where: { id: userId },
+      data: { password: newHash }
+    });
+
+    return { message: 'Password updated successfully' };
   }
 }

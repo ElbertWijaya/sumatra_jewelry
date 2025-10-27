@@ -26,6 +26,9 @@ export declare class UsersController {
         branchName?: string;
         branchAddress?: string;
     }): Promise<{
+        branchName: string;
+        branchAddress: string;
+        joinedAt: string;
         id: string;
         email: string;
         fullName: string;
@@ -38,5 +41,11 @@ export declare class UsersController {
             address: string | null;
             name: string;
         };
+    }>;
+    changePassword(req: any, body: {
+        oldPassword: string;
+        newPassword: string;
+    }): Promise<{
+        message: string;
     }>;
 }

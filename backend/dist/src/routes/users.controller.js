@@ -74,7 +74,42 @@ let UsersController = class UsersController {
                 branch: { select: { name: true, address: true } }
             }
         });
-        return updated;
+        return {
+            ...updated,
+            branchName: updated.branch?.name || '',
+            branchAddress: updated.branch?.address || '',
+            joinedAt: updated.created_at ? updated.created_at.toISOString().split('T')[0] : ''
+        };
+    }
+    async changePassword(req, body) {
+        const userId = req.user.sub;
+        const user = await this.prisma.account.findUnique({ where: { id: userId } });
+        if (!user)
+            throw new Error('User not found');
+        const hash = user.password || '';
+        let match = false;
+        try {
+            if (hash.startsWith('$2a$') || hash.startsWith('$2b$') || hash.startsWith('$2y$')) {
+                const bcrypt = require('bcrypt');
+                match = await bcrypt.compare(body.oldPassword, hash);
+            }
+            else {
+                const argon2 = require('argon2');
+                match = await argon2.verify(hash, body.oldPassword);
+            }
+        }
+        catch {
+            throw new Error('Invalid old password');
+        }
+        if (!match)
+            throw new Error('Invalid old password');
+        const argon2 = require('argon2');
+        const newHash = await argon2.hash(body.newPassword);
+        await this.prisma.account.update({
+            where: { id: userId },
+            data: { password: newHash }
+        });
+        return { message: 'Password updated successfully' };
     }
 };
 exports.UsersController = UsersController;
@@ -103,6 +138,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "updateMe", null);
+__decorate([
+    (0, common_1.Put)('me/password'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'SALES', 'DESIGNER', 'CASTER', 'CARVER', 'DIAMOND_SETTER', 'FINISHER', 'INVENTORY'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "changePassword", null);
 exports.UsersController = UsersController = __decorate([
     (0, common_1.Controller)('users'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

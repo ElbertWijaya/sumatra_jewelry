@@ -20,9 +20,12 @@ const COLORS = {
 export default function ProfileScreen() {
   const { user, setUser } = useAuth();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editAddress, setEditAddress] = useState('');
 
   const handleEditAvatar = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -63,6 +66,52 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleEditProfile = () => {
+    setEditPhone(user?.phone || '');
+    setEditAddress(user?.address || '');
+    setShowEditModal(true);
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const updated = await api.users.updateMe(user?.token || '', {
+        phone: editPhone,
+        address: editAddress
+      });
+      setUser({ ...user, phone: updated.phone, address: updated.address });
+      setShowEditModal(false);
+      Alert.alert('Berhasil', 'Profil berhasil diperbarui!');
+    } catch (error) {
+      console.error('Update profile error:', error);
+      Alert.alert('Error', 'Gagal memperbarui profil. Coba lagi.');
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      Alert.alert('Error', 'Konfirmasi password tidak cocok!');
+      return;
+    }
+    if (newPassword.length < 6) {
+      Alert.alert('Error', 'Password baru minimal 6 karakter!');
+      return;
+    }
+    try {
+      await api.users.changePassword(user?.token || '', {
+        oldPassword,
+        newPassword
+      });
+      setShowPasswordModal(false);
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      Alert.alert('Berhasil', 'Password berhasil diubah!');
+    } catch (error) {
+      console.error('Change password error:', error);
+      Alert.alert('Error', 'Gagal mengubah password. Periksa password lama.');
+    }
+  };
+
   if (!user) return <View style={{flex:1,justifyContent:'center',alignItems:'center'}}><Text style={{color:COLORS.gold}}>Memuat data user...</Text></View>;
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.dark }}>
@@ -95,7 +144,7 @@ export default function ProfileScreen() {
 
         {/* Action Buttons */}
         <View style={s.actionRow}>
-          <TouchableOpacity style={s.actionBtn}><Ionicons name="create" size={18} color={COLORS.dark} style={s.actionIcon} /><Text style={s.actionText}>Edit Profil</Text></TouchableOpacity>
+          <TouchableOpacity style={s.actionBtn} onPress={handleEditProfile}><Ionicons name="create" size={18} color={COLORS.dark} style={s.actionIcon} /><Text style={s.actionText}>Edit Profil</Text></TouchableOpacity>
           <TouchableOpacity style={s.actionBtn} onPress={() => setShowPasswordModal(true)}><Ionicons name="key" size={18} color={COLORS.dark} style={s.actionIcon} /><Text style={s.actionText}>Ubah Password</Text></TouchableOpacity>
           <TouchableOpacity style={[s.actionBtn, {backgroundColor: COLORS.brown}]}><Ionicons name="log-out" size={18} color={COLORS.gold} style={s.actionIcon} /><Text style={[s.actionText, {color: COLORS.gold}]}>Logout</Text></TouchableOpacity>
         </View>
@@ -135,7 +184,37 @@ export default function ProfileScreen() {
             />
             <View style={{flexDirection:'row', justifyContent:'flex-end', gap:10, marginTop:10}}>
               <TouchableOpacity onPress={() => setShowPasswordModal(false)} style={s.modalBtnCancel}><Text style={s.modalBtnCancelText}>Batal</Text></TouchableOpacity>
-              <TouchableOpacity style={s.modalBtnSave}><Text style={s.modalBtnSaveText}>Simpan</Text></TouchableOpacity>
+              <TouchableOpacity onPress={handleChangePassword} style={s.modalBtnSave}><Text style={s.modalBtnSaveText}>Simpan</Text></TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Modal edit profil */}
+      {showEditModal && (
+        <View style={s.modalOverlay}>
+          <View style={s.modalCard}>
+            <Text style={s.modalTitle}>Edit Profil</Text>
+            <TextInput
+              style={s.modalInput}
+              placeholder="No. HP"
+              placeholderTextColor={COLORS.brown}
+              value={editPhone}
+              onChangeText={setEditPhone}
+              keyboardType="phone-pad"
+            />
+            <TextInput
+              style={s.modalInput}
+              placeholder="Alamat"
+              placeholderTextColor={COLORS.brown}
+              value={editAddress}
+              onChangeText={setEditAddress}
+              multiline
+              numberOfLines={3}
+            />
+            <View style={{flexDirection:'row', justifyContent:'flex-end', gap:10, marginTop:10}}>
+              <TouchableOpacity onPress={() => setShowEditModal(false)} style={s.modalBtnCancel}><Text style={s.modalBtnCancelText}>Batal</Text></TouchableOpacity>
+              <TouchableOpacity onPress={handleSaveProfile} style={s.modalBtnSave}><Text style={s.modalBtnSaveText}>Simpan</Text></TouchableOpacity>
             </View>
           </View>
         </View>
