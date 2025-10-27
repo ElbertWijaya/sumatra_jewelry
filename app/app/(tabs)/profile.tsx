@@ -130,31 +130,75 @@ export default function ProfileScreen() {
         style={s.headerBg}
       />
       <ScrollView contentContainerStyle={{paddingBottom: 32}}>
-        {/* Header Avatar & Nama & Role */}
-        <View style={s.headerWrap}>
-          <Image source={{uri: user.avatar || 'https://ui-avatars.com/api/?name='+(user.fullName||'User')+'&background=FFD700&color=181512&size=256'}} style={s.avatarImg} />
-          <TouchableOpacity style={s.editAvatarBtn} onPress={handleEditAvatar}>
-            <Ionicons name="camera" size={18} color={COLORS.gold} />
-          </TouchableOpacity>
-          <Text style={s.profileName}>{user.fullName}</Text>
-          <Text style={s.profileEmail}>{user.email}</Text>
-          <View style={s.roleBadge}><Text style={s.roleBadgeText}>Role: {user.job_role || '-'}</Text></View>
+        {/* Cover Image */}
+        <View style={s.coverContainer}>
+          <LinearGradient
+            colors={[COLORS.gold, COLORS.brown, COLORS.dark]}
+            start={{x:0, y:0}}
+            end={{x:1, y:1}}
+            style={s.coverGradient}
+          />
+          <View style={s.coverOverlay}>
+            <Text style={s.coverTitle}>Profil Pengguna</Text>
+          </View>
         </View>
 
-        {/* Info Card */}
-        <View style={s.infoCard}>
-          <View style={s.infoRow}><Ionicons name="call" size={18} color={COLORS.gold} style={s.infoIcon} /><Text style={s.infoLabel}>No. HP</Text><Text style={s.infoValue}>{user.phone || '-'}</Text></View>
-          <View style={s.infoRow}><Ionicons name="location" size={18} color={COLORS.gold} style={s.infoIcon} /><Text style={s.infoLabel}>Alamat</Text><Text style={s.infoValue}>{user.address || '-'}</Text></View>
-          <View style={s.infoRow}><MaterialCommunityIcons name="store" size={18} color={COLORS.gold} style={s.infoIcon} /><Text style={s.infoLabel}>Cabang</Text><Text style={s.infoValue}>{user.branchName || '-'}</Text></View>
-          <View style={s.infoRow}><MaterialCommunityIcons name="map-marker" size={18} color={COLORS.gold} style={s.infoIcon} /><Text style={s.infoLabel}>Alamat Cabang</Text><Text style={s.infoValue}>{user.branchAddress || '-'}</Text></View>
-          <View style={s.infoRow}><MaterialCommunityIcons name="calendar-check" size={18} color={COLORS.gold} style={s.infoIcon} /><Text style={s.infoLabel}>Gabung</Text><Text style={s.infoValue}>{user.joinedAt ? new Date(user.joinedAt).toLocaleDateString('id-ID') : '-'}</Text></View>
+        {/* Profile Header */}
+        <View style={s.profileHeader}>
+          <View style={s.avatarWrapper}>
+            <Image source={{uri: user.avatar || 'https://ui-avatars.com/api/?name='+(user.fullName||'User')+'&background=FFD700&color=181512&size=256'}} style={s.largeAvatar} />
+            <TouchableOpacity style={s.editAvatarBtn} onPress={handleEditAvatar}>
+              <Ionicons name="camera" size={20} color={COLORS.gold} />
+            </TouchableOpacity>
+          </View>
+          <Text style={s.userName}>{user.fullName}</Text>
+          <Text style={s.userEmail}>{user.email}</Text>
+          <View style={s.roleBadge}><Text style={s.roleBadgeText}>{user.job_role || 'User'}</Text></View>
+        </View>
+
+        {/* Bio Section */}
+        <View style={s.bioSection}>
+          <Text style={s.bioTitle}>Tentang Saya</Text>
+          <View style={s.bioRow}>
+            <Ionicons name="call" size={20} color={COLORS.gold} />
+            <Text style={s.bioText}>{user.phone || 'Belum diisi'}</Text>
+          </View>
+          <View style={s.bioRow}>
+            <Ionicons name="location" size={20} color={COLORS.gold} />
+            <Text style={s.bioText}>{user.address || 'Belum diisi'}</Text>
+          </View>
+          <View style={s.bioRow}>
+            <MaterialCommunityIcons name="calendar-check" size={20} color={COLORS.gold} />
+            <Text style={s.bioText}>Bergabung {user.joinedAt ? new Date(user.joinedAt).toLocaleDateString('id-ID') : '-'}</Text>
+          </View>
+        </View>
+
+        {/* Branch Info */}
+        <View style={s.branchSection}>
+          <Text style={s.sectionTitle}>Informasi Cabang</Text>
+          <View style={s.branchRow}>
+            <MaterialCommunityIcons name="store" size={24} color={COLORS.gold} />
+            <View style={s.branchDetails}>
+              <Text style={s.branchName}>{user.branchName || 'Belum diisi'}</Text>
+              <Text style={s.branchAddress}>{user.branchAddress || 'Belum diisi'}</Text>
+            </View>
+          </View>
         </View>
 
         {/* Action Buttons */}
-        <View style={s.actionRow}>
-          <TouchableOpacity style={s.actionBtn} onPress={handleEditProfile}><Ionicons name="create" size={18} color={COLORS.dark} style={s.actionIcon} /><Text style={s.actionText}>Edit Profil</Text></TouchableOpacity>
-          <TouchableOpacity style={s.actionBtn} onPress={() => setShowPasswordModal(true)}><Ionicons name="key" size={18} color={COLORS.dark} style={s.actionIcon} /><Text style={s.actionText}>Ubah Password</Text></TouchableOpacity>
-          <TouchableOpacity style={[s.actionBtn, {backgroundColor: COLORS.brown}]}><Ionicons name="log-out" size={18} color={COLORS.gold} style={s.actionIcon} /><Text style={[s.actionText, {color: COLORS.gold}]}>Logout</Text></TouchableOpacity>
+        <View style={s.actionsGrid}>
+          <TouchableOpacity style={s.gridBtn} onPress={handleEditProfile}>
+            <Ionicons name="create" size={24} color={COLORS.dark} />
+            <Text style={s.gridBtnText}>Edit Profil</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.gridBtn} onPress={() => setShowPasswordModal(true)}>
+            <Ionicons name="key" size={24} color={COLORS.dark} />
+            <Text style={s.gridBtnText}>Ubah Password</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[s.gridBtn, s.logoutGridBtn]}>
+            <Ionicons name="log-out" size={24} color={COLORS.gold} />
+            <Text style={[s.gridBtnText, {color: COLORS.gold}]}>Logout</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Versi aplikasi */}
@@ -166,30 +210,39 @@ export default function ProfileScreen() {
         <View style={s.modalOverlay}>
           <View style={s.modalCard}>
             <Text style={s.modalTitle}>Ganti Password</Text>
-            <TextInput
-              style={s.modalInput}
-              placeholder="Password lama"
-              placeholderTextColor={COLORS.brown}
-              secureTextEntry
-              value={oldPassword}
-              onChangeText={setOldPassword}
-            />
-            <TextInput
-              style={s.modalInput}
-              placeholder="Password baru"
-              placeholderTextColor={COLORS.brown}
-              secureTextEntry
-              value={newPassword}
-              onChangeText={setNewPassword}
-            />
-            <TextInput
-              style={s.modalInput}
-              placeholder="Konfirmasi password baru"
-              placeholderTextColor={COLORS.brown}
-              secureTextEntry
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-            />
+            <View style={s.modalInputRow}>
+              <Text style={s.modalLabel}>Lama</Text>
+              <TextInput
+                style={s.modalInput}
+                placeholder="Password lama"
+                placeholderTextColor={COLORS.brown}
+                secureTextEntry
+                value={oldPassword}
+                onChangeText={setOldPassword}
+              />
+            </View>
+            <View style={s.modalInputRow}>
+              <Text style={s.modalLabel}>Baru</Text>
+              <TextInput
+                style={s.modalInput}
+                placeholder="Password baru"
+                placeholderTextColor={COLORS.brown}
+                secureTextEntry
+                value={newPassword}
+                onChangeText={setNewPassword}
+              />
+            </View>
+            <View style={s.modalInputRow}>
+              <Text style={s.modalLabel}>Konfirmasi</Text>
+              <TextInput
+                style={s.modalInput}
+                placeholder="Konfirmasi password baru"
+                placeholderTextColor={COLORS.brown}
+                secureTextEntry
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+              />
+            </View>
             <View style={{flexDirection:'row', justifyContent:'flex-end', gap:10, marginTop:10}}>
               <TouchableOpacity onPress={() => setShowPasswordModal(false)} style={s.modalBtnCancel}><Text style={s.modalBtnCancelText}>Batal</Text></TouchableOpacity>
               <TouchableOpacity onPress={handleChangePassword} style={s.modalBtnSave}><Text style={s.modalBtnSaveText}>Simpan</Text></TouchableOpacity>
@@ -260,13 +313,45 @@ const s = StyleSheet.create({
   versionWrap: { alignItems:'center', marginTop:18, marginBottom:8 },
   versionText: { color:COLORS.yellow, fontSize:13, fontWeight:'600' },
   modalOverlay: { position:'absolute', top:0, left:0, right:0, bottom:0, backgroundColor:'#181512cc', justifyContent:'center', alignItems:'center', zIndex:99 },
-  modalCard: { backgroundColor:COLORS.card, borderRadius:18, padding:22, minWidth:280, borderWidth:1, borderColor:COLORS.gold, shadowColor:'#000', shadowOpacity:0.12, shadowRadius:10, shadowOffset:{width:0,height:2} },
-  modalTitle: { color:COLORS.gold, fontSize:18, fontWeight:'700', marginBottom:12, textAlign:'center' },
-  modalInputRow: { flexDirection:'row', alignItems:'center', marginBottom:8 },
-  modalLabel: { color:COLORS.gold, fontWeight:'600', fontSize:14, width:60, marginRight:10 },
-  modalInput: { backgroundColor:COLORS.white, borderRadius:8, borderWidth:1, borderColor:COLORS.gold, padding:10, color:COLORS.dark, fontSize:14, flex:1 },
+  modalCard: { backgroundColor:COLORS.card, borderRadius:18, padding:16, minWidth:350, borderWidth:1, borderColor:COLORS.gold, shadowColor:'#000', shadowOpacity:0.12, shadowRadius:10, shadowOffset:{width:0,height:2} },
+  modalTitle: { color:COLORS.gold, fontSize:18, fontWeight:'700', marginBottom:8, textAlign:'center' },
+  modalInputRow: { flexDirection:'row', alignItems:'center', marginBottom:8, flexWrap:'wrap' },
+  modalLabel: { color:COLORS.gold, fontWeight:'600', fontSize:14, minWidth:70, marginRight:10 },
+  modalInput: { backgroundColor:COLORS.white, borderRadius:8, borderWidth:1, borderColor:COLORS.gold, padding:10, color:COLORS.dark, fontSize:14, flex:1, minWidth:200 },
   modalBtnCancel: { paddingVertical:8, paddingHorizontal:16, borderRadius:8, backgroundColor:COLORS.brown },
   modalBtnCancelText: { color:COLORS.gold, fontWeight:'700', fontSize:14 },
   modalBtnSave: { paddingVertical:8, paddingHorizontal:16, borderRadius:8, backgroundColor:COLORS.gold },
   modalBtnSaveText: { color:COLORS.dark, fontWeight:'700', fontSize:14 },
+  welcomeSection: { paddingHorizontal:20, paddingTop:20, paddingBottom:10 },
+  welcomeText: { color:COLORS.yellow, fontSize:16, fontWeight:'500' },
+  welcomeName: { color:COLORS.white, fontSize:28, fontWeight:'700', marginTop:4 },
+  profileCard: { backgroundColor:COLORS.card, borderRadius:20, padding:20, marginHorizontal:18, marginBottom:20, borderWidth:1, borderColor:COLORS.border, shadowColor:'#000', shadowOpacity:0.1, shadowRadius:8, shadowOffset:{width:0,height:3}, alignItems:'center' },
+  avatarContainer: { position:'relative', marginBottom:12 },
+  infoContainer: { marginHorizontal:18, marginBottom:20 },
+  infoSection: { backgroundColor:COLORS.card, borderRadius:16, padding:18, marginBottom:16, borderWidth:1, borderColor:COLORS.border, shadowColor:'#000', shadowOpacity:0.08, shadowRadius:6, shadowOffset:{width:0,height:2} },
+  sectionTitle: { color:COLORS.gold, fontSize:16, fontWeight:'700', marginBottom:12, textAlign:'center' },
+  actionContainer: { flexDirection:'row', justifyContent:'space-around', marginHorizontal:18, marginBottom:18, gap:8 },
+  logoutBtn: { backgroundColor:COLORS.brown },
+  coverContainer: { height:200, position:'relative' },
+  coverGradient: { flex:1 },
+  coverOverlay: { position:'absolute', top:0, left:0, right:0, bottom:0, justifyContent:'center', alignItems:'center' },
+  coverTitle: { color:COLORS.white, fontSize:24, fontWeight:'700', textShadowColor:'#000', textShadowOffset:{width:1,height:1}, textShadowRadius:2 },
+  profileHeader: { alignItems:'center', marginTop:-50, marginBottom:20 },
+  avatarWrapper: { position:'relative', marginBottom:12 },
+  largeAvatar: { width:120, height:120, borderRadius:60, borderWidth:4, borderColor:COLORS.gold },
+  userName: { color:COLORS.white, fontSize:28, fontWeight:'700', marginBottom:4 },
+  userEmail: { color:COLORS.yellow, fontSize:16, fontWeight:'500', marginBottom:8 },
+  bioSection: { backgroundColor:COLORS.card, borderRadius:16, padding:18, marginHorizontal:18, marginBottom:16, borderWidth:1, borderColor:COLORS.border, shadowColor:'#000', shadowOpacity:0.08, shadowRadius:6, shadowOffset:{width:0,height:2} },
+  bioTitle: { color:COLORS.gold, fontSize:18, fontWeight:'700', marginBottom:12, textAlign:'center' },
+  bioRow: { flexDirection:'row', alignItems:'center', marginBottom:8 },
+  bioText: { color:COLORS.white, fontSize:14, fontWeight:'500', marginLeft:8 },
+  branchSection: { backgroundColor:COLORS.card, borderRadius:16, padding:18, marginHorizontal:18, marginBottom:16, borderWidth:1, borderColor:COLORS.border, shadowColor:'#000', shadowOpacity:0.08, shadowRadius:6, shadowOffset:{width:0,height:2} },
+  branchRow: { flexDirection:'row', alignItems:'flex-start' },
+  branchDetails: { marginLeft:12, flex:1 },
+  branchName: { color:COLORS.white, fontSize:16, fontWeight:'700', marginBottom:4 },
+  branchAddress: { color:COLORS.yellow, fontSize:14, fontWeight:'500' },
+  actionsGrid: { flexDirection:'row', justifyContent:'space-around', marginHorizontal:18, marginBottom:18, gap:8 },
+  gridBtn: { flexDirection:'column', alignItems:'center', backgroundColor:COLORS.gold, borderRadius:16, paddingVertical:16, paddingHorizontal:12, shadowColor:'#000', shadowOpacity:0.08, shadowRadius:4, shadowOffset:{width:0,height:1}, minWidth:80 },
+  gridBtnText: { color:COLORS.dark, fontWeight:'700', fontSize:12, marginTop:4, textAlign:'center' },
+  logoutGridBtn: { backgroundColor:COLORS.brown },
 });
