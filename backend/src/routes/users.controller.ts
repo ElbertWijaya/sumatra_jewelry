@@ -18,6 +18,7 @@ export class UsersController {
       select: {
         phone: true,
         address: true,
+        created_at: true,
         branch: { select: { name: true, address: true } }
       }
     });
@@ -25,7 +26,8 @@ export class UsersController {
       phone: user?.phone || '',
       address: user?.address || '',
       branchName: user?.branch?.name || '',
-      branchAddress: user?.branch?.address || ''
+      branchAddress: user?.branch?.address || '',
+      joinedAt: user?.created_at || ''
     };
   }
 

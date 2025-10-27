@@ -52,7 +52,7 @@ let AuthService = class AuthService {
     }
     async login(email, password) {
         const user = await this.validateUser(email, password);
-        const payload = { sub: user.id, job_role: user.job_role ?? null, email: user.email };
+        const payload = { sub: user.id, jobRole: user.job_role ?? null, email: user.email };
         const accessToken = await this.jwt.signAsync(payload);
         console.log('[LOGIN] user:', user.email, 'job_role:', user.job_role, 'token:', accessToken);
         return {
