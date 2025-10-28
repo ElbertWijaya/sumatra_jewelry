@@ -111,5 +111,8 @@ export const api = {
   },
   files: {
     upload: (token: string, form: FormData) => fetch(`${getApiBase()}/files/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form }).then(r=> r.ok ? r.json() : r.text().then(t=>{ throw new Error(t); }))
+  },
+  dashboard: {
+    stats: (token: string) => request('/dashboard/stats', { headers: { Authorization: `Bearer ${token}` } }),
   }
 };

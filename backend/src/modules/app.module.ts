@@ -9,9 +9,10 @@ import { FilesModule } from './files.module';
 import { TasksModule } from './tasks.module';
 import { UsersModule } from './users.module';
 import { InventoryModule } from './inventory.module';
+import { DashboardModule } from './dashboard.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, OrdersModule, FilesModule, TasksModule, UsersModule, InventoryModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, OrdersModule, FilesModule, TasksModule, UsersModule, InventoryModule, DashboardModule],
   controllers: [],
   providers: [],
 })

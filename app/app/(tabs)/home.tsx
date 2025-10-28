@@ -1,11 +1,12 @@
 
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Platform, Dimensions } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@lib/context/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { api } from '@lib/api/client';
 
 const MOCK_NOTIF = [
   { id: 1, text: 'Order #1234 telah disetujui' },
@@ -25,11 +26,22 @@ const COLORS = {
 
 
 export default function HomeScreen() {
-        {/* Divider solid gold */}
-        <View style={s.statusDividerSolid} />
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { width, height } = Dimensions.get('window');
   const router = useRouter();
+  const [stats, setStats] = useState({
+    aktif: { count: 0, change: 0 },
+    ditugaskan: { count: 0, change: 0 },
+    selesai: { count: 0, change: 0 },
+    pending: { count: 0, change: 0 }
+  });
+
+  useEffect(() => {
+    if (token) {
+      api.dashboard.stats(token).then(setStats).catch(console.error);
+    }
+  }, [token]);
+
   return (
     <View style={{flex:1}}>
       <LinearGradient
@@ -39,61 +51,126 @@ export default function HomeScreen() {
         style={[StyleSheet.absoluteFill, {zIndex:-1}]}
       />
       <ScrollView style={s.container} contentContainerStyle={{paddingBottom: 32}} showsVerticalScrollIndicator={false}>
-        {/* Greeting */}
-        <View style={s.greetingWrap}>
-          <Text style={s.greetingText}>Selamat datang,</Text>
-          <Text style={s.greetingName}>{user?.fullName || 'User'}</Text>
+        {/* Hero Section */}
+        <View style={s.heroSection}>
+          <LinearGradient
+            colors={[COLORS.gold, COLORS.brown, COLORS.dark]}
+            start={{x:0, y:0}}
+            end={{x:1, y:1}}
+            style={s.heroGradient}
+          >
+            <View style={s.heroContent}>
+              <Text style={s.heroGreeting}>Selamat datang kembali,</Text>
+              <Text style={s.heroName}>{user?.fullName || 'User'}</Text>
+              <Text style={s.heroSubtitle}>Mari kelola bisnis perhiasan Anda hari ini</Text>
+            </View>
+            <View style={s.heroDecoration}>
+              <MaterialCommunityIcons name="diamond-stone" size={80} color={COLORS.white} style={{opacity: 0.3}} />
+            </View>
+          </LinearGradient>
         </View>
 
-        {/* Indikator status minimalis */}
-        <View style={s.indicatorMinimalRow}>
-          <View style={s.indicatorMinimalItem}>
-            <MaterialCommunityIcons name="diamond-stone" size={22} color={COLORS.gold} />
-            <Text style={s.indicatorMinimalNum}>5</Text>
-          </View>
-          <View style={s.indicatorMinimalItem}>
-            <MaterialCommunityIcons name="account-tie" size={22} color={COLORS.gold} />
-            <Text style={s.indicatorMinimalNum}>7</Text>
-          </View>
-          <View style={s.indicatorMinimalItem}>
-            <MaterialCommunityIcons name="check-circle-outline" size={22} color={COLORS.gold} />
-            <Text style={s.indicatorMinimalNum}>12</Text>
-          </View>
-        </View>
-        <View style={s.indicatorMinimalLabelRow}>
-          <Text style={s.indicatorMinimalLabel}>Aktif</Text>
-          <Text style={s.indicatorMinimalLabel}>Ditugaskan</Text>
-          <Text style={s.indicatorMinimalLabel}>Selesai</Text>
+        {/* Stats Strip */}
+        <View style={s.statsStrip}>
+          <Text style={s.statsTitle}>Business Overview</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.statsContainer}>
+            <View style={s.statItem}>
+              <View style={s.statHeader}>
+                <MaterialCommunityIcons name="diamond-stone" size={24} color={COLORS.gold} />
+                <Text style={s.statMetric}>Aktif</Text>
+              </View>
+              <Text style={s.statValue}>{stats.aktif.count}</Text>
+              <View style={s.statProgress}>
+                <View style={[s.statProgressBar, {width: `${Math.min((stats.aktif.count / 10) * 100, 100)}%`}]} />
+              </View>
+              <Text style={s.statChange}>{stats.aktif.change > 0 ? '+' : ''}{stats.aktif.change} hari ini</Text>
+            </View>
+            <View style={s.statItem}>
+              <View style={s.statHeader}>
+                <MaterialCommunityIcons name="account-tie" size={24} color={COLORS.gold} />
+                <Text style={s.statMetric}>Ditugaskan</Text>
+              </View>
+              <Text style={s.statValue}>{stats.ditugaskan.count}</Text>
+              <View style={s.statProgress}>
+                <View style={[s.statProgressBar, {width: `${Math.min((stats.ditugaskan.count / 10) * 100, 100)}%`}]} />
+              </View>
+              <Text style={s.statChange}>{stats.ditugaskan.change > 0 ? '+' : ''}{stats.ditugaskan.change} hari ini</Text>
+            </View>
+            <View style={s.statItem}>
+              <View style={s.statHeader}>
+                <MaterialCommunityIcons name="check-circle-outline" size={24} color={COLORS.gold} />
+                <Text style={s.statMetric}>Selesai</Text>
+              </View>
+              <Text style={s.statValue}>{stats.selesai.count}</Text>
+              <View style={s.statProgress}>
+                <View style={[s.statProgressBar, {width: `${Math.min((stats.selesai.count / 10) * 100, 100)}%`}]} />
+              </View>
+              <Text style={s.statChange}>{stats.selesai.change > 0 ? '+' : ''}{stats.selesai.change} hari ini</Text>
+            </View>
+            <View style={s.statItem}>
+              <View style={s.statHeader}>
+                <Ionicons name="time-outline" size={24} color={COLORS.gold} />
+                <Text style={s.statMetric}>Pending</Text>
+              </View>
+              <Text style={s.statValue}>{stats.pending.count}</Text>
+              <View style={s.statProgress}>
+                <View style={[s.statProgressBar, {width: `${Math.min((stats.pending.count / 10) * 100, 100)}%`}]} />
+              </View>
+              <Text style={s.statChange}>{stats.pending.change > 0 ? '+' : ''}{stats.pending.change} hari ini</Text>
+            </View>
+          </ScrollView>
         </View>
 
-        {/* Quick Actions besar */}
-        <View style={s.quickRowCompact}>
-          <TouchableOpacity style={s.quickBtnCompact} onPress={() => router.push('/create-order')}>
-            <View style={s.quickIconCircleCompact}><Ionicons name="add-circle" size={22} color={COLORS.yellow} /></View>
-            <Text style={s.quickLabelCompact}>Order Baru</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.quickBtnCompact} onPress={() => router.push('/my-orders')}>
-            <View style={s.quickIconCircleCompact}><Ionicons name="list" size={20} color={COLORS.yellow} /></View>
-            <Text style={s.quickLabelCompact}>Order Saya</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.quickBtnCompact} onPress={() => router.push('/inventory-picker')}>
-            <View style={s.quickIconCircleCompact}><Ionicons name="archive" size={20} color={COLORS.yellow} /></View>
-            <Text style={s.quickLabelCompact}>Ambil dari Inventory</Text>
-          </TouchableOpacity>
+        {/* Quick Actions */}
+        <View style={s.actionsSection}>
+          <Text style={s.sectionTitle}>Quick Actions</Text>
+          <View style={s.actionsGrid}>
+            <TouchableOpacity style={s.actionButton} onPress={() => router.push('/create-order')}>
+              <View style={s.actionIconBg}>
+                <Ionicons name="add-circle" size={28} color={COLORS.yellow} />
+              </View>
+              <Text style={s.actionButtonText}>Order Baru</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.actionButton} onPress={() => router.push('/my-orders')}>
+              <View style={s.actionIconBg}>
+                <Ionicons name="list" size={28} color={COLORS.yellow} />
+              </View>
+              <Text style={s.actionButtonText}>Order Saya</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.actionButton} onPress={() => router.push('/inventory-picker')}>
+              <View style={s.actionIconBg}>
+                <Ionicons name="archive" size={28} color={COLORS.yellow} />
+              </View>
+              <Text style={s.actionButtonText}>Inventory</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Notifikasi dan tips clean */}
-        <View style={s.notifCardModern}>
-          <Ionicons name="notifications-outline" size={20} color={COLORS.gold} style={{marginRight:10}} />
-          <View style={{flex:1}}>
+        {/* Notifications */}
+        <View style={s.notificationsSection}>
+          <View style={s.sectionHeader}>
+            <Ionicons name="notifications-outline" size={24} color={COLORS.gold} />
+            <Text style={s.sectionTitle}>Notifikasi Terbaru</Text>
+          </View>
+          <View style={s.notificationsList}>
             {MOCK_NOTIF.map(n => (
-              <Text key={n.id} style={s.notifTextModern}>{n.text}</Text>
+              <View key={n.id} style={s.notificationItem}>
+                <View style={s.notificationDot} />
+                <Text style={s.notificationText}>{n.text}</Text>
+              </View>
             ))}
           </View>
         </View>
-        <View style={s.tipsCardModern}>
-          <MaterialCommunityIcons name="lightbulb-on-outline" size={20} color={COLORS.gold} style={{marginRight:10}} />
-          <Text style={s.tipsTextModern}>Tips: Follow up customer secara rutin!</Text>
+
+        {/* Tips */}
+        <View style={s.tipsSection}>
+          <View style={s.tipsCard}>
+            <View style={s.tipsHeader}>
+              <MaterialCommunityIcons name="lightbulb-on-outline" size={24} color={COLORS.gold} />
+              <Text style={s.tipsTitle}>Tips & Info</Text>
+            </View>
+            <Text style={s.tipsText}>Tips: Follow up customer secara rutin untuk meningkatkan kepuasan dan loyalitas!</Text>
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -101,22 +178,39 @@ export default function HomeScreen() {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, padding: 18 },
-  greetingWrap: { marginBottom: 18 },
-  greetingText: { color: COLORS.gold, fontSize: 16, fontWeight:'500', marginBottom:2 },
-  greetingName: { color: COLORS.yellow, fontSize: 22, fontWeight:'700', marginBottom:2 },
-  indicatorMinimalRow: { flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginBottom:2, marginTop:2, paddingHorizontal:2 },
-  indicatorMinimalItem: { alignItems:'center', flex:1 },
-  indicatorMinimalNum: { fontWeight:'bold', fontSize:22, color:COLORS.gold, marginTop:2 },
-  indicatorMinimalLabelRow: { flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginBottom:18, marginTop:0, paddingHorizontal:2 },
-  indicatorMinimalLabel: { color:COLORS.yellow, fontSize:12, fontWeight:'500', textAlign:'center', flex:1 },
-  statusDividerSolid: { height: 3, backgroundColor: COLORS.gold, borderRadius: 2, marginVertical: 14, marginHorizontal: 8 },
-  quickRowCompact: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 18, gap: 6 },
-  quickBtnCompact: { flex:1, backgroundColor: COLORS.brown, borderRadius: 14, alignItems: 'center', paddingVertical: 10, marginHorizontal: 1, shadowColor:'#000', shadowOpacity:0.08, shadowRadius:4, shadowOffset:{width:0,height:1}, minWidth: 60 },
-  quickIconCircleCompact: { backgroundColor: COLORS.card, borderRadius: 24, padding: 7, marginBottom: 4, borderWidth:1, borderColor:COLORS.border },
-  quickLabelCompact: { color: COLORS.yellow, fontSize: 11, fontWeight:'600', textAlign:'center', marginTop: 1 },
-  notifCardModern: { flexDirection:'row', alignItems:'center', backgroundColor: COLORS.card, borderRadius: 16, padding: 16, marginBottom: 18, borderWidth:1, borderColor:COLORS.border, shadowColor:'#000', shadowOpacity:0.08, shadowRadius:6, shadowOffset:{width:0,height:2} },
-  notifTextModern: { color: COLORS.yellow, fontSize: 14, marginBottom: 2 },
-  tipsCardModern: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.card, borderRadius: 14, padding: 14, marginBottom: 8, borderWidth:1, borderColor:COLORS.border },
-  tipsTextModern: { color: COLORS.gold, fontSize: 14, flex:1, fontStyle:'italic' },
+  container: { flex: 1, padding: 16 },
+  heroSection: { marginBottom: 20 },
+  heroGradient: { borderRadius: 20, padding: 20, minHeight: 140 },
+  heroContent: { flex: 1, justifyContent: 'center' },
+  heroGreeting: { color: COLORS.white, fontSize: 16, fontWeight: '500', opacity: 0.9 },
+  heroName: { color: COLORS.white, fontSize: 26, fontWeight: '700', marginTop: 4 },
+  heroSubtitle: { color: COLORS.white, fontSize: 14, fontWeight: '400', opacity: 0.8, marginTop: 6 },
+  heroDecoration: { position: 'absolute', right: 16, top: 16 },
+  statsStrip: { marginBottom: 28 },
+  statsTitle: { color: COLORS.gold, fontSize: 18, fontWeight: '700', marginBottom: 12, marginLeft: 16 },
+  statsContainer: { paddingHorizontal: 16, gap: 12 },
+  statItem: { backgroundColor: COLORS.card, borderRadius: 16, padding: 16, minWidth: 110, borderWidth: 1, borderColor: COLORS.border, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
+  statHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  statMetric: { color: COLORS.yellow, fontSize: 12, fontWeight: '500', marginLeft: 6 },
+  statValue: { color: COLORS.gold, fontSize: 26, fontWeight: 'bold', marginBottom: 6 },
+  statProgress: { width: '100%', height: 4, backgroundColor: COLORS.border, borderRadius: 2, marginBottom: 6 },
+  statProgressBar: { height: '100%', backgroundColor: COLORS.gold, borderRadius: 2 },
+  statChange: { color: COLORS.yellow, fontSize: 10, fontWeight: '500' },
+  actionsSection: { marginBottom: 28 },
+  sectionTitle: { color: COLORS.gold, fontSize: 20, fontWeight: '700', marginBottom: 16, marginLeft: 16 },
+  actionsGrid: { flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: 16 },
+  actionButton: { alignItems: 'center', minWidth: 80 },
+  actionIconBg: { backgroundColor: COLORS.brown, borderRadius: 16, padding: 12, marginBottom: 8, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } },
+  actionButtonText: { color: COLORS.gold, fontSize: 12, fontWeight: '600', textAlign: 'center' },
+  notificationsSection: { marginBottom: 28 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, marginLeft: 16 },
+  notificationsList: { paddingHorizontal: 16 },
+  notificationItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.card, borderRadius: 12, padding: 16, marginBottom: 8, borderWidth: 1, borderColor: COLORS.border },
+  notificationDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.gold, marginRight: 12 },
+  notificationText: { color: COLORS.yellow, fontSize: 14, flex: 1 },
+  tipsSection: { marginBottom: 20 },
+  tipsCard: { backgroundColor: COLORS.card, borderRadius: 16, padding: 20, marginHorizontal: 16, borderWidth: 1, borderColor: COLORS.border, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
+  tipsHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  tipsTitle: { color: COLORS.gold, fontSize: 18, fontWeight: '700', marginLeft: 8 },
+  tipsText: { color: COLORS.gold, fontSize: 14, fontStyle: 'italic', lineHeight: 20 },
 });
