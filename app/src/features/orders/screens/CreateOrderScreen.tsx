@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, Button, ScrollView, StyleSheet, Alert, TouchableOpacity, Image, Modal } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, TextInput, Button, ScrollView, StyleSheet, Alert, TouchableOpacity, Image, Modal, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -42,6 +43,30 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
   const [stones, setStones] = useState<StoneFormItem[]>([]);
   const [ringSize, setRingSize] = useState('');
   const ringSizeInputRef = useRef<TextInput | null>(null);
+
+  // Animation refs
+  const fadeAnim1 = useRef(new Animated.Value(0)).current;
+  const fadeAnim2 = useRef(new Animated.Value(0)).current;
+  const fadeAnim3 = useRef(new Animated.Value(0)).current;
+  const fadeAnim4 = useRef(new Animated.Value(0)).current;
+  const fadeAnim5 = useRef(new Animated.Value(0)).current;
+  const fadeAnim6 = useRef(new Animated.Value(0)).current;
+  const fadeAnim7 = useRef(new Animated.Value(0)).current;
+  const fadeAnim8 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const animations = [
+      Animated.timing(fadeAnim1, { toValue: 1, duration: 600, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+      Animated.timing(fadeAnim2, { toValue: 1, duration: 600, delay: 100, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+      Animated.timing(fadeAnim3, { toValue: 1, duration: 600, delay: 200, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+      Animated.timing(fadeAnim4, { toValue: 1, duration: 600, delay: 300, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+      Animated.timing(fadeAnim5, { toValue: 1, duration: 600, delay: 400, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+      Animated.timing(fadeAnim6, { toValue: 1, duration: 600, delay: 500, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+      Animated.timing(fadeAnim7, { toValue: 1, duration: 600, delay: 600, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+      Animated.timing(fadeAnim8, { toValue: 1, duration: 600, delay: 700, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+    ];
+    Animated.stagger(100, animations).start();
+  }, []);
 
   const formatIDR = (raw: string) => {
     const digits = (raw || '').replace(/\D/g, '');
@@ -216,65 +241,53 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
             <Text style={styles.sectionPremium}>INFORMASI ORDER</Text>
           </View>
           <View style={styles.dividerGold} />
-          <View style={styles.infoOrderRowVertical}>
-            <View style={styles.infoOrderRowHorizontal}>
-              <View style={styles.infoOrderLabelWrap}>
+          <View style={styles.infoOrderVertical}>
+            <View style={styles.fieldVertical}>
+              <View style={styles.fieldLabelRow}>
                 <Ionicons name="pricetag" size={16} color={COLORS.gold} style={{marginRight:6}} />
-                <Text style={styles.infoOrderMiniLabel}>Jenis Barang</Text>
+                <Text style={styles.fieldLabel}>Jenis Barang</Text>
               </View>
-              <View style={{width:'100%', maxWidth:320, alignSelf:'center', flexDirection:'row', alignItems:'center'}}>
-                <View style={{flexShrink:1, minWidth:0}} />
-                <View style={{width:150}}>
-                  {renderSelectRow('jenisBarang', '', jenisBarang, JENIS_BARANG_OPTIONS, setJenisBarang, styles.selectPremium)}
-                </View>
+              <View style={styles.selectContainer}>
+                {renderSelectRow('jenisBarang', '', jenisBarang, JENIS_BARANG_OPTIONS, setJenisBarang, styles.selectPremium)}
               </View>
             </View>
-            <View style={styles.infoOrderRowHorizontal}>
-              <View style={styles.infoOrderLabelWrap}>
+            <View style={styles.fieldVertical}>
+              <View style={styles.fieldLabelRow}>
                 <Ionicons name="color-palette" size={16} color={COLORS.gold} style={{marginRight:6}} />
-                <Text style={styles.infoOrderMiniLabel}>Jenis Emas</Text>
+                <Text style={styles.fieldLabel}>Jenis Emas</Text>
               </View>
-              <View style={{width:'100%', maxWidth:320, alignSelf:'center', flexDirection:'row', alignItems:'center'}}>
-                <View style={{flexShrink:1, minWidth:0}} />
-                <View style={{width:150}}>
-                  {renderSelectRow('jenisEmas', '', jenisEmas, JENIS_EMAS_OPTIONS, setJenisEmas, styles.selectPremium)}
-                </View>
+              <View style={styles.selectContainer}>
+                {renderSelectRow('jenisEmas', '', jenisEmas, JENIS_EMAS_OPTIONS, setJenisEmas, styles.selectPremium)}
               </View>
             </View>
-            <View style={styles.infoOrderRowHorizontal}>
-              <View style={styles.infoOrderLabelWrap}>
+            <View style={styles.fieldVertical}>
+              <View style={styles.fieldLabelRow}>
                 <Ionicons name="color-fill" size={16} color={COLORS.gold} style={{marginRight:6}} />
-                <Text style={styles.infoOrderMiniLabel}>Warna Emas</Text>
+                <Text style={styles.fieldLabel}>Warna Emas</Text>
               </View>
-              <View style={{width:'100%', maxWidth:320, alignSelf:'center', flexDirection:'row', alignItems:'center'}}>
-                <View style={{flexShrink:1, minWidth:0}} />
-                <View style={{width:150}}>
-                  {renderSelectRow('warnaEmas', '', warnaEmas, WARNA_EMAS_OPTIONS, setWarnaEmas, styles.selectPremium)}
-                </View>
+              <View style={styles.selectContainer}>
+                {renderSelectRow('warnaEmas', '', warnaEmas, WARNA_EMAS_OPTIONS, setWarnaEmas, styles.selectPremium)}
               </View>
             </View>
             {(jenisBarang === 'Women Ring' || jenisBarang === 'Men Ring') && (
-              <View style={styles.infoOrderRowHorizontal}>
-                <View style={styles.infoOrderLabelWrap}>
+              <View style={styles.fieldVertical}>
+                <View style={styles.fieldLabelRow}>
                   <Ionicons name="resize" size={16} color={COLORS.gold} style={{marginRight:6}} />
-                  <Text style={styles.infoOrderMiniLabel}>Ukuran Cincin</Text>
+                  <Text style={styles.fieldLabel}>Ukuran Cincin</Text>
                 </View>
-                <View style={{width:'100%', maxWidth:320, flexDirection:'row', alignItems:'center'}}>
-                  <View style={{flexShrink:1, minWidth:0}} />
-                  <View style={{width:110}}>
-                    <View style={styles.ringSizeInputBox}>
-                      <TextInput
-                        ref={ringSizeInputRef}
-                        style={styles.ringSizeNumericInput}
-                        placeholder="--"
-                        placeholderTextColor="#bfae6a"
-                        value={ringSize}
-                        onChangeText={(txt)=> setRingSize(txt.replace(/[^0-9]/g,''))}
-                        keyboardType="numeric"
-                        maxLength={3}
-                        returnKeyType="done"
-                      />
-                    </View>
+                <View style={styles.ringSizeContainer}>
+                  <View style={styles.ringSizeInputBox}>
+                    <TextInput
+                      ref={ringSizeInputRef}
+                      style={styles.ringSizeNumericInput}
+                      placeholder="--"
+                      placeholderTextColor="#bfae6a"
+                      value={ringSize}
+                      onChangeText={(txt)=> setRingSize(txt.replace(/[^0-9]/g,''))}
+                      keyboardType="numeric"
+                      maxLength={3}
+                      returnKeyType="done"
+                    />
                   </View>
                 </View>
               </View>
@@ -426,48 +439,60 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
           </View>
         </View>
         {/* TANGGAL */}
-        <View style={[styles.cardSectionPremium, {paddingVertical:14}]}> 
+        <View style={styles.cardSectionPremium}>
           <View style={styles.sectionHeaderRow}>
             <Ionicons name="calendar" size={20} color={COLORS.gold} style={styles.sectionHeaderIcon} />
             <Text style={styles.sectionPremium}>TANGGAL</Text>
           </View>
           <View style={styles.dividerGold} />
-          <View style={styles.dateRowCompact}>
-            <View style={{ flex:1, position:'relative' }}>
-              <TouchableOpacity style={styles.dateMiniCard} onPress={()=>pickDate('ready')}>
-              <Ionicons name="alarm" size={16} color={COLORS.gold} style={{marginBottom:2}} />
-              <Text style={styles.dateMiniLabel}>Perkiraan Siap</Text>
-              <Text style={styles.dateMiniValue}>{promisedReadyDate || '-'}</Text>
-              </TouchableOpacity>
-              {!!promisedReadyDate && (
-                <TouchableOpacity onPress={()=>setPromisedReadyDate('')} style={{ position:'absolute', right: 6, top: 6 }}>
-                  <Ionicons name="close-circle" size={16} color="#b22" />
+          <View style={styles.infoOrderVertical}>
+            <View style={styles.fieldVertical}>
+              <View style={styles.fieldLabelRow}>
+                <Ionicons name="alarm" size={16} color={COLORS.gold} style={{marginRight:6}} />
+                <Text style={styles.fieldLabel}>Perkiraan Siap</Text>
+              </View>
+              <View style={styles.selectContainer}>
+                <TouchableOpacity style={styles.dateMiniCard} onPress={()=>pickDate('ready')}>
+                  <Text style={styles.dateMiniValue}>{promisedReadyDate || '-'}</Text>
                 </TouchableOpacity>
-              )}
+                {!!promisedReadyDate && (
+                  <TouchableOpacity onPress={()=>setPromisedReadyDate('')} style={{ position:'absolute', right: 6, top: 36 }}>
+                    <Ionicons name="close-circle" size={16} color="#b22" />
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
-            <View style={{ flex:1, position:'relative' }}>
-              <TouchableOpacity style={styles.dateMiniCard} onPress={()=>pickDate('selesai')}>
-              <Ionicons name="checkmark-done" size={16} color={COLORS.gold} style={{marginBottom:2}} />
-              <Text style={styles.dateMiniLabel}>Selesai</Text>
-              <Text style={styles.dateMiniValue}>{tanggalSelesai || '-'}</Text>
-              </TouchableOpacity>
-              {!!tanggalSelesai && (
-                <TouchableOpacity onPress={()=>setTanggalSelesai('')} style={{ position:'absolute', right: 6, top: 6 }}>
-                  <Ionicons name="close-circle" size={16} color="#b22" />
+            <View style={styles.fieldVertical}>
+              <View style={styles.fieldLabelRow}>
+                <Ionicons name="checkmark-done" size={16} color={COLORS.gold} style={{marginRight:6}} />
+                <Text style={styles.fieldLabel}>Tanggal Selesai</Text>
+              </View>
+              <View style={styles.selectContainer}>
+                <TouchableOpacity style={styles.dateMiniCard} onPress={()=>pickDate('selesai')}>
+                  <Text style={styles.dateMiniValue}>{tanggalSelesai || '-'}</Text>
                 </TouchableOpacity>
-              )}
+                {!!tanggalSelesai && (
+                  <TouchableOpacity onPress={()=>setTanggalSelesai('')} style={{ position:'absolute', right: 6, top: 36 }}>
+                    <Ionicons name="close-circle" size={16} color="#b22" />
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
-            <View style={{ flex:1, position:'relative' }}>
-              <TouchableOpacity style={styles.dateMiniCard} onPress={()=>pickDate('ambil')}>
-              <Ionicons name="archive" size={16} color={COLORS.gold} style={{marginBottom:2}} />
-              <Text style={styles.dateMiniLabel}>Ambil</Text>
-              <Text style={styles.dateMiniValue}>{tanggalAmbil || '-'}</Text>
-              </TouchableOpacity>
-              {!!tanggalAmbil && (
-                <TouchableOpacity onPress={()=>setTanggalAmbil('')} style={{ position:'absolute', right: 6, top: 6 }}>
-                  <Ionicons name="close-circle" size={16} color="#b22" />
+            <View style={styles.fieldVertical}>
+              <View style={styles.fieldLabelRow}>
+                <Ionicons name="archive" size={16} color={COLORS.gold} style={{marginRight:6}} />
+                <Text style={styles.fieldLabel}>Tanggal Ambil</Text>
+              </View>
+              <View style={styles.selectContainer}>
+                <TouchableOpacity style={styles.dateMiniCard} onPress={()=>pickDate('ambil')}>
+                  <Text style={styles.dateMiniValue}>{tanggalAmbil || '-'}</Text>
                 </TouchableOpacity>
-              )}
+                {!!tanggalAmbil && (
+                  <TouchableOpacity onPress={()=>setTanggalAmbil('')} style={{ position:'absolute', right: 6, top: 36 }}>
+                    <Ionicons name="close-circle" size={16} color="#b22" />
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
           </View>
           {showPicker && (
@@ -513,6 +538,12 @@ const styles = StyleSheet.create({
   infoOrderLabelWrap: { flexDirection: 'row', alignItems: 'center', minWidth: 128, maxWidth: 150, marginRight: 18, paddingTop: 6 },
   selectPremium: { backgroundColor: COLORS.card, borderWidth: FIELD_BORDER_WIDTH, borderColor: COLORS.gold, borderRadius: FIELD_RADIUS, color: COLORS.gold, fontWeight: '600', fontSize: 15, paddingVertical: 8, paddingHorizontal: 10, marginTop: 2, marginBottom: 2, textAlign: 'center' },
   infoOrderMiniLabel: { color: COLORS.gold, fontSize: 12, fontWeight: '500', marginBottom: 0, textAlign: 'left', flexWrap: 'wrap', marginLeft: 6, letterSpacing: 0.2, textTransform: 'capitalize' },
+  infoOrderVertical: { flexDirection: 'column', gap: 16, marginBottom: 2, marginTop: 2 },
+  fieldVertical: { marginBottom: 0 },
+  fieldLabelRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+  fieldLabel: { color: COLORS.gold, fontSize: 13, fontWeight: '600', marginLeft: 2 },
+  selectContainer: { alignSelf: 'stretch' },
+  ringSizeContainer: { alignSelf: 'flex-start' },
   imageIconLabel: { color: COLORS.gold, fontSize: 11, fontWeight: '500', marginTop: 2, textAlign: 'center', letterSpacing: 0.1 },
   imageGridWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
   imageThumbWrap: { width: 64, height: 64, borderRadius: 10, overflow: 'hidden', marginRight: 8, marginBottom: 8, backgroundColor: '#222', borderWidth: 1, borderColor: COLORS.border, position:'relative' },
@@ -521,9 +552,9 @@ const styles = StyleSheet.create({
   imageBtnRow: { flexDirection:'row', alignItems:'center', gap:12, marginTop:2, marginBottom:2 },
   imageIconBtn: { backgroundColor:'rgba(35,32,28,0.85)', borderRadius:12, borderWidth:1, borderColor:COLORS.border, padding:8, marginRight:4 },
   dateRowCompact: { flexDirection:'row', justifyContent:'space-between', alignItems:'flex-start', marginBottom:2, gap:8 },
-  dateMiniCard: { flex:1, alignItems:'center', backgroundColor:'rgba(35,32,28,0.85)', borderRadius:12, borderWidth:1, borderColor:COLORS.gold, paddingVertical:10, marginHorizontal:2, minWidth:80 },
-  dateMiniLabel: { color:COLORS.gold, fontSize:11, fontWeight:'600', marginBottom:2 },
-  dateMiniValue: { color:COLORS.yellow, fontSize:13, fontWeight:'700' },
+  dateMiniCard: { flex:1, alignItems:'center', backgroundColor:'rgba(35,32,28,0.85)', borderRadius:12, borderWidth:1, borderColor:COLORS.gold, paddingVertical:16, marginHorizontal:2, minWidth:100 },
+  dateMiniLabel: { color:COLORS.gold, fontSize:11, fontWeight:'700', marginBottom:2 },
+  dateMiniValue: { color:COLORS.white, fontSize:16, fontWeight:'700', textAlign:'center' },
   cardSectionPremium: { backgroundColor: COLORS.card, borderRadius: 20, borderWidth: 1.5, borderColor: COLORS.gold, padding: 22, marginBottom: 22, shadowColor: '#000', shadowOpacity: 0.13, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 4, overflow: 'visible' },
   sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
   sectionHeaderIcon: { marginRight: 8 },

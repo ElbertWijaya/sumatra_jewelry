@@ -19,7 +19,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = useCallback(async (email: string, password: string) => {
     const data = await api.login(email, password);
     setToken(data.accessToken);
-    setUser(data.user);
+    // Pastikan jobRole selalu ada di user context
+    setUser({
+      ...data.user,
+      jobRole: data.user.jobRole || data.user.job_role || null
+    });
     await SecureStore.setItemAsync('token', data.accessToken);
   }, []);
 
