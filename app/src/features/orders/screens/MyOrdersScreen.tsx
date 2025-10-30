@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, TextInput, ScrollView, Image, Modal } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { api, API_URL } from '@lib/api/client';
 import { useAuth } from '@lib/context/AuthContext';
@@ -32,6 +32,7 @@ function isActiveStatus(status?: string | null) {
 
 export const MyOrdersScreen: React.FC = () => {
   const { token } = useAuth();
+  const { filter } = useLocalSearchParams();
   const { data, error, isLoading, refetch, isRefetching } = useQuery<Order[]>({
     queryKey: ['orders','inprogress'],
     queryFn: () => api.orders.list(token || '') as Promise<Order[]>,
@@ -43,8 +44,19 @@ export const MyOrdersScreen: React.FC = () => {
 
   const [query, setQuery] = React.useState('');
   const [filterOpen, setFilterOpen] = React.useState(false);
-  type StatusFilter = 'SEMUA' | 'AKTIF' | 'SELESAI' | 'BATAL';
+  type StatusFilter = 'SEMUA' | 'AKTIF' | 'DITUGASKAN' | 'SELESAI' | 'VERIFIKASI' | 'BATAL';
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('AKTIF');
+
+  React.useEffect(() => {
+    if (filter) {
+      if (filter === 'aktif') setStatusFilter('AKTIF');
+      else if (filter === 'ditugaskan') setStatusFilter('DITUGASKAN');
+      else if (filter === 'selesai') setStatusFilter('SELESAI');
+      else if (filter === 'verifikasi') setStatusFilter('VERIFIKASI');
+      else if (filter === 'batal') setStatusFilter('BATAL');
+      else setStatusFilter('SEMUA');
+    }
+  }, [filter]);
   const normalized = (s: string) => (s || '').toLowerCase().trim();
   const matchesQuery = (o: Order) => {
     const q = normalized(query);
@@ -57,6 +69,14 @@ export const MyOrdersScreen: React.FC = () => {
     .filter(o => {
       if (statusFilter === 'SEMUA') return true;
       if (statusFilter === 'AKTIF') return isActiveStatus(o.status);
+      if (statusFilter === 'DITUGASKAN') {
+        const s = String(o.status || '').toUpperCase();
+        return s === 'ASSIGNED' || s === 'DITERIMA';
+      }
+      if (statusFilter === 'VERIFIKASI') {
+        const s = String(o.status || '').toUpperCase();
+        return s === 'AWAITING_VALIDATION';
+      }
       const s = String(o.status || '').toUpperCase();
       if (statusFilter === 'SELESAI') return s === 'DONE' || s === 'SELESAI';
       if (statusFilter === 'BATAL') return s === 'CANCELLED' || s === 'CANCELED' || s === 'DELETED' || s === 'DIBATALKAN';
@@ -246,7 +266,7 @@ export const MyOrdersScreen: React.FC = () => {
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Filter</Text>
             <Text style={styles.filterLabel}>Status</Text>
-            {(['SEMUA','AKTIF','SELESAI','BATAL'] as StatusFilter[]).map((s) => (
+            {(['SEMUA','AKTIF','DITUGASKAN','SELESAI','VERIFIKASI','BATAL'] as StatusFilter[]).map((s) => (
               <TouchableOpacity key={s} style={styles.filterItem} onPress={() => setStatusFilter(s)}>
                 <View style={[styles.radio, statusFilter===s && styles.radioActive]} />
                 <Text style={styles.filterText}>{s}</Text>

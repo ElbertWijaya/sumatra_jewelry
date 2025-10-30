@@ -33,7 +33,7 @@ export default function HomeScreen() {
     aktif: { count: 0, change: 0 },
     ditugaskan: { count: 0, change: 0 },
     selesai: { count: 0, change: 0 },
-    pending: { count: 0, change: 0 }
+    verifikasi: { count: 0, change: 0 }
   });
 
   useEffect(() => {
@@ -74,7 +74,7 @@ export default function HomeScreen() {
         <View style={s.statsStrip}>
           <Text style={s.statsTitle}>Business Overview</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.statsContainer}>
-            <View style={s.statItem}>
+            <TouchableOpacity style={s.statItem} onPress={() => router.push('/my-orders?filter=aktif')}>
               <View style={s.statHeader}>
                 <MaterialCommunityIcons name="diamond-stone" size={24} color={COLORS.gold} />
                 <Text style={s.statMetric}>Aktif</Text>
@@ -84,8 +84,8 @@ export default function HomeScreen() {
                 <View style={[s.statProgressBar, {width: `${Math.min((stats.aktif.count / 10) * 100, 100)}%`}]} />
               </View>
               <Text style={s.statChange}>{stats.aktif.change > 0 ? '+' : ''}{stats.aktif.change} hari ini</Text>
-            </View>
-            <View style={s.statItem}>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.statItem} onPress={() => router.push('/my-orders?filter=ditugaskan')}>
               <View style={s.statHeader}>
                 <MaterialCommunityIcons name="account-tie" size={24} color={COLORS.gold} />
                 <Text style={s.statMetric}>Ditugaskan</Text>
@@ -95,8 +95,8 @@ export default function HomeScreen() {
                 <View style={[s.statProgressBar, {width: `${Math.min((stats.ditugaskan.count / 10) * 100, 100)}%`}]} />
               </View>
               <Text style={s.statChange}>{stats.ditugaskan.change > 0 ? '+' : ''}{stats.ditugaskan.change} hari ini</Text>
-            </View>
-            <View style={s.statItem}>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.statItem} onPress={() => router.push('/my-orders?filter=selesai')}>
               <View style={s.statHeader}>
                 <MaterialCommunityIcons name="check-circle-outline" size={24} color={COLORS.gold} />
                 <Text style={s.statMetric}>Selesai</Text>
@@ -106,18 +106,18 @@ export default function HomeScreen() {
                 <View style={[s.statProgressBar, {width: `${Math.min((stats.selesai.count / 10) * 100, 100)}%`}]} />
               </View>
               <Text style={s.statChange}>{stats.selesai.change > 0 ? '+' : ''}{stats.selesai.change} hari ini</Text>
-            </View>
-            <View style={s.statItem}>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.statItem} onPress={() => router.push('/my-orders?filter=verifikasi')}>
               <View style={s.statHeader}>
-                <Ionicons name="time-outline" size={24} color={COLORS.gold} />
-                <Text style={s.statMetric}>Pending</Text>
+                <Ionicons name="checkmark-circle-outline" size={24} color={COLORS.gold} />
+                <Text style={s.statMetric}>Verifikasi</Text>
               </View>
-              <Text style={s.statValue}>{stats.pending.count}</Text>
+              <Text style={s.statValue}>{stats.verifikasi.count}</Text>
               <View style={s.statProgress}>
-                <View style={[s.statProgressBar, {width: `${Math.min((stats.pending.count / 10) * 100, 100)}%`}]} />
+                <View style={[s.statProgressBar, {width: `${Math.min((stats.verifikasi.count / 10) * 100, 100)}%`}]} />
               </View>
-              <Text style={s.statChange}>{stats.pending.change > 0 ? '+' : ''}{stats.pending.change} hari ini</Text>
-            </View>
+              <Text style={s.statChange}>{stats.verifikasi.change > 0 ? '+' : ''}{stats.verifikasi.change} hari ini</Text>
+            </TouchableOpacity>
           </ScrollView>
         </View>
 

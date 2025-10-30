@@ -17,6 +17,13 @@ import { useRouter } from 'expo-router';
 import ImagePreviewModal from '@ui/molecules/ImagePreviewModal';
 
 export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCreated }) => {
+  // Helper untuk format tanggal ke DD/MM/YYYY
+  const formatDate = (iso: string) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
   const { token, user } = useAuth();
   const router = useRouter();
   const qc = useQueryClient();
@@ -452,14 +459,17 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
                 <Text style={styles.fieldLabel}>Perkiraan Siap</Text>
               </View>
               <View style={styles.selectContainer}>
-                <TouchableOpacity style={styles.dateMiniCard} onPress={()=>pickDate('ready')}>
-                  <Text style={styles.dateMiniValue}>{promisedReadyDate || '-'}</Text>
-                </TouchableOpacity>
-                {!!promisedReadyDate && (
-                  <TouchableOpacity onPress={()=>setPromisedReadyDate('')} style={{ position:'absolute', right: 6, top: 36 }}>
-                    <Ionicons name="close-circle" size={16} color="#b22" />
+                <View style={styles.dateRow}>
+                  <TouchableOpacity style={styles.dateMiniCard} onPress={()=>pickDate('ready')}>
+                    <Ionicons name="calendar" size={18} color={COLORS.gold} style={{marginRight:8}} />
+                    <Text style={styles.dateMiniValue}>{promisedReadyDate ? formatDate(promisedReadyDate) : 'Pilih Tanggal'}</Text>
                   </TouchableOpacity>
-                )}
+                  {!!promisedReadyDate && (
+                    <TouchableOpacity onPress={()=>setPromisedReadyDate('')} style={styles.dateClearBtn}>
+                      <Ionicons name="close-circle" size={20} color="#b22" />
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
             </View>
             <View style={styles.fieldVertical}>
@@ -468,14 +478,17 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
                 <Text style={styles.fieldLabel}>Tanggal Selesai</Text>
               </View>
               <View style={styles.selectContainer}>
-                <TouchableOpacity style={styles.dateMiniCard} onPress={()=>pickDate('selesai')}>
-                  <Text style={styles.dateMiniValue}>{tanggalSelesai || '-'}</Text>
-                </TouchableOpacity>
-                {!!tanggalSelesai && (
-                  <TouchableOpacity onPress={()=>setTanggalSelesai('')} style={{ position:'absolute', right: 6, top: 36 }}>
-                    <Ionicons name="close-circle" size={16} color="#b22" />
+                <View style={styles.dateRow}>
+                  <TouchableOpacity style={styles.dateMiniCard} onPress={()=>pickDate('selesai')}>
+                    <Ionicons name="calendar" size={18} color={COLORS.gold} style={{marginRight:8}} />
+                    <Text style={styles.dateMiniValue}>{tanggalSelesai ? formatDate(tanggalSelesai) : 'Pilih Tanggal'}</Text>
                   </TouchableOpacity>
-                )}
+                  {!!tanggalSelesai && (
+                    <TouchableOpacity onPress={()=>setTanggalSelesai('')} style={styles.dateClearBtn}>
+                      <Ionicons name="close-circle" size={20} color="#b22" />
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
             </View>
             <View style={styles.fieldVertical}>
@@ -484,14 +497,17 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
                 <Text style={styles.fieldLabel}>Tanggal Ambil</Text>
               </View>
               <View style={styles.selectContainer}>
-                <TouchableOpacity style={styles.dateMiniCard} onPress={()=>pickDate('ambil')}>
-                  <Text style={styles.dateMiniValue}>{tanggalAmbil || '-'}</Text>
-                </TouchableOpacity>
-                {!!tanggalAmbil && (
-                  <TouchableOpacity onPress={()=>setTanggalAmbil('')} style={{ position:'absolute', right: 6, top: 36 }}>
-                    <Ionicons name="close-circle" size={16} color="#b22" />
+                <View style={styles.dateRow}>
+                  <TouchableOpacity style={styles.dateMiniCard} onPress={()=>pickDate('ambil')}>
+                    <Ionicons name="calendar" size={18} color={COLORS.gold} style={{marginRight:8}} />
+                    <Text style={styles.dateMiniValue}>{tanggalAmbil ? formatDate(tanggalAmbil) : 'Pilih Tanggal'}</Text>
                   </TouchableOpacity>
-                )}
+                  {!!tanggalAmbil && (
+                    <TouchableOpacity onPress={()=>setTanggalAmbil('')} style={styles.dateClearBtn}>
+                      <Ionicons name="close-circle" size={20} color="#b22" />
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
             </View>
           </View>
@@ -551,10 +567,12 @@ const styles = StyleSheet.create({
   imageRemoveBtn: { position:'absolute', top:2, right:2, backgroundColor:'rgba(0,0,0,0.15)', borderRadius:10, padding:0 },
   imageBtnRow: { flexDirection:'row', alignItems:'center', gap:12, marginTop:2, marginBottom:2 },
   imageIconBtn: { backgroundColor:'rgba(35,32,28,0.85)', borderRadius:12, borderWidth:1, borderColor:COLORS.border, padding:8, marginRight:4 },
+  dateRow: { flexDirection: 'row', alignItems: 'center' },
   dateRowCompact: { flexDirection:'row', justifyContent:'space-between', alignItems:'flex-start', marginBottom:2, gap:8 },
-  dateMiniCard: { flex:1, alignItems:'center', backgroundColor:'rgba(35,32,28,0.85)', borderRadius:12, borderWidth:1, borderColor:COLORS.gold, paddingVertical:16, marginHorizontal:2, minWidth:100 },
+  dateMiniCard: { flex:1, alignItems:'center', backgroundColor:'rgba(35,32,28,0.85)', borderRadius:12, borderWidth:1, borderColor:COLORS.gold, paddingVertical:12, marginHorizontal:2, minWidth:100 },
   dateMiniLabel: { color:COLORS.gold, fontSize:11, fontWeight:'700', marginBottom:2 },
   dateMiniValue: { color:COLORS.white, fontSize:16, fontWeight:'700', textAlign:'center' },
+  dateClearBtn: { marginLeft: 8 },
   cardSectionPremium: { backgroundColor: COLORS.card, borderRadius: 20, borderWidth: 1.5, borderColor: COLORS.gold, padding: 22, marginBottom: 22, shadowColor: '#000', shadowOpacity: 0.13, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 4, overflow: 'visible' },
   sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
   sectionHeaderIcon: { marginRight: 8 },

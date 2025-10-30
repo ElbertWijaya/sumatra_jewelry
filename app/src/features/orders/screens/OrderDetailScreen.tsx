@@ -24,8 +24,6 @@ export const OrderDetailScreen: React.FC = () => {
 
   const det: any = data || {};
   const stones: any[] = Array.isArray(det.stones) ? det.stones : [];
-  const totalJumlahBatu = stones.reduce((acc, s) => acc + (Number(s?.jumlah) || 0), 0);
-  const totalBeratBatu = stones.reduce((acc, s) => acc + (Number(s?.berat) || 0), 0);
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
 
   const formatDateStr = (s?: string | null) => {
@@ -253,8 +251,15 @@ export const OrderDetailScreen: React.FC = () => {
           <View style={styles.card}>
             <Text style={styles.title}>Ringkasan Batu</Text>
             <View style={styles.divider} />
-            <Text style={styles.row}><Text style={styles.key}>Jumlah Batu:</Text> <Text style={styles.val}>{totalJumlahBatu}</Text></Text>
-            <Text style={styles.row}><Text style={styles.key}>Total Berat:</Text> <Text style={styles.val}>{totalBeratBatu > 0 ? `${totalBeratBatu} gr` : '-'}</Text></Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
+              {stones.map((stone: any, index: number) => (
+                <View key={index} style={styles.stoneCard}>
+                  <Text style={styles.stoneTitle}>{stone.bentuk || '-'}</Text>
+                  <Text style={styles.stoneDetail}>Jumlah: {stone.jumlah || '-'}</Text>
+                  <Text style={styles.stoneDetail}>Berat: {stone.berat ? `${stone.berat} ct` : '-'}</Text>
+                </View>
+              ))}
+            </ScrollView>
           </View>
         )}
         <View style={styles.card}>
@@ -493,4 +498,7 @@ const styles = StyleSheet.create({
   subtaskTextActive: { color:'#1b1b1b', fontWeight:'700' },
   validateBtn: { flexDirection:'row', alignItems:'center', backgroundColor: COLORS.gold, paddingHorizontal:12, paddingVertical:8, borderRadius:10 },
   validateBtnText: { color: '#1b1b1b', fontWeight:'800' },
+  stoneCard: { width: 120, padding: 10, borderRadius: 10, backgroundColor: '#1d1a16', borderWidth: 1, borderColor: COLORS.border, marginRight: 12 },
+  stoneTitle: { color: COLORS.gold, fontWeight: '700', fontSize: 14, marginBottom: 4 },
+  stoneDetail: { color: COLORS.yellow, fontSize: 12, marginBottom: 2 },
 });
