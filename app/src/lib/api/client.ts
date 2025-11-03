@@ -94,10 +94,13 @@ export const api = {
     assign: (token: string, id: number, assignedToId: string) => request(`/tasks/${id}/assign`, { method: 'POST', body: JSON.stringify({ assignedToId }), headers: { Authorization: `Bearer ${token}` } }),
     assignBulk: (token: string, payload: { orderId: number; role: string; userId: string; subtasks: { stage?: string; notes?: string }[] }) => request('/tasks/assign-bulk', { method: 'POST', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` } }),
     requestDone: (token: string, id: number, notes?: string) => request(`/tasks/${id}/request-done`, { method: 'POST', body: JSON.stringify({ notes }), headers: { Authorization: `Bearer ${token}` } }),
+    requestDoneMine: (token: string, orderId: number, notes?: string) => request(`/tasks/order/${orderId}/request-done-mine`, { method: 'POST', body: JSON.stringify({ notes }), headers: { Authorization: `Bearer ${token}` } }),
     validate: (token: string, id: number, notes?: string) => request(`/tasks/${id}/validate`, { method: 'POST', body: JSON.stringify({ notes }), headers: { Authorization: `Bearer ${token}` } }),
     validateUserForOrder: (token: string, orderId: number, userId: string, notes?: string) => request(`/tasks/order/${orderId}/validate-user/${userId}`, { method: 'POST', body: JSON.stringify({ notes }), headers: { Authorization: `Bearer ${token}` } }),
     start: (token: string, id: number) => request(`/tasks/${id}/start`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }),
     check: (token: string, id: number) => request(`/tasks/${id}/check`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }),
+    uncheck: (token: string, id: number) => request(`/tasks/${id}/uncheck`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }),
+    acceptMine: (token: string, orderId: number) => request(`/tasks/order/${orderId}/accept-mine`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }),
   },
   users: {
     list: (token: string, opts?: { jobRole?: string }) => {

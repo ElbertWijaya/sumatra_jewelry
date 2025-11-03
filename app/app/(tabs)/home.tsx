@@ -7,6 +7,7 @@ import { useAuth } from '@lib/context/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { api } from '@lib/api/client';
+import { WorkerDashboardScreen } from '@features/tasks/screens/WorkerDashboardScreen';
 
 const MOCK_NOTIF = [
   { id: 1, text: 'Order #1234 telah disetujui' },
@@ -41,6 +42,15 @@ export default function HomeScreen() {
       api.dashboard.stats(token).then(setStats).catch(console.error);
     }
   }, [token]);
+
+  const isWorkerRole = React.useMemo(() => {
+    const r = String(user?.jobRole || user?.job_role || '').toUpperCase();
+    return ['DESIGNER','CASTER','CARVER','DIAMOND_SETTER','FINISHER','INVENTORY'].includes(r);
+  }, [user]);
+
+  if (isWorkerRole) {
+    return <WorkerDashboardScreen />;
+  }
 
   return (
     <View style={{flex:1}}>
