@@ -1,0 +1,1 @@
+The tasks tab screen (tasks.tsx) was removed via request on 2025-11-01 to simplify the bottom navigation.

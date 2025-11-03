@@ -20,36 +20,7 @@ type TabBarIconProps = { color: string; size: number };
 
 export default function TabLayout() {
   const { logout, user } = useAuth();
-  const role = user?.role;
-
-  let tabScreens;
-  if (role === 'bos') {
-    tabScreens = [
-      <Tabs.Screen key="home" name="home" options={{ title: 'Home', tabBarIcon: ({ color, size }: TabBarIconProps) => (<Ionicons name="home" size={size} color={color} />) }} />,
-      <Tabs.Screen key="history" name="history" options={{ title: 'History', tabBarIcon: ({ color, size }: TabBarIconProps) => (<Ionicons name="time" size={size} color={color} />) }} />,
-      <Tabs.Screen key="notification" name="notification" options={{ title: 'Notification', tabBarIcon: ({ color, size }: TabBarIconProps) => (<Ionicons name="notifications" size={size} color={color} />) }} />,
-      <Tabs.Screen key="profile" name="profile" options={{ title: 'Profile', tabBarIcon: ({ color, size }: TabBarIconProps) => (<Ionicons name="person" size={size} color={color} />) }} />,
-    ];
-  } else if (role === 'sales') {
-    tabScreens = [
-      <Tabs.Screen key="home" name="home" options={{ title: 'Home', tabBarIcon: ({ color, size }: TabBarIconProps) => (<Ionicons name="home" size={size} color={color} />) }} />,
-      <Tabs.Screen key="history" name="history" options={{ title: 'History', tabBarIcon: ({ color, size }: TabBarIconProps) => (<Ionicons name="time" size={size} color={color} />) }} />,
-      <Tabs.Screen key="notification" name="notification" options={{ title: 'Notification', tabBarIcon: ({ color, size }: TabBarIconProps) => (<Ionicons name="notifications" size={size} color={color} />) }} />,
-      <Tabs.Screen key="profile" name="profile" options={{ title: 'Profile', tabBarIcon: ({ color, size }: TabBarIconProps) => (<Ionicons name="person" size={size} color={color} />) }} />,
-    ];
-  } else if (["designer","caster","carver","diamond-setter","finisher"].includes(role)) {
-    tabScreens = [
-      <Tabs.Screen key="home" name="home" options={{ title: 'Home', tabBarIcon: ({ color, size }: TabBarIconProps) => (<Ionicons name="home" size={size} color={color} />) }} />,
-      <Tabs.Screen key="tasks" name="tasks" options={{ title: 'Tasks', tabBarIcon: ({ color, size }: TabBarIconProps) => (<Ionicons name="construct" size={size} color={color} />) }} />,
-      <Tabs.Screen key="profile" name="profile" options={{ title: 'Profile', tabBarIcon: ({ color, size }: TabBarIconProps) => (<Ionicons name="person" size={size} color={color} />) }} />,
-    ];
-  } else {
-    // fallback: selalu render Home & Profile agar tidak kosong
-    tabScreens = [
-      <Tabs.Screen key="home" name="home" options={{ title: 'Home', tabBarIcon: ({ color, size }: TabBarIconProps) => (<Ionicons name="home" size={size} color={color} />) }} />,
-      <Tabs.Screen key="profile" name="profile" options={{ title: 'Profile', tabBarIcon: ({ color, size }: TabBarIconProps) => (<Ionicons name="person" size={size} color={color} />) }} />,
-    ];
-  }
+  const role = (user?.jobRole || user?.role || '').toString().toUpperCase();
 
   return (
     <Tabs
@@ -91,7 +62,13 @@ export default function TabLayout() {
         },
       }}
     >
-      {tabScreens}
+  {/* Declare all tabs explicitly so options always apply; control visibility later if needed */}
+  <Tabs.Screen name="home" options={{ title: 'Home', tabBarIcon: ({ color, size }: TabBarIconProps) => (<Ionicons name="home" size={size} color={color} />) }} />
+  <Tabs.Screen name="history" options={{ title: 'History', tabBarIcon: ({ color, size }: TabBarIconProps) => (<Ionicons name="time" size={size} color={color} />) }} />
+  <Tabs.Screen name="notification" options={{ title: 'Notification', tabBarIcon: ({ color, size }: TabBarIconProps) => (<Ionicons name="notifications" size={size} color={color} />) }} />
+  <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: ({ color, size }: TabBarIconProps) => (<Ionicons name="person" size={size} color={color} />) }} />
+      {/* Explicitly hide tasks route from tab bar if file exists */}
+      <Tabs.Screen name="tasks" options={{ href: null }} />
     </Tabs>
   );
 }

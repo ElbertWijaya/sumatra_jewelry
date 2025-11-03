@@ -27,7 +27,7 @@ type Order = {
 
 function isActiveStatus(status?: string | null) {
   const s = String(status || '').toUpperCase();
-  return s !== 'DONE' && s !== 'DELETED' && s !== 'CANCELLED' && s !== 'CANCELED';
+  return s === 'DITERIMA' || s === 'DALAM_PROSES';
 }
 
 export const MyOrdersScreen: React.FC = () => {
@@ -130,6 +130,17 @@ export const MyOrdersScreen: React.FC = () => {
     return cleaned[cleaned.length - 1]; // ambil yang terbaru (paling akhir)
   };
 
+  const getEmptyMessage = (filter: StatusFilter) => {
+    switch (filter) {
+      case 'AKTIF': return 'Tidak ada order aktif';
+      case 'DITUGASKAN': return 'Tidak ada order yang ditugaskan';
+      case 'SELESAI': return 'Tidak ada order selesai';
+      case 'VERIFIKASI': return 'Tidak ada order dalam verifikasi';
+      case 'BATAL': return 'Tidak ada order batal';
+      default: return 'Tidak ada order';
+    }
+  };
+
   const Thumbnail: React.FC<{ url?: string | null }> = ({ url }) => {
     const [loaded, setLoaded] = React.useState(false);
     if (!url) {
@@ -176,7 +187,7 @@ export const MyOrdersScreen: React.FC = () => {
         data={filtered}
         keyExtractor={(item) => String(item.id)}
         refreshControl={<RefreshControl refreshing={isRefetching || isLoading} onRefresh={refetch} />}
-        ListEmptyComponent={!isLoading ? <Text style={styles.empty}>Tidak ada order aktif</Text> : null}
+        ListEmptyComponent={!isLoading ? <Text style={styles.empty}>{getEmptyMessage(statusFilter)}</Text> : null}
         renderItem={({ item }) => (
           <TouchableOpacity
             onPress={() => router.push({ pathname: '/order/[id]', params: { id: String(item.id) } })}

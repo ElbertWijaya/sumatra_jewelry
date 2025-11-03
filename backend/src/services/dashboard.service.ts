@@ -19,11 +19,10 @@ export class DashboardService {
 
     // Count orders by status
     const [aktif, ditugaskan, selesai, verifikasi] = await Promise.all([
-      // Aktif: Pesanan baru yang belum ditugaskan ke role manapun (DRAFT atau DITERIMA tanpa tasks assigned)
+      // Aktif: Pesanan yang masih aktif (hanya DITERIMA atau DALAM_PROSES)
       this.prisma.order.count({
         where: {
-          status: { in: ['DRAFT', 'DITERIMA'] },
-          tasks: { none: {} } // No tasks assigned
+          status: { in: ['DITERIMA', 'DALAM_PROSES'] }
         }
       }),
 
@@ -58,8 +57,7 @@ export class DashboardService {
     const [aktifToday, ditugaskanToday, selesaiToday, verifikasiToday] = await Promise.all([
       this.prisma.order.count({
         where: {
-          status: { in: ['DRAFT', 'DITERIMA'] },
-          tasks: { none: {} },
+          status: { in: ['DITERIMA', 'DALAM_PROSES'] },
           updatedAt: { gte: startOfDay, lt: endOfDay }
         }
       }),
@@ -90,8 +88,7 @@ export class DashboardService {
     const [aktifYesterday, ditugaskanYesterday, selesaiYesterday, verifikasiYesterday] = await Promise.all([
       this.prisma.order.count({
         where: {
-          status: { in: ['DRAFT', 'DITERIMA'] },
-          tasks: { none: {} },
+          status: { in: ['DITERIMA', 'DALAM_PROSES'] },
           updatedAt: { gte: startOfYesterday, lt: endOfYesterday }
         }
       }),
