@@ -69,6 +69,9 @@ export default function InProgressScreen() {
     onError: (e: any) => Alert.alert('Gagal', String(e?.message || 'Gagal mengajukan verifikasi')),
   });
 
+  const [expanded, setExpanded] = React.useState<Record<number, boolean>>({});
+  const toggle = (orderId: number) => setExpanded(prev => ({ ...prev, [orderId]: !prev[orderId] }));
+
   return (
     <View style={s.container}>
       <FlatList
@@ -83,13 +86,37 @@ export default function InProgressScreen() {
           const total = inprog.length;
           const pct = total > 0 ? Math.round((checked/total) * 100) : 0;
           const ready = canRequestDone(g);
+          // fetch order details lazily when expanded
+          const isOpen = !!expanded[g.orderId];
+          const orderQuery = useQuery<any>({
+            queryKey: ['order', g.orderId],
+            queryFn: () => api.orders.get(token || '', g.orderId),
+            enabled: !!token && isOpen,
+            staleTime: 0,
+          });
+          const det: any = orderQuery.data || {};
           return (
-            <View style={s.card}>
+            <TouchableOpacity activeOpacity={0.9} onPress={() => toggle(g.orderId)} style={s.card}>
               <View style={s.cardHeader}>
                 <Text style={s.code}>{g.code}</Text>
                 <View style={s.meta}><Ionicons name='calendar' size={12} color={COLORS.gold} /><Text style={s.metaText}>{formatDate(g.promised)}</Text></View>
               </View>
               <View style={s.progressBar}><View style={[s.progressFill,{ width: `${pct}%` }]} /></View>
+              {isOpen && (
+                <View style={s.detailBox}>
+                  {orderQuery.isLoading ? (
+                    <ActivityIndicator color={COLORS.gold} />
+                  ) : (
+                    <>
+                      <View style={s.detailRow}><Text style={s.detailKey}>Customer</Text><Text style={s.detailVal} numberOfLines={1}>{det.customerName || '-'}</Text></View>
+                      <View style={s.detailRow}><Text style={s.detailKey}>Jenis</Text><Text style={s.detailVal} numberOfLines={1}>{det.jenisBarang || det.jenis || '-'}</Text></View>
+                      {det.ringSize ? <View style={s.detailRow}><Text style={s.detailKey}>Ukuran Cincin</Text><Text style={s.detailVal}>{det.ringSize}</Text></View> : null}
+                      <View style={s.detailRow}><Text style={s.detailKey}>Perkiraan Siap</Text><Text style={s.detailVal}>{det.promisedReadyDate ? formatDate(det.promisedReadyDate) : '-'}</Text></View>
+                      {det.catatan ? <View style={[s.detailRow,{alignItems:'flex-start'}]}><Text style={s.detailKey}>Catatan</Text><Text style={[s.detailVal,{flex:1}]} numberOfLines={3}>{det.catatan}</Text></View> : null}
+                    </>
+                  )}
+                </View>
+              )}
               {g.tasks.sort((a,b)=>a.id-b.id).map(t => (
                 <View key={t.id} style={s.taskRow}>
                   <View style={{ flex:1 }}>
@@ -112,7 +139,7 @@ export default function InProgressScreen() {
                 </TouchableOpacity>
               </View>
               {!ready && <Text style={s.hint}>Centang semua sub-tugas untuk dapat mengajukan verifikasi.</Text>}
-            </View>
+            </TouchableOpacity>
           );
         }}
       />
@@ -131,6 +158,10 @@ const s = StyleSheet.create({
   metaText: { color: COLORS.yellow, fontWeight:'700' },
   progressBar: { height: 4, backgroundColor: 'rgba(255,215,0,0.16)', borderRadius: 999, overflow: 'hidden', marginBottom: 6 },
   progressFill: { height: '100%', backgroundColor: COLORS.gold },
+  detailBox: { backgroundColor:'rgba(35,32,28,0.85)', borderRadius:10, borderWidth:0.8, borderColor:COLORS.border, padding:8, marginTop:6 },
+  detailRow: { flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:4 },
+  detailKey: { color: COLORS.gold, fontSize: 11, fontWeight:'700' },
+  detailVal: { color: COLORS.yellow, fontSize: 12, fontWeight:'700', marginLeft: 8, flexShrink: 1 },
   taskRow: { flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingVertical:8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(255,215,0,0.12)' },
   taskStage: { color: COLORS.yellow, fontWeight:'700' },
   checkBtn: { flexDirection:'row', alignItems:'center', gap: 6, paddingVertical:6, paddingHorizontal:10, borderRadius: 10, borderWidth: 1, borderColor: COLORS.border, backgroundColor: 'rgba(43,37,34,0.9)' },

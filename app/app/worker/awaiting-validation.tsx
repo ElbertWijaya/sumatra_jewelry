@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@lib/context/AuthContext';
 import { api } from '@lib/api/client';
@@ -37,6 +37,9 @@ export default function AwaitingValidationScreen() {
     return acc;
   }, {} as any));
 
+  const [expanded, setExpanded] = React.useState<Record<number, boolean>>({});
+  const toggle = (orderId: number) => setExpanded(p => ({ ...p, [orderId]: !p[orderId] }));
+
   return (
     <View style={s.container}>
       <FlatList
@@ -46,20 +49,41 @@ export default function AwaitingValidationScreen() {
         ListHeaderComponent={<Text style={s.title}>Menunggu Verifikasi</Text>}
         ListEmptyComponent={!isLoading ? <Text style={s.empty}>Tidak ada order yang menunggu verifikasi.</Text> : null}
         renderItem={({ item: g }) => (
-          <View style={s.card}>
+          <TouchableOpacity style={s.card} activeOpacity={0.9} onPress={() => toggle(g.orderId)}>
             <Text style={s.code}>{g.code}</Text>
+            {expanded[g.orderId] && <OrderDetailInline orderId={g.orderId} />}
             {g.tasks.sort((a,b)=>a.id-b.id).map(t => (
               <View key={t.id} style={s.taskRow}>
                 <Text style={s.taskStage}>{t.stage || 'Sub-tugas'}</Text>
                 <Text style={s.taskMeta}>AWAITING_VALIDATION</Text>
               </View>
             ))}
-          </View>
+          </TouchableOpacity>
         )}
       />
     </View>
   );
 }
+
+const OrderDetailInline: React.FC<{ orderId: number }> = ({ orderId }) => {
+  const { token } = useAuth();
+  const { data, isLoading } = useQuery<any>({
+    queryKey: ['order', orderId],
+    queryFn: () => api.orders.get(token || '', orderId),
+    enabled: !!token && !!orderId,
+  });
+  if (isLoading) return <View style={s.detailBox}><ActivityIndicator color={COLORS.gold} /></View>;
+  const det: any = data || {};
+  return (
+    <View style={s.detailBox}>
+      <View style={s.detailRow}><Text style={s.detailKey}>Customer</Text><Text style={s.detailVal} numberOfLines={1}>{det.customerName || '-'}</Text></View>
+      <View style={s.detailRow}><Text style={s.detailKey}>Jenis</Text><Text style={s.detailVal} numberOfLines={1}>{det.jenisBarang || det.jenis || '-'}</Text></View>
+      {det.ringSize ? <View style={s.detailRow}><Text style={s.detailKey}>Ukuran Cincin</Text><Text style={s.detailVal}>{det.ringSize}</Text></View> : null}
+      <View style={s.detailRow}><Text style={s.detailKey}>Perkiraan Siap</Text><Text style={s.detailVal}>{det.promisedReadyDate ? String(det.promisedReadyDate).slice(0,10) : '-'}</Text></View>
+      {det.catatan ? <View style={[s.detailRow,{alignItems:'flex-start'}]}><Text style={s.detailKey}>Catatan</Text><Text style={[s.detailVal,{flex:1}]} numberOfLines={3}>{det.catatan}</Text></View> : null}
+    </View>
+  );
+};
 
 const s = StyleSheet.create({
   container: { flex:1, backgroundColor: COLORS.dark, padding: 16 },
@@ -70,4 +94,8 @@ const s = StyleSheet.create({
   taskRow: { flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingVertical:8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(255,215,0,0.12)' },
   taskStage: { color: COLORS.yellow, fontWeight:'700' },
   taskMeta: { color: '#bfae6a', fontSize: 12 },
+  detailBox: { backgroundColor:'rgba(35,32,28,0.85)', borderRadius:10, borderWidth:0.8, borderColor:COLORS.border, padding:8, marginBottom:6 },
+  detailRow: { flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:4 },
+  detailKey: { color: COLORS.gold, fontSize: 11, fontWeight:'700' },
+  detailVal: { color: COLORS.yellow, fontSize: 12, fontWeight:'700', marginLeft: 8, flexShrink: 1 },
 });

@@ -165,32 +165,47 @@ export const WorkerDashboardScreen: React.FC = () => {
               </LinearGradient>
             </View>
 
-            {/* Metrics strip */}
-            <View style={s.metricsRow}>
-              <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={() => router.push('/worker/assigned')}
-                style={[s.metricCard]}
-              >
-                <View style={s.metricHeader}><MaterialCommunityIcons name="account-tie" size={18} color={COLORS.gold} /><Text style={s.metricLabel}>Ditugaskan</Text></View>
-                <Text style={s.metricValue}>{countAssigned}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={() => router.push('/worker/in-progress')}
-                style={[s.metricCard]}
-              >
-                <View style={s.metricHeader}><Ionicons name="construct-outline" size={18} color={COLORS.gold} /><Text style={s.metricLabel}>Dalam Proses</Text></View>
-                <Text style={s.metricValue}>{countInProgress}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={() => router.push('/worker/awaiting-validation')}
-                style={[s.metricCard]}
-              >
-                <View style={s.metricHeader}><Ionicons name="checkmark-done-outline" size={18} color={COLORS.gold} /><Text style={s.metricLabel}>Verifikasi</Text></View>
-                <Text style={s.metricValue}>{countAwaiting}</Text>
-              </TouchableOpacity>
+            {/* Metrics grid (uniform like Sales) */}
+            <View style={s.statsSection}>
+              <View style={s.statGrid}>
+                <TouchableOpacity style={s.statTile} activeOpacity={0.85} onPress={() => router.push('/worker/assigned')}>
+                  <View style={s.tileTopRow}>
+                    <View style={s.iconBadge}><MaterialCommunityIcons name="account-tie" size={18} color={COLORS.gold} /></View>
+                    <Text style={s.tileLabel}>Ditugaskan</Text>
+                  </View>
+                  <Text style={s.tileValue}>{countAssigned}</Text>
+                  <View style={s.tileBar}><View style={[s.tileBarFill, { width: `${Math.min((countAssigned/10)*100,100)}%` }]} /></View>
+                  <Text style={s.tileMeta}>Tap untuk lihat</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={s.statTile} activeOpacity={0.85} onPress={() => router.push('/worker/in-progress')}>
+                  <View style={s.tileTopRow}>
+                    <View style={s.iconBadge}><Ionicons name="construct-outline" size={18} color={COLORS.gold} /></View>
+                    <Text style={s.tileLabel}>Dalam Proses</Text>
+                  </View>
+                  <Text style={s.tileValue}>{countInProgress}</Text>
+                  <View style={s.tileBar}><View style={[s.tileBarFill, { width: `${Math.min((countInProgress/10)*100,100)}%` }]} /></View>
+                  <Text style={s.tileMeta}>Tap untuk lihat</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={s.statTile} activeOpacity={0.85} onPress={() => router.push('/worker/awaiting-validation')}>
+                  <View style={s.tileTopRow}>
+                    <View style={s.iconBadge}><Ionicons name="checkmark-done-outline" size={18} color={COLORS.gold} /></View>
+                    <Text style={s.tileLabel}>Verifikasi</Text>
+                  </View>
+                  <Text style={s.tileValue}>{countAwaiting}</Text>
+                  <View style={s.tileBar}><View style={[s.tileBarFill, { width: `${Math.min((countAwaiting/10)*100,100)}%` }]} /></View>
+                  <Text style={s.tileMeta}>Tap untuk lihat</Text>
+                </TouchableOpacity>
+                <View style={[s.statTile, { opacity: 0.9 }]}
+                >
+                  <View style={s.tileTopRow}>
+                    <View style={s.iconBadge}><Ionicons name="checkmark-done-circle" size={18} color={COLORS.gold} /></View>
+                    <Text style={s.tileLabel}>Siap Ajukan</Text>
+                  </View>
+                  <Text style={s.tileValue}>{countReadySubmit}</Text>
+                  <View style={s.tileBar}><View style={[s.tileBarFill, { width: `${Math.min((countReadySubmit/10)*100,100)}%` }]} /></View>
+                  <Text style={s.tileMeta}>Semua subtask tercentang</Text>
+                </View>
+              </View>
             </View>
 
             {/* Quick Actions (worker-focused) */}
@@ -383,6 +398,17 @@ const s = StyleSheet.create({
   metricHeader: { flexDirection:'row', alignItems:'center', gap: 6, marginBottom: 8 },
   metricLabel: { color: COLORS.yellow, fontWeight:'700', fontSize: 12 },
   metricValue: { color: COLORS.gold, fontSize: 24, fontWeight:'800' },
+  // New stats grid (align with Sales tiles)
+  statsSection: { marginBottom: 16 },
+  statGrid: { flexDirection:'row', flexWrap:'wrap', justifyContent:'space-between', paddingHorizontal: 4 },
+  statTile: { width: '48%', backgroundColor: COLORS.card, borderRadius: 18, padding: 14, marginBottom: 12, borderWidth:1, borderColor: COLORS.border, shadowColor:'#000', shadowOpacity:0.08, shadowRadius:6, shadowOffset:{width:0,height:2} },
+  tileTopRow: { flexDirection:'row', alignItems:'center', marginBottom: 8, gap:8 },
+  iconBadge: { backgroundColor: '#2b2522', padding:8, borderRadius:12, borderWidth:1, borderColor:'rgba(255,215,0,0.18)' },
+  tileLabel: { color: COLORS.yellow, fontSize: 12, fontWeight:'700', letterSpacing:0.3 },
+  tileValue: { color: COLORS.gold, fontSize: 28, fontWeight:'800', marginBottom: 6 },
+  tileBar: { height: 5, backgroundColor:'rgba(255,215,0,0.18)', borderRadius: 999, overflow:'hidden', marginBottom:6 },
+  tileBarFill: { height:'100%', backgroundColor: COLORS.gold },
+  tileMeta: { color: '#bfae6a', fontSize: 11, fontWeight:'600' },
   errorText: { color: COLORS.danger, marginBottom: 8 },
   empty: { color: COLORS.yellow, textAlign:'center', marginTop: 24 },
   actionsSection: { marginBottom: 16 },
