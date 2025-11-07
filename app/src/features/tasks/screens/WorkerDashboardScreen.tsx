@@ -94,15 +94,10 @@ export const WorkerDashboardScreen: React.FC = () => {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['tasks','active'] }); },
   });
 
-  // Metrics (order-level counts)
-  const orderCountBy = (pred: (t: Task)=> boolean) => {
-    const set = new Set<number>();
-    mine.forEach(t => { if (pred(t)) set.add(t.orderId); });
-    return set.size;
-  };
-  const countAssigned = orderCountBy(t => t.status === 'ASSIGNED');
-  const countInProgress = orderCountBy(t => t.status === 'IN_PROGRESS');
-  const countAwaiting = orderCountBy(t => t.status === 'AWAITING_VALIDATION');
+  // Metrics (order-level counts) — compute from per-order groups to match lists
+  const countAssigned = groups.filter(g => g.tasks.some(t => t.status === 'ASSIGNED')).length;
+  const countInProgress = groups.filter(g => g.tasks.some(t => t.status === 'IN_PROGRESS')).length;
+  const countAwaiting = groups.filter(g => g.tasks.some(t => t.status === 'AWAITING_VALIDATION')).length;
 
   const canRequestDone = (group: { tasks: Task[] }) => {
     const hasAssigned = group.tasks.some(t => t.status === 'ASSIGNED');

@@ -42,24 +42,81 @@ export const MyOrdersScreen: React.FC = () => {
     refetchOnWindowFocus: true,
   });
   const allOrders = Array.isArray(data) ? data : [];
+  // DEV: also fetch dashboard stats to compare indicator vs list when needed
+  const { data: dashStats } = useQuery<any>({
+    queryKey: ['dashboard','stats','dev'],
+    queryFn: () => api.dashboard.stats(token || ''),
+    enabled: !!token && __DEV__,
+    staleTime: 0,
+  });
 
   const [query, setQuery] = React.useState('');
   const [filterOpen, setFilterOpen] = React.useState(false);
   type StatusFilter = 'SEMUA' | 'AKTIF' | 'DITUGASKAN' | 'SELESAI' | 'VERIFIKASI' | 'BATAL';
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('AKTIF');
 
-  // When filtering VERIFIKASI, compute orders that have tasks awaiting validation (task-level)
+  // Fetch tasks list when we need task-level filters (VERIFIKASI or DITUGASKAN)
   const { data: tasksData } = useQuery<any[]>({
-    queryKey: ['tasks','for-verification'],
+    queryKey: ['tasks','for-orders-filter', statusFilter],
     queryFn: async () => (api.tasks.list(token || '') as unknown) as Promise<any[]>,
-    enabled: !!token && statusFilter === 'VERIFIKASI',
-    refetchInterval: statusFilter === 'VERIFIKASI' ? 12000 : false,
+    enabled: !!token && (statusFilter === 'VERIFIKASI' || statusFilter === 'DITUGASKAN'),
+    refetchInterval: (statusFilter === 'VERIFIKASI' || statusFilter === 'DITUGASKAN') ? 12000 : false,
   });
   const verifOrderIds = React.useMemo(() => {
     if (!Array.isArray(tasksData)) return new Set<number>();
     const mine = tasksData.filter(t => String(t?.status || '').toUpperCase() === 'AWAITING_VALIDATION');
     return new Set<number>(mine.map(t => Number(t.orderId)).filter(Boolean));
   }, [tasksData]);
+  const assignedOrderIds = React.useMemo(() => {
+    if (!Array.isArray(tasksData)) return new Set<number>();
+    const mine = tasksData.filter(t => String(t?.status || '').toUpperCase() === 'ASSIGNED');
+    return new Set<number>(mine.map(t => Number(t.orderId)).filter(Boolean));
+  }, [tasksData]);
+  const assignedOrderIdsByOrderStatus = React.useMemo(() => {
+    const set = new Set<number>();
+    allOrders.forEach(o => {
+      const s = String(o.status || '').toUpperCase();
+      if (s === 'ASSIGNED' || s === 'DITERIMA') set.add(Number(o.id));
+    });
+    return set;
+  }, [allOrders]);
+
+  // Extra debug: status histograms for tasks and orders
+  const tasksStatusHistogram = React.useMemo(() => {
+    const h: Record<string, number> = {};
+    if (Array.isArray(tasksData)) {
+      for (const t of tasksData) {
+        const s = String(t?.status || 'UNKNOWN').toUpperCase();
+        h[s] = (h[s] || 0) + 1;
+      }
+    }
+    return h;
+  }, [tasksData]);
+  const tasksDebugList = React.useMemo(() => {
+    if (!Array.isArray(tasksData)) return [] as any[];
+    return tasksData.slice(0, 50).map(t => ({ id: t?.id, orderId: t?.orderId, status: String(t?.status || '').toUpperCase() }));
+  }, [tasksData]);
+  const ordersStatusHistogram = React.useMemo(() => {
+    const h: Record<string, number> = {};
+    for (const o of allOrders) {
+      const s = String(o?.status || 'UNKNOWN').toUpperCase();
+      h[s] = (h[s] || 0) + 1;
+    }
+    return h;
+  }, [allOrders]);
+
+  React.useEffect(() => {
+    if (__DEV__ && statusFilter === 'DITUGASKAN') {
+      console.log('[DEBUG][MyOrders] tasks status histogram =', tasksStatusHistogram);
+      console.log('[DEBUG][MyOrders] orders status histogram =', ordersStatusHistogram);
+      const assignedTaskOrderIds = Array.from(assignedOrderIds.values());
+      console.log('[DEBUG][MyOrders] tasks->ASSIGNED orderIds =', assignedTaskOrderIds);
+      const byOrderStatusIds = Array.from(assignedOrderIdsByOrderStatus.values());
+      console.log('[DEBUG][MyOrders] orders.status in {ASSIGNED,DITERIMA} ids =', byOrderStatusIds);
+      console.log('[DEBUG][MyOrders] dashboard.indicator =', dashStats?.ditugaskan?.count);
+      console.log('[DEBUG][MyOrders] first tasks snapshot =', tasksDebugList);
+    }
+  }, [statusFilter, tasksStatusHistogram, ordersStatusHistogram, assignedOrderIds, assignedOrderIdsByOrderStatus, dashStats, tasksDebugList]);
 
   React.useEffect(() => {
     if (filter) {
@@ -84,8 +141,13 @@ export const MyOrdersScreen: React.FC = () => {
       if (statusFilter === 'SEMUA') return true;
       if (statusFilter === 'AKTIF') return isActiveStatus(o.status);
       if (statusFilter === 'DITUGASKAN') {
+        // Align with dashboard (order-level) to keep indicator and list consistent for Sales
         const s = String(o.status || '').toUpperCase();
-        return s === 'ASSIGNED' || s === 'DITERIMA';
+        const ok = (s === 'ASSIGNED' || s === 'DITERIMA');
+        if (__DEV__) {
+          console.log('[DEBUG][MyOrders] DITUGASKAN (order.status) -> orderId', o.id, 'ok=', ok, 'status=', s);
+        }
+        return ok;
       }
       if (statusFilter === 'VERIFIKASI') {
         // Show orders that have tasks awaiting validation
@@ -179,6 +241,30 @@ export const MyOrdersScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      {__DEV__ && (
+        <View style={{ marginBottom: 6 }}>
+          {statusFilter === 'DITUGASKAN' && (
+            <>
+              <Text style={{ color:'#9f8f5a', fontSize:10 }}>
+                DEBUG Ditugaskan:
+                tasks.len={String(Array.isArray(tasksData) ? tasksData.length : 0)};
+                byTasks.assigned.orders={String(assignedOrderIds.size)};
+                byOrderStatus.orders={String(assignedOrderIdsByOrderStatus.size)};
+                listCount={String(filtered.length)}
+              </Text>
+              <Text style={{ color:'#9f8f5a', fontSize:10 }}>
+                dashboard.indicator={(dashStats?.ditugaskan?.count ?? 'n/a')}
+              </Text>
+              <Text style={{ color:'#9f8f5a', fontSize:10 }}>
+                tasks.hist={JSON.stringify(tasksStatusHistogram)}; orders.hist={JSON.stringify(ordersStatusHistogram)}
+              </Text>
+              <Text style={{ color:'#9f8f5a', fontSize:10 }}>
+                tasks.sample={tasksDebugList.map(x=>`{id:${x.id},o:${x.orderId},s:${x.status}}`).join(' ')}
+              </Text>
+            </>
+          )}
+        </View>
+      )}
       {/* Search and Filters */}
       <View style={styles.searchWrap}>
         <Ionicons name="search" size={16} color={COLORS.gold} style={{marginLeft:10, marginRight:6}} />

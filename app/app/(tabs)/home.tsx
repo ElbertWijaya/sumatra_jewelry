@@ -8,6 +8,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { api } from '@lib/api/client';
 import { WorkerDashboardScreen } from '@features/tasks/screens/WorkerDashboardScreen';
+import { useQuery } from '@tanstack/react-query';
+import { useFocusEffect } from '@react-navigation/native';
 
 const MOCK_NOTIF = [
   { id: 1, text: 'Order #1234 telah disetujui' },
@@ -30,18 +32,57 @@ export default function HomeScreen() {
   const { user, token } = useAuth();
   const { width, height } = Dimensions.get('window');
   const router = useRouter();
-  const [stats, setStats] = useState({
-    aktif: { count: 0, change: 0 },
-    ditugaskan: { count: 0, change: 0 },
-    selesai: { count: 0, change: 0 },
-    verifikasi: { count: 0, change: 0 }
+  // Fetch orders for order-level indicators
+  const ordersQuery = useQuery<any[]>({
+    queryKey: ['orders','inprogress','home'],
+    queryFn: () => api.orders.list(token || '') as Promise<any[]>,
+    enabled: !!token,
+    refetchInterval: 12000,
+    staleTime: 0,
   });
+  // Fetch tasks for verification badge (awaiting validation) – may be user-scoped; still useful for Sales context we built
+  const tasksQuery = useQuery<any[]>({
+    queryKey: ['tasks','home'],
+    queryFn: () => api.tasks.list(token || '') as Promise<any[]>,
+    enabled: !!token,
+    refetchInterval: 12000,
+    staleTime: 0,
+  });
+  useFocusEffect(React.useCallback(() => {
+    if (token) { ordersQuery.refetch(); tasksQuery.refetch(); }
+  }, [token]));
 
-  useEffect(() => {
-    if (token) {
-      api.dashboard.stats(token).then(setStats).catch(console.error);
-    }
-  }, [token]);
+  const allOrders = Array.isArray(ordersQuery.data) ? ordersQuery.data : [];
+  const isActiveStatus = (s?: string|null) => {
+    const v = String(s || '').toUpperCase();
+    return v === 'DITERIMA' || v === 'DALAM_PROSES';
+  };
+  const countAktif = allOrders.filter(o => isActiveStatus(o.status)).length;
+  const countDitugaskan = allOrders.filter(o => {
+    const v = String(o?.status || '').toUpperCase();
+    return v === 'ASSIGNED' || v === 'DITERIMA';
+  }).length;
+  const countSelesai = allOrders.filter(o => {
+    const v = String(o?.status || '').toUpperCase();
+    return v === 'DONE' || v === 'SELESAI';
+  }).length;
+  const verifOrderIds = (() => {
+    const arr = Array.isArray(tasksQuery.data) ? tasksQuery.data : [];
+    const awaiting = arr.filter(t => String(t?.status || '').toUpperCase() === 'AWAITING_VALIDATION');
+    return new Set<number>(awaiting.map(t => Number(t.orderId)).filter(Boolean));
+  })();
+  const countVerifikasi = verifOrderIds.size;
+
+  const stats = {
+    aktif: { count: countAktif, change: 0 },
+    ditugaskan: { count: countDitugaskan, change: 0 },
+    selesai: { count: countSelesai, change: 0 },
+    verifikasi: { count: countVerifikasi, change: 0 },
+  } as const;
+
+  if (__DEV__) {
+    console.log('[DEBUG][Home][orders] total=', allOrders.length, 'aktif=', countAktif, 'ditugaskan=', countDitugaskan, 'selesai=', countSelesai);
+  }
 
   const isWorkerRole = React.useMemo(() => {
     const r = String(user?.jobRole || user?.job_role || '').toUpperCase();
@@ -105,6 +146,9 @@ export default function HomeScreen() {
                 <View style={[s.statProgressBar, {width: `${Math.min((stats.ditugaskan.count / 10) * 100, 100)}%`}]} />
               </View>
               <Text style={s.statChange}>{stats.ditugaskan.change > 0 ? '+' : ''}{stats.ditugaskan.change} hari ini</Text>
+              {__DEV__ && (
+                <Text style={s.debugText}>dbg: ditugaskan={String(stats.ditugaskan.count)}</Text>
+              )}
             </TouchableOpacity>
             <TouchableOpacity style={s.statItem} onPress={() => router.push('/my-orders?filter=selesai')}>
               <View style={s.statHeader}>
@@ -223,4 +267,5 @@ const s = StyleSheet.create({
   tipsHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   tipsTitle: { color: COLORS.gold, fontSize: 18, fontWeight: '700', marginLeft: 8 },
   tipsText: { color: COLORS.gold, fontSize: 14, fontStyle: 'italic', lineHeight: 20 },
+  debugText: { color: '#9f8f5a', fontSize: 10, marginTop: 4 },
 });
