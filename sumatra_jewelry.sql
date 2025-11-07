@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS `account` (
 -- Dumping data for table sumatra_jewelry.account: ~8 rows (approximately)
 DELETE FROM `account`;
 INSERT INTO `account` (`id`, `email`, `fullName`, `job_role`, `password`, `branch_id`, `phone`, `address`, `created_at`) VALUES
-	('33639b95-bdc7-49e0-971c-38189f625c91', 'designer@tokomas.local', 'Elbert Wijaya', 'DESIGNER', '$argon2id$v=19$m=65536,t=3,p=4$Ncppp1NWP3zuvd2L+qbHUg$Vk48NQ5wLdP9Ae3dBiicFNYIR5tCMVA7IpZLLGS3G58', 2, '081234567891', 'Jl. Sun Plaza', '2025-10-23 06:49:47.284'),
+	('33639b95-bdc7-49e0-971c-38189f625c91', 'designer@tokomas.local', 'Elbert Wijaya', 'DESIGNER', '$argon2id$v=19$m=65536,t=3,p=4$Ncppp1NWP3zuvd2L+qbHUg$Vk48NQ5wLdP9Ae3dBiicFNYIR5tCMVA7IpZLLGS3G58', 1, '081234567891', 'Jln Mandala by Pass Komp Mandala Permai No 184BB', '2025-10-23 06:49:47.284'),
 	('40290c76-4185-43f5-a91a-83429efde1d1', 'carver@tokomas.local', 'Acai', 'CARVER', '$argon2id$v=19$m=65536,t=3,p=4$LMDNix9cSVS47Tk+bg+reg$jRIhF9OvTUx131mm/ZHPsahWq+10zOvR5P96mdJOi1s', 1, '081234567892', 'Jl. Asia No.170 B', '2025-10-23 06:49:47.343'),
 	('523aca04-13fa-48ae-9a74-096567641d7c', 'inventory@tokomas.local', 'Suk Mai D', 'INVENTORY', '$argon2id$v=19$m=65536,t=3,p=4$dbA8cOGCUzbgumQCF+7oTQ$B1qY/vzn88p0G2ZQmQxG1fePJ+cLa9tGCSBtzDrlZwc', 1, '081234567896', 'Jl. Asia No.170 B', '2025-10-23 06:49:47.572'),
 	('7f200bfd-29bc-487b-9a3f-2cdc695dc38a', 'finisher@tokomas.local', 'Ayu', 'FINISHER', '$argon2id$v=19$m=65536,t=3,p=4$OTgRktCbCxPSeETKrsRF6w$cYsg9Yv6gIvIFY6RIOQnsUpvtj4VB46dBy1ywVi0c98', 2, '081234567895', 'Jl. Sun Plaza', '2025-10-23 06:49:47.518'),
@@ -146,10 +146,12 @@ CREATE TABLE IF NOT EXISTS `order` (
   KEY `Order_updated_by_id_fkey` (`updated_by_id`),
   CONSTRAINT `Order_created_by_id_fkey` FOREIGN KEY (`created_by_id`) REFERENCES `account` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `Order_updated_by_id_fkey` FOREIGN KEY (`updated_by_id`) REFERENCES `account` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table sumatra_jewelry.order: ~0 rows (approximately)
+-- Dumping data for table sumatra_jewelry.order: ~1 rows (approximately)
 DELETE FROM `order`;
+INSERT INTO `order` (`id`, `code`, `status`, `completed_date`, `created_at`, `created_by_id`, `customer_address`, `customer_name`, `customer_phone`, `design_image_url`, `down_payment`, `estimated_price`, `final_price`, `gold_color`, `gold_price_per_gram`, `gold_type`, `item_type`, `notes`, `pickup_date`, `reference_image_urls`, `updated_at`, `updated_by_id`, `promised_ready_date`, `stone_count`, `total_stone_weight`, `ring_size`) VALUES
+	(1, 'TM-202510-0001', 'DALAM_PROSES', '2025-11-09 00:00:00.000', '2025-10-30 04:46:54.547', 'cbd96a29-15a6-4817-8557-e3a870c5a76f', 'Jln Ayam Kuning Meledak Gg Lopolopo No 368D', 'Samsudin', '081635946823', NULL, 350000000.00, 450000000.00, 500000000.00, 'White Gold', 2500000.00, '18K', 'Women Ring', 'Dibuat sesuai contoh', '2025-11-12 00:00:00.000', '["/uploads/1761797831540-84745238.jpeg"]', '2025-11-03 03:20:27.339', 'cbd96a29-15a6-4817-8557-e3a870c5a76f', '2025-11-06 00:00:00.000', 2, 0.82, '15');
 
 -- Dumping structure for table sumatra_jewelry.orderhistory
 DROP TABLE IF EXISTS `orderhistory`;
@@ -179,10 +181,16 @@ CREATE TABLE IF NOT EXISTS `orderhistory` (
   KEY `OrderHistory_userId_idx` (`userId`),
   CONSTRAINT `OrderHistory_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `order` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `OrderHistory_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `account` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table sumatra_jewelry.orderhistory: ~0 rows (approximately)
+-- Dumping data for table sumatra_jewelry.orderhistory: ~3 rows (approximately)
 DELETE FROM `orderhistory`;
+INSERT INTO `orderhistory` (`id`, `orderId`, `changedAt`, `userId`, `changeSummary`, `diff`, `action`, `actorName`, `actorRole`, `context`, `field`, `groupId`, `next`, `orderCode`, `prev`, `snapshot`, `statusFrom`, `statusTo`) VALUES
+	(1, 1, '2025-10-30 04:46:54.598', 'cbd96a29-15a6-4817-8557-e3a870c5a76f', 'CREATE ORDER', NULL, 'CREATED', 'Yanti', NULL, NULL, NULL, NULL, NULL, 'TM-202510-0001', NULL, NULL, NULL, NULL),
+	(2, 1, '2025-10-30 05:32:09.465', 'cbd96a29-15a6-4817-8557-e3a870c5a76f', 'STATUS: DRAFT -> DITERIMA', '{"from":"DRAFT","to":"DITERIMA"}', 'STATUS_CHANGED', 'Yanti', NULL, NULL, NULL, NULL, NULL, 'TM-202510-0001', NULL, NULL, 'DRAFT', 'DITERIMA'),
+	(3, 1, '2025-11-03 03:20:27.339', '33639b95-bdc7-49e0-971c-38189f625c91', 'STATUS: DITERIMA -> DALAM_PROSES', '{"from":"DITERIMA","to":"DALAM_PROSES"}', 'STATUS_CHANGED', 'Elbert Wijaya', NULL, NULL, NULL, NULL, NULL, 'TM-202510-0001', NULL, NULL, 'DITERIMA', 'DALAM_PROSES'),
+	(4, 1, '2025-11-07 03:58:37.973', '33639b95-bdc7-49e0-971c-38189f625c91', 'TASKS_REQUESTED_VALIDATION user=33639b95-bdc7-49e0-971c-38189f625c91', '{"userId":"33639b95-bdc7-49e0-971c-38189f625c91","event":"REQUEST_VALIDATION_BULK","count":3,"notes":null}', 'TASK_EVENT', 'Elbert Wijaya', NULL, NULL, NULL, NULL, NULL, 'TM-202510-0001', NULL, NULL, NULL, NULL),
+	(5, 1, '2025-11-07 04:42:59.574', 'cbd96a29-15a6-4817-8557-e3a870c5a76f', 'TASKS_VALIDATED user=33639b95-bdc7-49e0-971c-38189f625c91', '{"userId":"33639b95-bdc7-49e0-971c-38189f625c91","event":"TASKS_VALIDATED","count":3,"notes":null}', 'TASK_EVENT', 'Yanti', NULL, NULL, NULL, NULL, NULL, 'TM-202510-0001', NULL, NULL, NULL, NULL);
 
 -- Dumping structure for table sumatra_jewelry.orderstone
 DROP TABLE IF EXISTS `orderstone`;
@@ -197,10 +205,13 @@ CREATE TABLE IF NOT EXISTS `orderstone` (
   KEY `OrderStone_orderId_idx` (`orderId`),
   KEY `OrderStone_bentuk_idx` (`bentuk`),
   CONSTRAINT `OrderStone_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `order` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table sumatra_jewelry.orderstone: ~0 rows (approximately)
+-- Dumping data for table sumatra_jewelry.orderstone: ~2 rows (approximately)
 DELETE FROM `orderstone`;
+INSERT INTO `orderstone` (`id`, `orderId`, `bentuk`, `jumlah`, `berat`, `createdAt`) VALUES
+	(1, 1, 'Round', 1, 0.69, '2025-10-30 04:46:54.569'),
+	(2, 1, 'Round', 36, 0.14, '2025-10-30 04:46:54.569');
 
 -- Dumping structure for table sumatra_jewelry.ordertask
 DROP TABLE IF EXISTS `ordertask`;
@@ -229,10 +240,15 @@ CREATE TABLE IF NOT EXISTS `ordertask` (
   CONSTRAINT `OrderTask_checked_by_id_fkey` FOREIGN KEY (`checked_by_id`) REFERENCES `account` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `OrderTask_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `order` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `OrderTask_validated_by_id_fkey` FOREIGN KEY (`validated_by_id`) REFERENCES `account` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table sumatra_jewelry.ordertask: ~0 rows (approximately)
+-- Dumping data for table sumatra_jewelry.ordertask: ~4 rows (approximately)
 DELETE FROM `ordertask`;
+INSERT INTO `ordertask` (`id`, `orderId`, `stage`, `status`, `assigned_to_id`, `created_at`, `notes`, `requested_done_at`, `updated_at`, `validated_at`, `validated_by_id`, `job_role`, `checked_at`, `checked_by_id`, `is_checked`) VALUES
+	(1, 1, 'Awal', 'OPEN', NULL, '2025-10-30 04:46:54.594', NULL, NULL, '2025-10-30 04:46:54.594', NULL, NULL, NULL, NULL, NULL, 0),
+	(2, 1, 'Gambar 3D', 'DONE', '33639b95-bdc7-49e0-971c-38189f625c91', '2025-10-30 05:32:09.465', NULL, '2025-11-07 03:58:37.950', '2025-11-07 04:42:59.557', '2025-11-07 04:42:59.554', 'cbd96a29-15a6-4817-8557-e3a870c5a76f', 'DESIGNER', '2025-11-07 03:53:30.695', '33639b95-bdc7-49e0-971c-38189f625c91', 1),
+	(3, 1, 'Print Resin', 'DONE', '33639b95-bdc7-49e0-971c-38189f625c91', '2025-10-30 05:32:09.465', NULL, '2025-11-07 03:58:37.950', '2025-11-07 04:42:59.557', '2025-11-07 04:42:59.554', 'cbd96a29-15a6-4817-8557-e3a870c5a76f', 'DESIGNER', '2025-11-07 03:56:18.968', '33639b95-bdc7-49e0-971c-38189f625c91', 1),
+	(4, 1, 'Pengecekan', 'DONE', '33639b95-bdc7-49e0-971c-38189f625c91', '2025-10-30 05:32:09.465', NULL, '2025-11-07 03:58:37.950', '2025-11-07 04:42:59.557', '2025-11-07 04:42:59.554', 'cbd96a29-15a6-4817-8557-e3a870c5a76f', 'DESIGNER', '2025-11-07 03:58:36.300', '33639b95-bdc7-49e0-971c-38189f625c91', 1);
 
 -- Dumping structure for table sumatra_jewelry._prisma_migrations
 DROP TABLE IF EXISTS `_prisma_migrations`;
@@ -248,7 +264,7 @@ CREATE TABLE IF NOT EXISTS `_prisma_migrations` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table sumatra_jewelry._prisma_migrations: ~27 rows (approximately)
+-- Dumping data for table sumatra_jewelry._prisma_migrations: ~26 rows (approximately)
 DELETE FROM `_prisma_migrations`;
 INSERT INTO `_prisma_migrations` (`id`, `checksum`, `finished_at`, `migration_name`, `logs`, `rolled_back_at`, `started_at`, `applied_steps_count`) VALUES
 	('01591da7-d3c6-4a97-903f-9a2241369f75', 'fcc00eb3eda2f1914c340bcce5835bda855aa9cd6c24acfda923290fd422940e', '2025-10-23 06:17:42.784', '20251023061741_', NULL, NULL, '2025-10-23 06:17:41.815', 1),

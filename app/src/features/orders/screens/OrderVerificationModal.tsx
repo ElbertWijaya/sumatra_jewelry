@@ -29,6 +29,7 @@ export const OrderVerificationModal: React.FC<{
     queryFn: async () => api.tasks.awaitingValidation(token || '', Number(orderId)) as unknown as Promise<Task[]>,
     enabled: !!token && !!orderId && visible,
     refetchOnWindowFocus: true,
+    refetchInterval: visible ? 8000 : false,
   });
 
   const grouped = React.useMemo(() => {

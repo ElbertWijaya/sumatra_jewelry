@@ -36,7 +36,8 @@ export default function InProgressScreen() {
     queryKey: ['tasks','active'],
     queryFn: () => api.tasks.list(token || '') as Promise<Task[]>,
     enabled: !!token,
-    refetchInterval: 12000,
+    refetchInterval: 6000,
+    refetchOnWindowFocus: true,
   });
 
   const tasks = Array.isArray(data) ? data : [];

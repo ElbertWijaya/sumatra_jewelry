@@ -31,7 +31,7 @@ export default function HistoryScreen() {
     queryKey: ['orders','history'],
     queryFn: () => api.orders.list(token || '') as Promise<Order[]>,
     enabled: !!token,
-    refetchInterval: 12000,
+    refetchInterval: 6000,
     refetchOnWindowFocus: true,
   });
   const allOrders = Array.isArray(data) ? data : [];

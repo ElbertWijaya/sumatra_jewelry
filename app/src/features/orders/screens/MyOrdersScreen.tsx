@@ -38,7 +38,7 @@ export const MyOrdersScreen: React.FC = () => {
     queryKey: ['orders','inprogress'],
     queryFn: () => api.orders.list(token || '') as Promise<Order[]>,
     enabled: !!token,
-    refetchInterval: 12000,
+    refetchInterval: 6000, // Tier1: faster polling
     refetchOnWindowFocus: true,
   });
   const allOrders = Array.isArray(data) ? data : [];
@@ -50,11 +50,11 @@ export const MyOrdersScreen: React.FC = () => {
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('AKTIF');
 
   // Fetch tasks list when we need task-level filters (VERIFIKASI or DITUGASKAN)
-  const { data: tasksData } = useQuery<any[]>({
+  const { data: tasksData, refetch: refetchTasks } = useQuery<any[]>({
     queryKey: ['tasks','for-orders-filter', statusFilter],
     queryFn: async () => (api.tasks.list(token || '') as unknown) as Promise<any[]>,
     enabled: !!token && (statusFilter === 'VERIFIKASI' || statusFilter === 'DITUGASKAN'),
-    refetchInterval: (statusFilter === 'VERIFIKASI' || statusFilter === 'DITUGASKAN') ? 12000 : false,
+    refetchInterval: (statusFilter === 'VERIFIKASI' || statusFilter === 'DITUGASKAN') ? 6000 : false,
   });
   const verifOrderIds = React.useMemo(() => {
     if (!Array.isArray(tasksData)) return new Set<number>();
@@ -320,6 +320,10 @@ export const MyOrdersScreen: React.FC = () => {
           </TouchableOpacity>
         )}
       />
+      <TouchableOpacity onPress={() => { refetch(); if (statusFilter==='VERIFIKASI'||statusFilter==='DITUGASKAN') refetchTasks(); }} style={styles.refreshFloating} activeOpacity={0.9}>
+        <Ionicons name="refresh" size={18} color={COLORS.gold} />
+        <Text style={styles.refreshFloatingText}>Refresh</Text>
+      </TouchableOpacity>
       <OrderActionsModal
         visible={open}
         order={selected as any}
@@ -426,4 +430,6 @@ const styles = StyleSheet.create({
   thumbImg: { width: 56, height: 56, resizeMode: 'cover' },
   thumbPlaceholder: { flex:1, alignItems:'center', justifyContent:'center', backgroundColor:'#23201c' },
   thumbSkeleton: { ...StyleSheet.absoluteFillObject as any, backgroundColor: '#2b2522' },
+  refreshFloating: { position:'absolute', bottom:20, right:20, backgroundColor:'rgba(255,215,0,0.12)', borderRadius:16, paddingHorizontal:14, paddingVertical:10, flexDirection:'row', alignItems:'center', gap:6, borderWidth:1, borderColor:COLORS.border },
+  refreshFloatingText: { color: COLORS.gold, fontWeight:'800', fontSize:12 },
 });

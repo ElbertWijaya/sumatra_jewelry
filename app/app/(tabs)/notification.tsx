@@ -19,7 +19,7 @@ export default function NotificationScreen() {
     queryKey: ['orders','notifications'],
     queryFn: () => api.orders.list(token || '') as Promise<Order[]>,
     enabled: !!token,
-    refetchInterval: 15000,
+    refetchInterval: 6000,
     refetchOnWindowFocus: true,
   });
 

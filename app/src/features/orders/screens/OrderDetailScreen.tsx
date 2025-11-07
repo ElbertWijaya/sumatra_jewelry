@@ -19,7 +19,7 @@ export const OrderDetailScreen: React.FC = () => {
     queryKey: ['order', orderId],
     queryFn: () => api.orders.get(token || '', orderId),
     enabled: !!token && !!orderId,
-    refetchInterval: 12000,
+    refetchInterval: 8000, // Tier1: moderate polling for detail view
   });
 
   const det: any = data || {};
@@ -113,13 +113,13 @@ export const OrderDetailScreen: React.FC = () => {
     queryKey: ['order-verif', orderId],
     queryFn: () => api.tasks.awaitingValidation(token || '', orderId),
     enabled: !!token && !!orderId,
-    refetchInterval: 12000,
+    refetchInterval: 8000,
   });
-  const { data: tasksByOrder } = useQuery({
+  const { data: tasksByOrder, refetch: refetchTasksByOrder } = useQuery({
     queryKey: ['tasks','order', orderId],
     queryFn: () => api.tasks.listByOrder(token || '', orderId),
     enabled: !!token && !!orderId,
-    refetchInterval: 12000,
+    refetchInterval: 8000,
   });
   const activeAssignee = React.useMemo(() => {
     const list = Array.isArray(tasksByOrder) ? tasksByOrder : [];
@@ -202,6 +202,10 @@ export const OrderDetailScreen: React.FC = () => {
 
         {tab === 'detail' && (
         <>
+        <TouchableOpacity onPress={() => { refetch(); refetchTasksByOrder(); }} style={styles.inlineRefresh} activeOpacity={0.85}>
+          <Ionicons name="refresh" size={14} color={COLORS.gold} style={{ marginRight:6 }} />
+          <Text style={styles.inlineRefreshText}>Refresh</Text>
+        </TouchableOpacity>
         <View style={styles.assignWrap}>
           {activeAssignee ? (
             <View style={styles.assigneeInfo}>
@@ -312,6 +316,10 @@ export const OrderDetailScreen: React.FC = () => {
           <View style={styles.card}>
             <Text style={styles.title}>Menunggu Verifikasi</Text>
             <View style={styles.divider} />
+            <TouchableOpacity onPress={() => { refetchVerif(); refetch(); }} style={styles.inlineRefreshSecondary} activeOpacity={0.85}>
+              <Ionicons name="refresh" size={14} color={COLORS.gold} style={{ marginRight:6 }} />
+              <Text style={styles.inlineRefreshText}>Refresh</Text>
+            </TouchableOpacity>
             {Array.isArray(verifData) && verifData.length > 0 ? (
               verifData.map((t: any) => (
                 <View key={t.id} style={{ paddingVertical:8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: COLORS.border }}>
@@ -478,6 +486,9 @@ const styles = StyleSheet.create({
   assignBtnTextDark: { color: '#1b1b1b', fontWeight:'800' },
   assigneeInfo: { flexDirection:'row', alignItems:'center', backgroundColor:'#ffe082', paddingHorizontal:12, paddingVertical:8, borderRadius:10 },
   assigneeText: { color: '#1b1b1b', fontWeight:'800' },
+  inlineRefresh: { alignSelf:'flex-end', flexDirection:'row', alignItems:'center', backgroundColor:'rgba(255,215,0,0.08)', paddingHorizontal:10, paddingVertical:6, borderRadius:10, borderWidth:1, borderColor:'rgba(255,215,0,0.18)', marginBottom: 8 },
+  inlineRefreshSecondary: { alignSelf:'flex-end', flexDirection:'row', alignItems:'center', backgroundColor:'rgba(255,215,0,0.05)', paddingHorizontal:10, paddingVertical:6, borderRadius:10, borderWidth:1, borderColor:'rgba(255,215,0,0.18)', marginBottom: 8 },
+  inlineRefreshText: { color: COLORS.gold, fontWeight:'800', fontSize: 12 },
   modalBackdrop: { flex:1, backgroundColor:'rgba(0,0,0,0.5)', justifyContent:'center', padding:16 },
   modalCard: { backgroundColor: COLORS.card, borderRadius: 14, padding: 14, borderWidth:1, borderColor: COLORS.border },
   modalTitle: { color: COLORS.gold, fontSize:16, fontWeight:'700', marginBottom:8 },

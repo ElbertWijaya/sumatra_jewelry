@@ -37,7 +37,8 @@ export default function HomeScreen() {
     queryKey: ['orders','inprogress','home'],
     queryFn: () => api.orders.list(token || '') as Promise<any[]>,
     enabled: !!token,
-    refetchInterval: 12000,
+    // Tier1: faster polling for fresher dashboard counts
+    refetchInterval: 6000,
     staleTime: 0,
   });
   // Fetch tasks for verification badge (awaiting validation) – may be user-scoped; still useful for Sales context we built
@@ -45,7 +46,7 @@ export default function HomeScreen() {
     queryKey: ['tasks','home'],
     queryFn: () => api.tasks.list(token || '') as Promise<any[]>,
     enabled: !!token,
-    refetchInterval: 12000,
+    refetchInterval: 6000,
     staleTime: 0,
   });
   useFocusEffect(React.useCallback(() => {
@@ -122,8 +123,12 @@ export default function HomeScreen() {
         {/* Stats Grid (Redesigned 2x2 uniform cards) */}
         <View style={s.statsSection}>
           <View style={s.statsHeaderRow}>
-            <Text style={s.statsTitle}>Business Overview</Text>
-          </View>
+              <Text style={s.statsTitle}>Business Overview</Text>
+              <TouchableOpacity onPress={() => { ordersQuery.refetch(); tasksQuery.refetch(); }} style={s.refreshBtn} activeOpacity={0.8}>
+                <Ionicons name="refresh" size={16} color={COLORS.gold} />
+                <Text style={s.refreshTxt}>Refresh</Text>
+              </TouchableOpacity>
+            </View>
           <View style={s.statGrid}>
             <TouchableOpacity style={s.statTile} activeOpacity={0.85} onPress={() => router.push('/my-orders?filter=aktif')}>
               <View style={s.tileTopRow}>
@@ -232,6 +237,8 @@ const s = StyleSheet.create({
   // Redesigned stats grid styles
   statsSection: { marginBottom: 28 },
   statsHeaderRow: { flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom: 12, paddingHorizontal:16 },
+  refreshBtn: { flexDirection:'row', alignItems:'center', gap:6, backgroundColor:'rgba(255,215,0,0.08)', paddingHorizontal:10, paddingVertical:6, borderRadius:12, borderWidth:1, borderColor:'rgba(255,215,0,0.18)' },
+  refreshTxt: { color: COLORS.gold, fontSize:11, fontWeight:'700' },
   statsTitle: { color: COLORS.gold, fontSize: 18, fontWeight: '700' },
   statGrid: { flexDirection:'row', flexWrap:'wrap', justifyContent:'space-between', paddingHorizontal:16 },
   statTile: { width: '48%', backgroundColor: COLORS.card, borderRadius: 18, padding: 14, marginBottom: 14, borderWidth:1, borderColor: COLORS.border, shadowColor:'#000', shadowOpacity:0.08, shadowRadius:6, shadowOffset:{width:0,height:2} },
