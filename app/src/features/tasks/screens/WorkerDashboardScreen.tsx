@@ -46,6 +46,7 @@ export const WorkerDashboardScreen: React.FC = () => {
   const qc = useQueryClient();
   const userId = user?.id || user?.userId || null;
   const router = useRouter();
+  const [filterMode, setFilterMode] = React.useState<'ALL'|'NEED_ACCEPT'|'IN_PROGRESS'|'READY_SUBMIT'|'AWAITING_VALIDATION'>('ALL');
 
   const { data, error, isLoading, isRefetching, refetch } = useQuery<Task[]>({
     queryKey: ['tasks','active'],
@@ -98,9 +99,34 @@ export const WorkerDashboardScreen: React.FC = () => {
     if (inprog.length === 0) return false;
     return inprog.every(t => !!t.isChecked);
   };
+  const countReadySubmit = (() => {
+    const orderMap = new Map<number, { tasks: Task[] }>();
+    mine.forEach(t => {
+      if (!orderMap.has(t.orderId)) orderMap.set(t.orderId, { tasks: [] });
+      orderMap.get(t.orderId)!.tasks.push(t);
+    });
+    let c = 0;
+    for (const [_, v] of orderMap) {
+      const fakeGroup: any = { tasks: v.tasks };
+      if (canRequestDone(fakeGroup)) c++;
+    }
+    return c;
+  })();
+
+  
 
   // Recent activities (simple heuristic: last 5 of my tasks by id desc)
   const recent = mine.slice().sort((a,b) => b.id - a.id).slice(0,5);
+
+  // derive displayed groups per filter mode
+  const displayedGroups = groups.filter(g => {
+    if (filterMode === 'ALL') return true;
+    if (filterMode === 'NEED_ACCEPT') return g.tasks.some(t => t.status === 'ASSIGNED');
+    if (filterMode === 'IN_PROGRESS') return g.tasks.some(t => t.status === 'IN_PROGRESS');
+    if (filterMode === 'READY_SUBMIT') return canRequestDone(g);
+    if (filterMode === 'AWAITING_VALIDATION') return g.tasks.some(t => t.status === 'AWAITING_VALIDATION');
+    return true;
+  });
 
   return (
     <View style={{ flex: 1 }}>
@@ -112,7 +138,7 @@ export const WorkerDashboardScreen: React.FC = () => {
       />
       <FlatList
         contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
-        data={groups.sort((a,b) => (b.orderId - a.orderId))}
+        data={displayedGroups.sort((a,b) => (b.orderId - a.orderId))}
         keyExtractor={g => String(g.orderId)}
         refreshControl={<RefreshControl refreshing={isRefetching || isLoading} onRefresh={refetch} />}
         ListHeaderComponent={(
@@ -148,25 +174,25 @@ export const WorkerDashboardScreen: React.FC = () => {
               </View>
             </View>
 
-            {/* Quick Actions */}
+            {/* Quick Actions (worker-focused) */}
             <View style={s.actionsSection}>
               <Text style={s.sectionTitle}>Aksi Cepat</Text>
-              <View style={s.actionsGrid}>
-                <TouchableOpacity style={s.actionButton} onPress={() => router.push('/my-orders?filter=aktif')}>
-                  <View style={s.actionIconBg}><Ionicons name="list" size={24} color={COLORS.yellow} /></View>
-                  <Text style={s.actionButtonText}>Order Aktif</Text>
+              <View style={s.actionsGridTiles}>
+                <TouchableOpacity style={s.actionTile} onPress={() => setFilterMode(filterMode==='NEED_ACCEPT'?'ALL':'NEED_ACCEPT')}>
+                  <View style={s.actionIconBg}><Ionicons name="play" size={22} color={COLORS.yellow} /></View>
+                  <Text style={s.actionTileText}>Perlu Diterima</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={s.actionButton} onPress={() => router.push('/history')}>
-                  <View style={s.actionIconBg}><Ionicons name="time" size={24} color={COLORS.yellow} /></View>
-                  <Text style={s.actionButtonText}>Riwayat</Text>
+                <TouchableOpacity style={s.actionTile} onPress={() => setFilterMode(filterMode==='IN_PROGRESS'?'ALL':'IN_PROGRESS')}>
+                  <View style={s.actionIconBg}><Ionicons name="construct-outline" size={22} color={COLORS.yellow} /></View>
+                  <Text style={s.actionTileText}>Sedang Dikerjakan</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={s.actionButton} onPress={() => router.push('/notification')}>
-                  <View style={s.actionIconBg}><Ionicons name="notifications" size={24} color={COLORS.yellow} /></View>
-                  <Text style={s.actionButtonText}>Notifikasi</Text>
+                <TouchableOpacity style={s.actionTile} onPress={() => setFilterMode(filterMode==='READY_SUBMIT'?'ALL':'READY_SUBMIT')}>
+                  <View style={s.actionIconBg}><Ionicons name="checkmark-done-circle" size={22} color={COLORS.yellow} /></View>
+                  <Text style={s.actionTileText}>Siap Ajukan</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={s.actionButton} onPress={() => router.push('/profile')}>
-                  <View style={s.actionIconBg}><Ionicons name="person" size={24} color={COLORS.yellow} /></View>
-                  <Text style={s.actionButtonText}>Profil</Text>
+                <TouchableOpacity style={s.actionTile} onPress={() => setFilterMode(filterMode==='AWAITING_VALIDATION'?'ALL':'AWAITING_VALIDATION')}>
+                  <View style={s.actionIconBg}><Ionicons name="hourglass-outline" size={22} color={COLORS.yellow} /></View>
+                  <Text style={s.actionTileText}>Menunggu Verifikasi</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -307,10 +333,10 @@ const s = StyleSheet.create({
   errorText: { color: COLORS.danger, marginBottom: 8 },
   empty: { color: COLORS.yellow, textAlign:'center', marginTop: 24 },
   actionsSection: { marginBottom: 16 },
-  actionsGrid: { flexDirection:'row', justifyContent:'space-between' },
-  actionButton: { alignItems:'center', minWidth: 70 },
-  actionIconBg: { backgroundColor: COLORS.brown, borderRadius: 14, padding: 12, marginBottom: 6 },
-  actionButtonText: { color: COLORS.gold, fontSize: 12, fontWeight:'700' },
+  actionsGridTiles: { flexDirection:'row', flexWrap:'wrap', justifyContent:'space-between', paddingHorizontal: 4 },
+  actionTile: { width: '48%', alignItems:'center', marginBottom: 12 },
+  actionIconBg: { backgroundColor: COLORS.brown, borderRadius: 16, padding: 12, marginBottom: 8, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } },
+  actionTileText: { color: COLORS.gold, fontSize: 12, fontWeight:'700', textAlign:'center' },
   sectionHeader: { flexDirection:'row', alignItems:'center', gap: 8, marginBottom: 8 },
   sectionTitle: { color: COLORS.gold, fontSize: 18, fontWeight:'800' },
   activityItem: { flexDirection:'row', alignItems:'center', backgroundColor: COLORS.card, borderRadius: 12, padding: 12, borderWidth:1, borderColor: COLORS.border, marginBottom: 8 },
