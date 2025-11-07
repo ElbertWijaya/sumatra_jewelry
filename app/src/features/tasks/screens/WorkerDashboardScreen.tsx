@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, ScrollView, Alert } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@lib/api/client';
 import { useAuth } from '@lib/context/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 
 const COLORS = { gold:'#FFD700', yellow:'#ffe082', dark:'#181512', card:'#23201c', border:'#4e3f2c', danger:'#c62828', success:'#2e7d32', brown:'#4E342E', white:'#ffffff' };
@@ -52,9 +53,15 @@ export const WorkerDashboardScreen: React.FC = () => {
     queryKey: ['tasks','active'],
     queryFn: () => api.tasks.list(token || '') as Promise<Task[]>,
     enabled: !!token,
-    refetchInterval: 12000,
+    refetchInterval: 6000,
     refetchOnWindowFocus: true,
+    staleTime: 0,
   });
+
+  // Ensure numbers refresh as soon as user returns to this screen
+  useFocusEffect(React.useCallback(() => {
+    if (token) refetch();
+  }, [token, refetch]));
 
   const tasks = Array.isArray(data) ? data : [];
   const mine = tasks.filter(t => String(t.assignedToId || '') === String(userId || ''));
@@ -87,10 +94,15 @@ export const WorkerDashboardScreen: React.FC = () => {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['tasks','active'] }); },
   });
 
-  // Metrics
-  const countAssigned = mine.filter(t => t.status === 'ASSIGNED').length;
-  const countInProgress = mine.filter(t => t.status === 'IN_PROGRESS').length;
-  const countAwaiting = mine.filter(t => t.status === 'AWAITING_VALIDATION').length;
+  // Metrics (order-level counts)
+  const orderCountBy = (pred: (t: Task)=> boolean) => {
+    const set = new Set<number>();
+    mine.forEach(t => { if (pred(t)) set.add(t.orderId); });
+    return set.size;
+  };
+  const countAssigned = orderCountBy(t => t.status === 'ASSIGNED');
+  const countInProgress = orderCountBy(t => t.status === 'IN_PROGRESS');
+  const countAwaiting = orderCountBy(t => t.status === 'AWAITING_VALIDATION');
 
   const canRequestDone = (group: { tasks: Task[] }) => {
     const hasAssigned = group.tasks.some(t => t.status === 'ASSIGNED');
@@ -160,39 +172,84 @@ export const WorkerDashboardScreen: React.FC = () => {
 
             {/* Metrics strip */}
             <View style={s.metricsRow}>
-              <View style={s.metricCard}>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => router.push('/worker/assigned')}
+                style={[s.metricCard]}
+              >
                 <View style={s.metricHeader}><MaterialCommunityIcons name="account-tie" size={18} color={COLORS.gold} /><Text style={s.metricLabel}>Ditugaskan</Text></View>
                 <Text style={s.metricValue}>{countAssigned}</Text>
-              </View>
-              <View style={s.metricCard}>
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => router.push('/worker/in-progress')}
+                style={[s.metricCard]}
+              >
                 <View style={s.metricHeader}><Ionicons name="construct-outline" size={18} color={COLORS.gold} /><Text style={s.metricLabel}>Dalam Proses</Text></View>
                 <Text style={s.metricValue}>{countInProgress}</Text>
-              </View>
-              <View style={s.metricCard}>
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => router.push('/worker/awaiting-validation')}
+                style={[s.metricCard]}
+              >
                 <View style={s.metricHeader}><Ionicons name="checkmark-done-outline" size={18} color={COLORS.gold} /><Text style={s.metricLabel}>Verifikasi</Text></View>
                 <Text style={s.metricValue}>{countAwaiting}</Text>
-              </View>
+              </TouchableOpacity>
             </View>
 
             {/* Quick Actions (worker-focused) */}
             <View style={s.actionsSection}>
               <Text style={s.sectionTitle}>Aksi Cepat</Text>
               <View style={s.actionsGridTiles}>
-                <TouchableOpacity style={s.actionTile} onPress={() => setFilterMode(filterMode==='NEED_ACCEPT'?'ALL':'NEED_ACCEPT')}>
+                <TouchableOpacity
+                  style={[s.actionTile, (countAssigned===0) && s.disabledTile]}
+                  disabled={countAssigned===0 || mAcceptMine.isPending}
+                  onPress={() => {
+                    // Accept All for first order that has ASSIGNED
+                    const target = groups.find(g => g.tasks.some(t => t.status==='ASSIGNED'));
+                    if (!target) { Alert.alert('Tidak ada','Tidak ada tugas yang perlu diterima.'); return; }
+                    mAcceptMine.mutate(target.orderId);
+                  }}
+                >
                   <View style={s.actionIconBg}><Ionicons name="play" size={22} color={COLORS.yellow} /></View>
-                  <Text style={s.actionTileText}>Perlu Diterima</Text>
+                  <Text style={s.actionTileText}>Terima Semua</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={s.actionTile} onPress={() => setFilterMode(filterMode==='IN_PROGRESS'?'ALL':'IN_PROGRESS')}>
-                  <View style={s.actionIconBg}><Ionicons name="construct-outline" size={22} color={COLORS.yellow} /></View>
-                  <Text style={s.actionTileText}>Sedang Dikerjakan</Text>
+
+                <TouchableOpacity
+                  style={[s.actionTile, (countAssigned===0) && s.disabledTile]}
+                  disabled={countAssigned===0 || mStart.isPending}
+                  onPress={() => {
+                    // Start Next: pick first ASSIGNED task id asc
+                    const next = mine.filter(t => t.status==='ASSIGNED').sort((a,b)=>a.id-b.id)[0];
+                    if (!next) { Alert.alert('Tidak ada','Tidak ada tugas ASSIGNED untuk dimulai.'); return; }
+                    mStart.mutate(next.id);
+                  }}
+                >
+                  <View style={s.actionIconBg}><Ionicons name="flash" size={22} color={COLORS.yellow} /></View>
+                  <Text style={s.actionTileText}>Mulai Berikutnya</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={s.actionTile} onPress={() => setFilterMode(filterMode==='READY_SUBMIT'?'ALL':'READY_SUBMIT')}>
+
+                <TouchableOpacity
+                  style={[s.actionTile, (countReadySubmit===0) && s.disabledTile]}
+                  disabled={countReadySubmit===0 || mRequestDoneMine.isPending}
+                  onPress={() => {
+                    // Request Done for first ready order
+                    const ready = groups.find(g => canRequestDone(g));
+                    if (!ready) { Alert.alert('Belum siap','Belum ada order yang siap diajukan.'); return; }
+                    mRequestDoneMine.mutate(ready.orderId);
+                  }}
+                >
                   <View style={s.actionIconBg}><Ionicons name="checkmark-done-circle" size={22} color={COLORS.yellow} /></View>
-                  <Text style={s.actionTileText}>Siap Ajukan</Text>
+                  <Text style={s.actionTileText}>Ajukan Selesai</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={s.actionTile} onPress={() => setFilterMode(filterMode==='AWAITING_VALIDATION'?'ALL':'AWAITING_VALIDATION')}>
-                  <View style={s.actionIconBg}><Ionicons name="hourglass-outline" size={22} color={COLORS.yellow} /></View>
-                  <Text style={s.actionTileText}>Menunggu Verifikasi</Text>
+
+                <TouchableOpacity
+                  style={s.actionTile}
+                  onPress={() => router.push('/my-orders')}
+                >
+                  <View style={s.actionIconBg}><Ionicons name="qr-code" size={22} color={COLORS.yellow} /></View>
+                  <Text style={s.actionTileText}>Scan Order</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -327,6 +384,7 @@ const s = StyleSheet.create({
   rolePillText: { color: COLORS.dark, fontWeight:'900', fontSize: 10, letterSpacing: 1 },
   metricsRow: { flexDirection:'row', gap: 10, marginBottom: 16 },
   metricCard: { flex:1, backgroundColor: COLORS.card, borderRadius: 12, padding: 12, borderWidth:1, borderColor: COLORS.border },
+  metricActive: { borderColor: COLORS.gold, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
   metricHeader: { flexDirection:'row', alignItems:'center', gap: 6, marginBottom: 8 },
   metricLabel: { color: COLORS.yellow, fontWeight:'700', fontSize: 12 },
   metricValue: { color: COLORS.gold, fontSize: 24, fontWeight:'800' },
@@ -337,6 +395,7 @@ const s = StyleSheet.create({
   actionTile: { width: '48%', alignItems:'center', marginBottom: 12 },
   actionIconBg: { backgroundColor: COLORS.brown, borderRadius: 16, padding: 12, marginBottom: 8, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } },
   actionTileText: { color: COLORS.gold, fontSize: 12, fontWeight:'700', textAlign:'center' },
+  disabledTile: { opacity: 0.5 },
   sectionHeader: { flexDirection:'row', alignItems:'center', gap: 8, marginBottom: 8 },
   sectionTitle: { color: COLORS.gold, fontSize: 18, fontWeight:'800' },
   activityItem: { flexDirection:'row', alignItems:'center', backgroundColor: COLORS.card, borderRadius: 12, padding: 12, borderWidth:1, borderColor: COLORS.border, marginBottom: 8 },

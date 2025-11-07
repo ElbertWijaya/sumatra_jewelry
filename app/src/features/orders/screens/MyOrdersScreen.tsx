@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, TextInput, ScrollView, Image, Modal } from 'react-native';
+import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, TextInput, ScrollView, Image, Modal, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { api, API_URL } from '@lib/api/client';
 import { useAuth } from '@lib/context/AuthContext';
 import { OrderActionsModal } from './OrderActionsModal';
+import { OrderVerificationModal } from './OrderVerificationModal';
 
 const COLORS = { gold:'#FFD700', yellow:'#ffe082', dark:'#181512', card:'#23201c', border:'#4e3f2c' };
 
@@ -31,7 +32,7 @@ function isActiveStatus(status?: string | null) {
 }
 
 export const MyOrdersScreen: React.FC = () => {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const { filter } = useLocalSearchParams();
   const { data, error, isLoading, refetch, isRefetching } = useQuery<Order[]>({
     queryKey: ['orders','inprogress'],
@@ -46,6 +47,19 @@ export const MyOrdersScreen: React.FC = () => {
   const [filterOpen, setFilterOpen] = React.useState(false);
   type StatusFilter = 'SEMUA' | 'AKTIF' | 'DITUGASKAN' | 'SELESAI' | 'VERIFIKASI' | 'BATAL';
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('AKTIF');
+
+  // When filtering VERIFIKASI, compute orders that have tasks awaiting validation (task-level)
+  const { data: tasksData } = useQuery<any[]>({
+    queryKey: ['tasks','for-verification'],
+    queryFn: async () => (api.tasks.list(token || '') as unknown) as Promise<any[]>,
+    enabled: !!token && statusFilter === 'VERIFIKASI',
+    refetchInterval: statusFilter === 'VERIFIKASI' ? 12000 : false,
+  });
+  const verifOrderIds = React.useMemo(() => {
+    if (!Array.isArray(tasksData)) return new Set<number>();
+    const mine = tasksData.filter(t => String(t?.status || '').toUpperCase() === 'AWAITING_VALIDATION');
+    return new Set<number>(mine.map(t => Number(t.orderId)).filter(Boolean));
+  }, [tasksData]);
 
   React.useEffect(() => {
     if (filter) {
@@ -74,8 +88,8 @@ export const MyOrdersScreen: React.FC = () => {
         return s === 'ASSIGNED' || s === 'DITERIMA';
       }
       if (statusFilter === 'VERIFIKASI') {
-        const s = String(o.status || '').toUpperCase();
-        return s === 'AWAITING_VALIDATION';
+        // Show orders that have tasks awaiting validation
+        return verifOrderIds.has(Number(o.id));
       }
       const s = String(o.status || '').toUpperCase();
       if (statusFilter === 'SELESAI') return s === 'DONE' || s === 'SELESAI';
@@ -93,6 +107,8 @@ export const MyOrdersScreen: React.FC = () => {
 
   const [selected, setSelected] = React.useState<Order | null>(null);
   const [open, setOpen] = React.useState(false);
+  const [verifOpen, setVerifOpen] = React.useState(false);
+  const [verifOrderId, setVerifOrderId] = React.useState<number | null>(null);
   const router = useRouter();
 
   const badgeStyleFor = (status?: string | null) => {
@@ -261,6 +277,24 @@ export const MyOrdersScreen: React.FC = () => {
                   </Text>
                 </View>
               </View>
+              {/* Verification CTA when in VERIFIKASI filter and user is SALES/ADMIN */}
+              {statusFilter === 'VERIFIKASI' && (() => {
+                const role = String(user?.jobRole || user?.role || '').toUpperCase();
+                const canVerify = role === 'SALES' || role === 'ADMINISTRATOR';
+                if (!canVerify) return null;
+                if (!verifOrderIds.has(Number(item.id))) return null;
+                return (
+                  <View style={{ flexDirection:'row', justifyContent:'flex-end', marginTop: 10 }}>
+                    <TouchableOpacity
+                      onPress={() => { setVerifOrderId(Number(item.id)); setVerifOpen(true); }}
+                      style={styles.verifyBtn}
+                    >
+                      <Ionicons name='checkmark-done' size={14} color={'#1b1b1b'} />
+                      <Text style={styles.verifyBtnText}>Verifikasi</Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })()}
             </View>
           </TouchableOpacity>
         )}
@@ -290,6 +324,14 @@ export const MyOrdersScreen: React.FC = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Verification Modal */}
+      <OrderVerificationModal
+        visible={verifOpen}
+        orderId={verifOrderId}
+        onClose={() => { setVerifOpen(false); setVerifOrderId(null); }}
+        onChanged={() => refetch()}
+      />
     </View>
   );
 };
@@ -357,6 +399,8 @@ const styles = StyleSheet.create({
   dateSection: { flexDirection:'row', alignItems:'stretch', gap: 10 },
   vLine: { width: StyleSheet.hairlineWidth, backgroundColor: 'rgba(255,215,0,0.16)' },
   stoneInfo: { color:'#bfae6a', fontSize:11, marginTop:2 },
+  verifyBtn: { flexDirection:'row', alignItems:'center', gap:6, backgroundColor: COLORS.gold, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
+  verifyBtnText: { color:'#1b1b1b', fontWeight:'800' },
   thumbWrap: { width: 56, height: 56, borderRadius: 10, overflow: 'hidden', backgroundColor: '#222', borderWidth: 1, borderColor: COLORS.border },
   thumbImg: { width: 56, height: 56, resizeMode: 'cover' },
   thumbPlaceholder: { flex:1, alignItems:'center', justifyContent:'center', backgroundColor:'#23201c' },
