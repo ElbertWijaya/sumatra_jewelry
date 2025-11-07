@@ -67,8 +67,7 @@ export default function TabLayout() {
   <Tabs.Screen name="history" options={{ title: 'History', tabBarIcon: ({ color, size }: TabBarIconProps) => (<Ionicons name="time" size={size} color={color} />) }} />
   <Tabs.Screen name="notification" options={{ title: 'Notification', tabBarIcon: ({ color, size }: TabBarIconProps) => (<Ionicons name="notifications" size={size} color={color} />) }} />
   <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: ({ color, size }: TabBarIconProps) => (<Ionicons name="person" size={size} color={color} />) }} />
-      {/* Explicitly hide tasks route from tab bar if file exists */}
-      <Tabs.Screen name="tasks" options={{ href: null }} />
+      {/* removed extraneous 'tasks' screen declaration (no matching file) */}
     </Tabs>
   );
 }

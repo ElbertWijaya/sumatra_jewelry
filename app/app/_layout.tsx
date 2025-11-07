@@ -95,8 +95,8 @@ const Gate: React.FC<{children: React.ReactNode}> = ({ children }) => {
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
   return (
-    <AuthProvider>
-      <QueryClientProvider client={qc}>
+    <QueryClientProvider client={qc}>
+      <AuthProvider>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           <Gate>
             <Stack>
@@ -105,7 +105,7 @@ function RootLayoutNav() {
             </Stack>
           </Gate>
         </ThemeProvider>
-      </QueryClientProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }

@@ -30,6 +30,8 @@ const COLORS = {
 
 export default function HomeScreen() {
   const { user, token } = useAuth();
+  // Optional: Realtime status indicator can be used later if needed
+  // const realtimeStatus = (useAuth() as any).realtimeStatus as 'connected'|'connecting'|'disconnected'|'error' | undefined;
   const { width, height } = Dimensions.get('window');
   const router = useRouter();
   // Fetch orders for order-level indicators
