@@ -42,13 +42,7 @@ export const MyOrdersScreen: React.FC = () => {
     refetchOnWindowFocus: true,
   });
   const allOrders = Array.isArray(data) ? data : [];
-  // DEV: also fetch dashboard stats to compare indicator vs list when needed
-  const { data: dashStats } = useQuery<any>({
-    queryKey: ['dashboard','stats','dev'],
-    queryFn: () => api.dashboard.stats(token || ''),
-    enabled: !!token && __DEV__,
-    staleTime: 0,
-  });
+  
 
   const [query, setQuery] = React.useState('');
   const [filterOpen, setFilterOpen] = React.useState(false);
@@ -81,42 +75,6 @@ export const MyOrdersScreen: React.FC = () => {
     return set;
   }, [allOrders]);
 
-  // Extra debug: status histograms for tasks and orders
-  const tasksStatusHistogram = React.useMemo(() => {
-    const h: Record<string, number> = {};
-    if (Array.isArray(tasksData)) {
-      for (const t of tasksData) {
-        const s = String(t?.status || 'UNKNOWN').toUpperCase();
-        h[s] = (h[s] || 0) + 1;
-      }
-    }
-    return h;
-  }, [tasksData]);
-  const tasksDebugList = React.useMemo(() => {
-    if (!Array.isArray(tasksData)) return [] as any[];
-    return tasksData.slice(0, 50).map(t => ({ id: t?.id, orderId: t?.orderId, status: String(t?.status || '').toUpperCase() }));
-  }, [tasksData]);
-  const ordersStatusHistogram = React.useMemo(() => {
-    const h: Record<string, number> = {};
-    for (const o of allOrders) {
-      const s = String(o?.status || 'UNKNOWN').toUpperCase();
-      h[s] = (h[s] || 0) + 1;
-    }
-    return h;
-  }, [allOrders]);
-
-  React.useEffect(() => {
-    if (__DEV__ && statusFilter === 'DITUGASKAN') {
-      console.log('[DEBUG][MyOrders] tasks status histogram =', tasksStatusHistogram);
-      console.log('[DEBUG][MyOrders] orders status histogram =', ordersStatusHistogram);
-      const assignedTaskOrderIds = Array.from(assignedOrderIds.values());
-      console.log('[DEBUG][MyOrders] tasks->ASSIGNED orderIds =', assignedTaskOrderIds);
-      const byOrderStatusIds = Array.from(assignedOrderIdsByOrderStatus.values());
-      console.log('[DEBUG][MyOrders] orders.status in {ASSIGNED,DITERIMA} ids =', byOrderStatusIds);
-      console.log('[DEBUG][MyOrders] dashboard.indicator =', dashStats?.ditugaskan?.count);
-      console.log('[DEBUG][MyOrders] first tasks snapshot =', tasksDebugList);
-    }
-  }, [statusFilter, tasksStatusHistogram, ordersStatusHistogram, assignedOrderIds, assignedOrderIdsByOrderStatus, dashStats, tasksDebugList]);
 
   React.useEffect(() => {
     if (filter) {
@@ -241,30 +199,7 @@ export const MyOrdersScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {__DEV__ && (
-        <View style={{ marginBottom: 6 }}>
-          {statusFilter === 'DITUGASKAN' && (
-            <>
-              <Text style={{ color:'#9f8f5a', fontSize:10 }}>
-                DEBUG Ditugaskan:
-                tasks.len={String(Array.isArray(tasksData) ? tasksData.length : 0)};
-                byTasks.assigned.orders={String(assignedOrderIds.size)};
-                byOrderStatus.orders={String(assignedOrderIdsByOrderStatus.size)};
-                listCount={String(filtered.length)}
-              </Text>
-              <Text style={{ color:'#9f8f5a', fontSize:10 }}>
-                dashboard.indicator={(dashStats?.ditugaskan?.count ?? 'n/a')}
-              </Text>
-              <Text style={{ color:'#9f8f5a', fontSize:10 }}>
-                tasks.hist={JSON.stringify(tasksStatusHistogram)}; orders.hist={JSON.stringify(ordersStatusHistogram)}
-              </Text>
-              <Text style={{ color:'#9f8f5a', fontSize:10 }}>
-                tasks.sample={tasksDebugList.map(x=>`{id:${x.id},o:${x.orderId},s:${x.status}}`).join(' ')}
-              </Text>
-            </>
-          )}
-        </View>
-      )}
+      {/* debug overlays removed */}
       {/* Search and Filters */}
       <View style={styles.searchWrap}>
         <Ionicons name="search" size={16} color={COLORS.gold} style={{marginLeft:10, marginRight:6}} />

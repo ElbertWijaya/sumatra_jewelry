@@ -80,9 +80,7 @@ export default function HomeScreen() {
     verifikasi: { count: countVerifikasi, change: 0 },
   } as const;
 
-  if (__DEV__) {
-    console.log('[DEBUG][Home][orders] total=', allOrders.length, 'aktif=', countAktif, 'ditugaskan=', countDitugaskan, 'selesai=', countSelesai);
-  }
+  // Debug removed: indicators now purely computed client-side from orders list.
 
   const isWorkerRole = React.useMemo(() => {
     const r = String(user?.jobRole || user?.job_role || '').toUpperCase();
@@ -121,58 +119,49 @@ export default function HomeScreen() {
           </LinearGradient>
         </View>
 
-        {/* Stats Strip */}
-        <View style={s.statsStrip}>
-          <Text style={s.statsTitle}>Business Overview</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.statsContainer}>
-            <TouchableOpacity style={s.statItem} onPress={() => router.push('/my-orders?filter=aktif')}>
-              <View style={s.statHeader}>
-                <MaterialCommunityIcons name="diamond-stone" size={24} color={COLORS.gold} />
-                <Text style={s.statMetric}>Aktif</Text>
+        {/* Stats Grid (Redesigned 2x2 uniform cards) */}
+        <View style={s.statsSection}>
+          <View style={s.statsHeaderRow}>
+            <Text style={s.statsTitle}>Business Overview</Text>
+          </View>
+          <View style={s.statGrid}>
+            <TouchableOpacity style={s.statTile} activeOpacity={0.85} onPress={() => router.push('/my-orders?filter=aktif')}>
+              <View style={s.tileTopRow}>
+                <View style={s.iconBadge}><MaterialCommunityIcons name="diamond-stone" size={18} color={COLORS.gold} /></View>
+                <Text style={s.tileLabel}>Aktif</Text>
               </View>
-              <Text style={s.statValue}>{stats.aktif.count}</Text>
-              <View style={s.statProgress}>
-                <View style={[s.statProgressBar, {width: `${Math.min((stats.aktif.count / 10) * 100, 100)}%`}]} />
-              </View>
-              <Text style={s.statChange}>{stats.aktif.change > 0 ? '+' : ''}{stats.aktif.change} hari ini</Text>
+              <Text style={s.tileValue}>{stats.aktif.count}</Text>
+              <View style={s.tileBar}><View style={[s.tileBarFill, { width: `${Math.min((stats.aktif.count/10)*100,100)}%` }]} /></View>
+              <Text style={s.tileMeta}>{stats.aktif.change > 0 ? '+' : ''}{stats.aktif.change} hari ini</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={s.statItem} onPress={() => router.push('/my-orders?filter=ditugaskan')}>
-              <View style={s.statHeader}>
-                <MaterialCommunityIcons name="account-tie" size={24} color={COLORS.gold} />
-                <Text style={s.statMetric}>Ditugaskan</Text>
+            <TouchableOpacity style={s.statTile} activeOpacity={0.85} onPress={() => router.push('/my-orders?filter=ditugaskan')}>
+              <View style={s.tileTopRow}>
+                <View style={s.iconBadge}><MaterialCommunityIcons name="account-tie" size={18} color={COLORS.gold} /></View>
+                <Text style={s.tileLabel}>Ditugaskan</Text>
               </View>
-              <Text style={s.statValue}>{stats.ditugaskan.count}</Text>
-              <View style={s.statProgress}>
-                <View style={[s.statProgressBar, {width: `${Math.min((stats.ditugaskan.count / 10) * 100, 100)}%`}]} />
-              </View>
-              <Text style={s.statChange}>{stats.ditugaskan.change > 0 ? '+' : ''}{stats.ditugaskan.change} hari ini</Text>
-              {__DEV__ && (
-                <Text style={s.debugText}>dbg: ditugaskan={String(stats.ditugaskan.count)}</Text>
-              )}
+              <Text style={s.tileValue}>{stats.ditugaskan.count}</Text>
+              <View style={s.tileBar}><View style={[s.tileBarFill, { width: `${Math.min((stats.ditugaskan.count/10)*100,100)}%` }]} /></View>
+              <Text style={s.tileMeta}>{stats.ditugaskan.change > 0 ? '+' : ''}{stats.ditugaskan.change} hari ini</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={s.statItem} onPress={() => router.push('/my-orders?filter=selesai')}>
-              <View style={s.statHeader}>
-                <MaterialCommunityIcons name="check-circle-outline" size={24} color={COLORS.gold} />
-                <Text style={s.statMetric}>Selesai</Text>
+            <TouchableOpacity style={s.statTile} activeOpacity={0.85} onPress={() => router.push('/my-orders?filter=selesai')}>
+              <View style={s.tileTopRow}>
+                <View style={s.iconBadge}><MaterialCommunityIcons name="check-circle-outline" size={18} color={COLORS.gold} /></View>
+                <Text style={s.tileLabel}>Selesai</Text>
               </View>
-              <Text style={s.statValue}>{stats.selesai.count}</Text>
-              <View style={s.statProgress}>
-                <View style={[s.statProgressBar, {width: `${Math.min((stats.selesai.count / 10) * 100, 100)}%`}]} />
-              </View>
-              <Text style={s.statChange}>{stats.selesai.change > 0 ? '+' : ''}{stats.selesai.change} hari ini</Text>
+              <Text style={s.tileValue}>{stats.selesai.count}</Text>
+              <View style={s.tileBar}><View style={[s.tileBarFill, { width: `${Math.min((stats.selesai.count/10)*100,100)}%` }]} /></View>
+              <Text style={s.tileMeta}>{stats.selesai.change > 0 ? '+' : ''}{stats.selesai.change} hari ini</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={s.statItem} onPress={() => router.push('/my-orders?filter=verifikasi')}>
-              <View style={s.statHeader}>
-                <Ionicons name="checkmark-circle-outline" size={24} color={COLORS.gold} />
-                <Text style={s.statMetric}>Verifikasi</Text>
+            <TouchableOpacity style={s.statTile} activeOpacity={0.85} onPress={() => router.push('/my-orders?filter=verifikasi')}>
+              <View style={s.tileTopRow}>
+                <View style={s.iconBadge}><Ionicons name="checkmark-done-circle" size={18} color={COLORS.gold} /></View>
+                <Text style={s.tileLabel}>Verifikasi</Text>
               </View>
-              <Text style={s.statValue}>{stats.verifikasi.count}</Text>
-              <View style={s.statProgress}>
-                <View style={[s.statProgressBar, {width: `${Math.min((stats.verifikasi.count / 10) * 100, 100)}%`}]} />
-              </View>
-              <Text style={s.statChange}>{stats.verifikasi.change > 0 ? '+' : ''}{stats.verifikasi.change} hari ini</Text>
+              <Text style={s.tileValue}>{stats.verifikasi.count}</Text>
+              <View style={s.tileBar}><View style={[s.tileBarFill, { width: `${Math.min((stats.verifikasi.count/10)*100,100)}%` }]} /></View>
+              <Text style={s.tileMeta}>{stats.verifikasi.change > 0 ? '+' : ''}{stats.verifikasi.change} hari ini</Text>
             </TouchableOpacity>
-          </ScrollView>
+          </View>
         </View>
 
         {/* Quick Actions */}
@@ -240,16 +229,19 @@ const s = StyleSheet.create({
   heroName: { color: COLORS.white, fontSize: 26, fontWeight: '700', marginTop: 4 },
   heroSubtitle: { color: COLORS.white, fontSize: 14, fontWeight: '400', opacity: 0.8, marginTop: 6 },
   heroDecoration: { position: 'absolute', right: 16, top: 16 },
-  statsStrip: { marginBottom: 28 },
-  statsTitle: { color: COLORS.gold, fontSize: 18, fontWeight: '700', marginBottom: 12, marginLeft: 16 },
-  statsContainer: { paddingHorizontal: 16, gap: 12 },
-  statItem: { backgroundColor: COLORS.card, borderRadius: 16, padding: 16, minWidth: 110, borderWidth: 1, borderColor: COLORS.border, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
-  statHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  statMetric: { color: COLORS.yellow, fontSize: 12, fontWeight: '500', marginLeft: 6 },
-  statValue: { color: COLORS.gold, fontSize: 26, fontWeight: 'bold', marginBottom: 6 },
-  statProgress: { width: '100%', height: 4, backgroundColor: COLORS.border, borderRadius: 2, marginBottom: 6 },
-  statProgressBar: { height: '100%', backgroundColor: COLORS.gold, borderRadius: 2 },
-  statChange: { color: COLORS.yellow, fontSize: 10, fontWeight: '500' },
+  // Redesigned stats grid styles
+  statsSection: { marginBottom: 28 },
+  statsHeaderRow: { flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom: 12, paddingHorizontal:16 },
+  statsTitle: { color: COLORS.gold, fontSize: 18, fontWeight: '700' },
+  statGrid: { flexDirection:'row', flexWrap:'wrap', justifyContent:'space-between', paddingHorizontal:16 },
+  statTile: { width: '48%', backgroundColor: COLORS.card, borderRadius: 18, padding: 14, marginBottom: 14, borderWidth:1, borderColor: COLORS.border, shadowColor:'#000', shadowOpacity:0.08, shadowRadius:6, shadowOffset:{width:0,height:2} },
+  tileTopRow: { flexDirection:'row', alignItems:'center', marginBottom: 8, gap:8 },
+  iconBadge: { backgroundColor: '#2b2522', padding:8, borderRadius:12, borderWidth:1, borderColor:'rgba(255,215,0,0.18)' },
+  tileLabel: { color: COLORS.yellow, fontSize: 12, fontWeight:'700', letterSpacing:0.3 },
+  tileValue: { color: COLORS.gold, fontSize: 28, fontWeight:'800', marginBottom: 6 },
+  tileBar: { height: 5, backgroundColor:'rgba(255,215,0,0.18)', borderRadius: 999, overflow:'hidden', marginBottom:6 },
+  tileBarFill: { height:'100%', backgroundColor: COLORS.gold },
+  tileMeta: { color: '#bfae6a', fontSize: 11, fontWeight:'600' },
   actionsSection: { marginBottom: 28 },
   sectionTitle: { color: COLORS.gold, fontSize: 20, fontWeight: '700', marginBottom: 16, marginLeft: 16 },
   actionsGrid: { flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: 16 },
@@ -267,5 +259,5 @@ const s = StyleSheet.create({
   tipsHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   tipsTitle: { color: COLORS.gold, fontSize: 18, fontWeight: '700', marginLeft: 8 },
   tipsText: { color: COLORS.gold, fontSize: 14, fontStyle: 'italic', lineHeight: 20 },
-  debugText: { color: '#9f8f5a', fontSize: 10, marginTop: 4 },
+  // debugText removed
 });
