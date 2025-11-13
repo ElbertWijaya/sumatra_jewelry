@@ -10,7 +10,7 @@ import { useAuth } from '@lib/context/AuthContext';
 const COLORS = { gold:'#FFD700', yellow:'#ffe082', dark:'#181512', card:'#23201c', border:'#4e3f2c' };
 
 export const OrderDetailScreen: React.FC = () => {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, src, fromWorker } = useLocalSearchParams<{ id: string; src?: string; fromWorker?: string }>();
   const { token } = useAuth();
   const router = useRouter();
   const orderId = Number(id);
@@ -52,8 +52,11 @@ export const OrderDetailScreen: React.FC = () => {
     return p.startsWith('/uploads') ? base + p : p;
   };
 
-  // Tabs state: 'detail' | 'verif'
+  // Determine if accessed from worker context (hide verification tab)
+  const isWorkerView = React.useMemo(() => (src === 'worker' || fromWorker === '1'), [src, fromWorker]);
+  // Tabs state: 'detail' | 'verif' (force to detail for worker view)
   const [tab, setTab] = React.useState<'detail'|'verif'>('detail');
+  React.useEffect(() => { if (isWorkerView && tab !== 'detail') setTab('detail'); }, [isWorkerView, tab]);
 
   // Edit modal state
   const [editOpen, setEditOpen] = React.useState(false);
@@ -108,11 +111,11 @@ export const OrderDetailScreen: React.FC = () => {
     onSuccess: () => { setAssignOpen(false); setSelectedSubtasks([]); setAssignRole(''); setAssignUserId(''); queryClient.invalidateQueries({ queryKey: ['tasks','order', orderId] }); },
   });
 
-  // Verification tab query
+  // Verification tab query (disabled for worker view)
   const { data: verifData, refetch: refetchVerif } = useQuery({
     queryKey: ['order-verif', orderId],
     queryFn: () => api.tasks.awaitingValidation(token || '', orderId),
-    enabled: !!token && !!orderId,
+    enabled: !isWorkerView && !!token && !!orderId,
     refetchInterval: 8000,
   });
   const { data: tasksByOrder, refetch: refetchTasksByOrder } = useQuery({
@@ -195,9 +198,11 @@ export const OrderDetailScreen: React.FC = () => {
           <TouchableOpacity onPress={() => setTab('detail')} style={[styles.tabItem, tab==='detail' && styles.tabItemActive]}>
             <Text style={[styles.tabText, tab==='detail' && styles.tabTextActive]}>Detail Pesanan</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => setTab('verif')} style={[styles.tabItem, tab==='verif' && styles.tabItemActive]}>
-            <Text style={[styles.tabText, tab==='verif' && styles.tabTextActive]}>Verifikasi Pekerja</Text>
-          </TouchableOpacity>
+          {!isWorkerView && (
+            <TouchableOpacity onPress={() => setTab('verif')} style={[styles.tabItem, tab==='verif' && styles.tabItemActive]}>
+              <Text style={[styles.tabText, tab==='verif' && styles.tabTextActive]}>Verifikasi Pekerja</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {tab === 'detail' && (
@@ -206,19 +211,21 @@ export const OrderDetailScreen: React.FC = () => {
           <Ionicons name="refresh" size={14} color={COLORS.gold} style={{ marginRight:6 }} />
           <Text style={styles.inlineRefreshText}>Refresh</Text>
         </TouchableOpacity>
-        <View style={styles.assignWrap}>
-          {activeAssignee ? (
-            <View style={styles.assigneeInfo}>
-              <MaterialCommunityIcons name="account-hard-hat-outline" size={16} color={'#1b1b1b'} style={{ marginRight:6 }} />
-              <Text style={styles.assigneeText}>Sedang dikerjakan oleh {activeAssignee.name}</Text>
-            </View>
-          ) : (
-            <TouchableOpacity onPress={() => setAssignOpen(true)} style={styles.assignBtnPrimary}>
-              <MaterialCommunityIcons name="account-plus-outline" size={16} color={'#1b1b1b'} style={{ marginRight:6 }} />
-              <Text style={styles.assignBtnTextDark}>Assign Pekerjaan</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        {!isWorkerView && (
+          <View style={styles.assignWrap}>
+            {activeAssignee ? (
+              <View style={styles.assigneeInfo}>
+                <MaterialCommunityIcons name="account-hard-hat-outline" size={16} color={'#1b1b1b'} style={{ marginRight:6 }} />
+                <Text style={styles.assigneeText}>Sedang dikerjakan oleh {activeAssignee.name}</Text>
+              </View>
+            ) : (
+              <TouchableOpacity onPress={() => setAssignOpen(true)} style={styles.assignBtnPrimary}>
+                <MaterialCommunityIcons name="account-plus-outline" size={16} color={'#1b1b1b'} style={{ marginRight:6 }} />
+                <Text style={styles.assignBtnTextDark}>Assign Pekerjaan</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
 
         <View style={styles.card}>
           <Text style={styles.title}>Informasi Customer</Text>
@@ -312,7 +319,7 @@ export const OrderDetailScreen: React.FC = () => {
         </>
         )}
 
-        {tab === 'verif' && (
+  {!isWorkerView && tab === 'verif' && (
           <View style={styles.card}>
             <Text style={styles.title}>Menunggu Verifikasi</Text>
             <View style={styles.divider} />
