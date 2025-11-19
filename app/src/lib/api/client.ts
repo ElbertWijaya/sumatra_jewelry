@@ -117,5 +117,26 @@ export const api = {
   },
   dashboard: {
     stats: (token: string) => request('/dashboard/stats', { headers: { Authorization: `Bearer ${token}` } }),
+  },
+  inventory: {
+    get: (token: string, id: number) => request(`/inventory/${id}`, { headers: { Authorization: `Bearer ${token}` } }),
+    listByOrder: (token: string, orderId: number) => request(`/inventory?orderId=${orderId}`, { headers: { Authorization: `Bearer ${token}` } }),
+    search: (token: string, params?: { q?: string; category?: string; status?: string; dateFrom?: string; dateTo?: string; limit?: number; offset?: number }) => {
+      const p = new URLSearchParams();
+      if (params?.q) p.set('q', params.q);
+      if (params?.category) p.set('category', params.category);
+      if (params?.status) p.set('status', params.status);
+      if (params?.dateFrom) p.set('dateFrom', params.dateFrom);
+      if (params?.dateTo) p.set('dateTo', params.dateTo);
+      if (params?.limit != null) p.set('limit', String(params.limit));
+      if (params?.offset != null) p.set('offset', String(params.offset));
+      const qs = p.toString();
+      const path = `/inventory/items/search/all${qs ? `?${qs}` : ''}`;
+      return request(path, { headers: { Authorization: `Bearer ${token}` } });
+    },
+    requests: (token: string) => request('/inventory/requests/list', { headers: { Authorization: `Bearer ${token}` } }),
+    create: (token: string, payload: any) => request('/inventory', { method: 'POST', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` } }),
+    update: (token: string, id: number, patch: any) => request(`/inventory/${id}`, { method: 'PATCH', body: JSON.stringify(patch), headers: { Authorization: `Bearer ${token}` } }),
+    history: (token: string, id: number) => request(`/inventory/${id}/history`, { headers: { Authorization: `Bearer ${token}` } }),
   }
 };

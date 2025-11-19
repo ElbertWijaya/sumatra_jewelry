@@ -5,6 +5,7 @@ const core_1 = require("@nestjs/core");
 const compressionLib = require('compression');
 const helmet_1 = require("helmet");
 const app_module_1 = require("./modules/app.module");
+const realtime_service_1 = require("./realtime/realtime.service");
 const fs_1 = require("fs");
 const path_1 = require("path");
 async function bootstrap() {
@@ -89,6 +90,14 @@ async function bootstrap() {
     app.use('/uploads', express.static(uploadsDir));
     app.useGlobalPipes(new common_1.ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true, transformOptions: { enableImplicitConversion: true } }));
     app.enableCors({ origin: '*', credentials: true });
+    try {
+        const rt = app.get(realtime_service_1.RealtimeService);
+        rt.init(app);
+        console.log('[Realtime] WebSocket initialized at /ws');
+    }
+    catch (e) {
+        console.warn('[Realtime] init failed:', e?.message);
+    }
     const port = process.env.PORT || 3000;
     await app.listen(port, '0.0.0.0');
     console.log(`API running on http://0.0.0.0:${port} (LAN access: http://<IP_LAN>:${port}/api )`);

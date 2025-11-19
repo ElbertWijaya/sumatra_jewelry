@@ -6,6 +6,7 @@ const compressionLib = require('compression');
 import helmet from 'helmet';
 
 import { AppModule } from './modules/app.module';
+import { RealtimeService } from './realtime/realtime.service';
 import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
@@ -99,6 +100,14 @@ async function bootstrap() {
   app.use('/uploads', express.static(uploadsDir));
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true, transformOptions: { enableImplicitConversion: true } }));
   app.enableCors({ origin: '*', credentials: true });
+  // Init WebSocket realtime server on /ws
+  try {
+    const rt = app.get(RealtimeService);
+    rt.init(app as any);
+    console.log('[Realtime] WebSocket initialized at /ws');
+  } catch (e) {
+    console.warn('[Realtime] init failed:', (e as any)?.message);
+  }
   const port = process.env.PORT || 3000;
   await app.listen(port, '0.0.0.0');
   console.log(`API running on http://0.0.0.0:${port} (LAN access: http://<IP_LAN>:${port}/api )`);

@@ -57,6 +57,14 @@ export const WorkerDashboardScreen: React.FC = () => {
     refetchOnWindowFocus: true,
     staleTime: 0,
   });
+  const isInventoryRole = String(user?.jobRole || user?.job_role || '').toUpperCase() === 'INVENTORY';
+  const { data: invReqData } = useQuery<any[]>({
+    queryKey: ['inventory','requests','count'],
+    queryFn: () => api.inventory.requests(token || ''),
+    enabled: !!token && isInventoryRole,
+    refetchInterval: isInventoryRole ? 6000 : false,
+  });
+  const invRequestCount = Array.isArray(invReqData) ? invReqData.length : 0;
 
   // Ensure numbers refresh as soon as user returns to this screen
   useFocusEffect(React.useCallback(() => {
@@ -168,6 +176,29 @@ export const WorkerDashboardScreen: React.FC = () => {
             {/* Metrics grid (uniform like Sales) */}
             <View style={s.statsSection}>
               <View style={s.statGrid}>
+                {/* Inventory-specific shortcuts */}
+                {isInventoryRole && (
+                  <>
+                    <TouchableOpacity style={s.statTile} activeOpacity={0.85} onPress={() => router.push('/inventory/requests')}>
+                      <View style={s.tileTopRow}>
+                        <View style={s.iconBadge}><Ionicons name="download" size={18} color={COLORS.gold} /></View>
+                        <Text style={s.tileLabel}>Request Inventory</Text>
+                      </View>
+                      <Text style={s.tileValue}>{invRequestCount}</Text>
+                      <View style={s.tileBar}><View style={[s.tileBarFill, { width: `100%` }]} /></View>
+                      <Text style={s.tileMeta}>Tap untuk proses</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={s.statTile} activeOpacity={0.85} onPress={() => router.push('/inventory')}>
+                      <View style={s.tileTopRow}>
+                        <View style={s.iconBadge}><Ionicons name="cube-outline" size={18} color={COLORS.gold} /></View>
+                        <Text style={s.tileLabel}>Stok Inventory</Text>
+                      </View>
+                      <Text style={s.tileValue}>•</Text>
+                      <View style={s.tileBar}><View style={[s.tileBarFill, { width: `100%` }]} /></View>
+                      <Text style={s.tileMeta}>Cari & filter</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
                 <TouchableOpacity style={s.statTile} activeOpacity={0.85} onPress={() => router.push('/worker/assigned')}>
                   <View style={s.tileTopRow}>
                     <View style={s.iconBadge}><MaterialCommunityIcons name="account-tie" size={18} color={COLORS.gold} /></View>
@@ -212,6 +243,18 @@ export const WorkerDashboardScreen: React.FC = () => {
             <View style={s.actionsSection}>
               <Text style={s.sectionTitle}>Aksi Cepat</Text>
               <View style={s.actionsGridTiles}>
+                {isInventoryRole && (
+                  <>
+                    <TouchableOpacity style={s.actionTile} onPress={() => router.push('/inventory/requests')}>
+                      <View style={s.actionIconBg}><Ionicons name="download" size={22} color={COLORS.yellow} /></View>
+                      <Text style={s.actionTileText}>Proses Request</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={s.actionTile} onPress={() => router.push('/inventory')}>
+                      <View style={s.actionIconBg}><Ionicons name="cube-outline" size={22} color={COLORS.yellow} /></View>
+                      <Text style={s.actionTileText}>Lihat Stok</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
                 <TouchableOpacity
                   style={[s.actionTile, (countAssigned===0) && s.disabledTile]}
                   disabled={countAssigned===0 || mAcceptMine.isPending}

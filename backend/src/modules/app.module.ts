@@ -10,9 +10,10 @@ import { TasksModule } from './tasks.module';
 import { UsersModule } from './users.module';
 import { InventoryModule } from './inventory.module';
 import { DashboardModule } from './dashboard.module';
+import { RealtimeModule } from './realtime.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, OrdersModule, FilesModule, TasksModule, UsersModule, InventoryModule, DashboardModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, OrdersModule, FilesModule, TasksModule, UsersModule, InventoryModule, DashboardModule, RealtimeModule],
   controllers: [],
   providers: [],
 })

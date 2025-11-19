@@ -5,7 +5,9 @@ export type RealtimeEvent =
   | { type: 'order.updated'; orderId: number }
   | { type: 'order.deleted'; orderId: number }
   | { type: 'task.updated'; taskId: number; orderId?: number }
-  | { type: 'task.statusChanged'; taskId: number; status: string; orderId?: number };
+  | { type: 'task.statusChanged'; taskId: number; status: string; orderId?: number }
+  | { type: 'inventory.created'; itemId: number; orderId?: number }
+  | { type: 'inventory.updated'; itemId: number; orderId?: number };
 
 export interface RealtimeOptions {
   token: string;
@@ -81,6 +83,22 @@ function handleMessage(raw: MessageEvent<any>) {
       }
       // Orders may change derived indicators
       qc.invalidateQueries({ queryKey: ['orders','inprogress','home'] });
+      break;
+    }
+    case 'inventory.created':
+    case 'inventory.updated': {
+      const itemId = data.itemId ? Number(data.itemId) : undefined;
+      const orderId = data.orderId ? Number(data.orderId) : undefined;
+      // Invalidate inventory requests and lists
+      qc.invalidateQueries({ queryKey: ['inventory','requests'] });
+      qc.invalidateQueries({ queryKey: ['inventory','requests','count'] });
+      qc.invalidateQueries({ queryKey: ['inventory','list'] });
+      if (orderId) {
+        qc.invalidateQueries({ queryKey: ['inventory','order', orderId] });
+      }
+      if (itemId) {
+        qc.invalidateQueries({ queryKey: ['inventory','detail', itemId] });
+      }
       break;
     }
     default:
