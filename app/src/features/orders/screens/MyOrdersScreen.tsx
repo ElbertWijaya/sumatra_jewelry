@@ -89,7 +89,7 @@ export const MyOrdersScreen: React.FC = () => {
         return verifOrderIds.has(Number(o.id));
       }
       const s = String(o.status || '').toUpperCase();
-      if (statusFilter === 'SELESAI') return s === 'DONE' || s === 'SELESAI';
+      if (statusFilter === 'SELESAI') return s === 'DONE' || s === 'SELESAI' || s === 'SIAP';
       if (statusFilter === 'BATAL') return s === 'CANCELLED' || s === 'CANCELED' || s === 'DELETED' || s === 'DIBATALKAN';
       return true;
     })

@@ -45,7 +45,8 @@ export function countDashboardMetrics(orders?: AnyOrder[] | null, tasks?: AnyTas
   const verif = setAwaitingValidationOrderIds(tasks).size;
   const selesai = ord.filter((o) => {
     const s = upper(o.status);
-    return s === 'DONE' || s === 'SELESAI';
+    // Tambah SIAP sebagai status selesai (konfirmasi user)
+    return s === 'DONE' || s === 'SELESAI' || s === 'SIAP';
   }).length;
 
   return { aktif, ditugaskan: assigned, selesai, verifikasi: verif } as const;
