@@ -7,6 +7,7 @@ import { useAuth } from '@lib/context/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { api } from '@lib/api/client';
+import { countDashboardMetrics, setAssignedOrderIds, setAwaitingValidationOrderIds, isOrderActiveStatus } from '@lib/metrics/orders';
 import { WorkerDashboardScreen } from '@features/tasks/screens/WorkerDashboardScreen';
 import { useQuery } from '@tanstack/react-query';
 import { useFocusEffect } from '@react-navigation/native';
@@ -56,25 +57,13 @@ export default function HomeScreen() {
   }, [token]));
 
   const allOrders = Array.isArray(ordersQuery.data) ? ordersQuery.data : [];
-  const isActiveStatus = (s?: string|null) => {
-    const v = String(s || '').toUpperCase();
-    return v === 'DITERIMA' || v === 'DALAM_PROSES';
-  };
-  const countAktif = allOrders.filter(o => isActiveStatus(o.status)).length;
-  const countDitugaskan = allOrders.filter(o => {
-    const v = String(o?.status || '').toUpperCase();
-    return v === 'ASSIGNED' || v === 'DITERIMA';
-  }).length;
-  const countSelesai = allOrders.filter(o => {
-    const v = String(o?.status || '').toUpperCase();
-    return v === 'DONE' || v === 'SELESAI';
-  }).length;
-  const verifOrderIds = (() => {
-    const arr = Array.isArray(tasksQuery.data) ? tasksQuery.data : [];
-    const awaiting = arr.filter(t => String(t?.status || '').toUpperCase() === 'AWAITING_VALIDATION');
-    return new Set<number>(awaiting.map(t => Number(t.orderId)).filter(Boolean));
-  })();
-  const countVerifikasi = verifOrderIds.size;
+  const metrics = countDashboardMetrics(allOrders as any, (tasksQuery.data as any) || []);
+  const countAktif = metrics.aktif;
+  const assignedOrderIds = React.useMemo(() => setAssignedOrderIds(tasksQuery.data as any), [tasksQuery.data]);
+  const countDitugaskan = metrics.ditugaskan;
+  const countSelesai = metrics.selesai;
+  const verifOrderIds = React.useMemo(() => setAwaitingValidationOrderIds(tasksQuery.data as any), [tasksQuery.data]);
+  const countVerifikasi = metrics.verifikasi;
 
   const stats = {
     aktif: { count: countAktif, change: 0 },

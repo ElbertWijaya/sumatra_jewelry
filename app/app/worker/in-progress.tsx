@@ -250,7 +250,7 @@ const OrderThumb: React.FC<{ orderId: number }> = ({ orderId }) => {
         <Image source={{ uri }} style={s.thumbImg} />
       ) : (
         <View style={s.thumbPlaceholder}>
-          <Ionicons name="image-outline" size={14} color={COLORS.gold} />
+          <Ionicons name="image-outline" size={18} color={COLORS.gold} />
         </View>
       )}
     </View>
@@ -276,8 +276,8 @@ const s = StyleSheet.create({
   code: { color: COLORS.gold, fontWeight:'800', fontSize: 14, marginBottom: 2 },
   metaRow: { flexDirection:'row', alignItems:'center', gap: 8 },
   headerLeft: { flexDirection:'row', alignItems:'center', gap:8 },
-  thumbWrap: { width: 28, height: 28, borderRadius: 6, overflow: 'hidden', borderWidth:1, borderColor:COLORS.border, backgroundColor:'#201c18' },
-  thumbImg: { width: 28, height: 28, resizeMode:'cover' },
+  thumbWrap: { width: 40, height: 40, borderRadius: 8, overflow: 'hidden', borderWidth:1, borderColor:COLORS.border, backgroundColor:'#201c18' },
+  thumbImg: { width: 40, height: 40, resizeMode:'cover' },
   thumbPlaceholder: { flex:1, justifyContent:'center', alignItems:'center' },
   pillDate: { flexDirection:'row', alignItems:'center', gap:6, borderWidth:1, borderColor:COLORS.border, paddingHorizontal:8, paddingVertical:2, borderRadius:8, backgroundColor:'#201c18' },
   metaText: { color: COLORS.yellow, fontWeight:'700', fontSize:12 },

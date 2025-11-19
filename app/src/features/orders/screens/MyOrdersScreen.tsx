@@ -4,6 +4,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { api, API_URL } from '@lib/api/client';
+import { setAwaitingValidationOrderIds, setAssignedOrderIds, isOrderActiveStatus } from '@lib/metrics/orders';
 import { useAuth } from '@lib/context/AuthContext';
 import { OrderActionsModal } from './OrderActionsModal';
 import { OrderVerificationModal } from './OrderVerificationModal';
@@ -26,10 +27,7 @@ type Order = {
   referensiGambarUrls?: string[] | null;
 };
 
-function isActiveStatus(status?: string | null) {
-  const s = String(status || '').toUpperCase();
-  return s === 'DITERIMA' || s === 'DALAM_PROSES';
-}
+function isActiveStatus(status?: string | null) { return isOrderActiveStatus(status); }
 
 export const MyOrdersScreen: React.FC = () => {
   const { token, user } = useAuth();
@@ -56,24 +54,8 @@ export const MyOrdersScreen: React.FC = () => {
     enabled: !!token && (statusFilter === 'VERIFIKASI' || statusFilter === 'DITUGASKAN'),
     refetchInterval: (statusFilter === 'VERIFIKASI' || statusFilter === 'DITUGASKAN') ? 6000 : false,
   });
-  const verifOrderIds = React.useMemo(() => {
-    if (!Array.isArray(tasksData)) return new Set<number>();
-    const mine = tasksData.filter(t => String(t?.status || '').toUpperCase() === 'AWAITING_VALIDATION');
-    return new Set<number>(mine.map(t => Number(t.orderId)).filter(Boolean));
-  }, [tasksData]);
-  const assignedOrderIds = React.useMemo(() => {
-    if (!Array.isArray(tasksData)) return new Set<number>();
-    const mine = tasksData.filter(t => String(t?.status || '').toUpperCase() === 'ASSIGNED');
-    return new Set<number>(mine.map(t => Number(t.orderId)).filter(Boolean));
-  }, [tasksData]);
-  const assignedOrderIdsByOrderStatus = React.useMemo(() => {
-    const set = new Set<number>();
-    allOrders.forEach(o => {
-      const s = String(o.status || '').toUpperCase();
-      if (s === 'ASSIGNED' || s === 'DITERIMA') set.add(Number(o.id));
-    });
-    return set;
-  }, [allOrders]);
+  const verifOrderIds = React.useMemo(() => setAwaitingValidationOrderIds(tasksData as any), [tasksData]);
+  const assignedOrderIds = React.useMemo(() => setAssignedOrderIds(tasksData as any), [tasksData]);
 
 
   React.useEffect(() => {
@@ -99,13 +81,8 @@ export const MyOrdersScreen: React.FC = () => {
       if (statusFilter === 'SEMUA') return true;
       if (statusFilter === 'AKTIF') return isActiveStatus(o.status);
       if (statusFilter === 'DITUGASKAN') {
-        // Align with dashboard (order-level) to keep indicator and list consistent for Sales
-        const s = String(o.status || '').toUpperCase();
-        const ok = (s === 'ASSIGNED' || s === 'DITERIMA');
-        if (__DEV__) {
-          console.log('[DEBUG][MyOrders] DITUGASKAN (order.status) -> orderId', o.id, 'ok=', ok, 'status=', s);
-        }
-        return ok;
+        // Align with dashboard: show orders with at least one task assigned/in-progress to anyone
+        return assignedOrderIds.has(Number(o.id));
       }
       if (statusFilter === 'VERIFIKASI') {
         // Show orders that have tasks awaiting validation

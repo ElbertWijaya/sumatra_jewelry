@@ -4,6 +4,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { api, API_URL } from '@lib/api/client';
+import { setAssignedOrderIds, setAwaitingValidationOrderIds } from '@lib/metrics/orders';
 import { useAuth } from '@lib/context/AuthContext';
 
 const COLORS = { gold:'#FFD700', yellow:'#ffe082', dark:'#181512', card:'#23201c', border:'#4e3f2c' };
@@ -36,6 +37,17 @@ export default function HistoryScreen() {
   });
   const allOrders = Array.isArray(data) ? data : [];
 
+  // Task-driven filters: fetch tasks when needed for Ditugaskan/Verifikasi views
+  const { data: tasksData } = useQuery<any[]>({
+    queryKey: ['tasks','history', filter],
+    queryFn: () => api.tasks.list(token || '') as Promise<any[]>,
+    enabled: !!token && (filter === 'ditugaskan' || filter === 'verifikasi'),
+    refetchInterval: (filter === 'ditugaskan' || filter === 'verifikasi') ? 6000 : false,
+    staleTime: 0,
+  });
+  const assignedOrderIds = React.useMemo(() => setAssignedOrderIds(tasksData as any), [tasksData]);
+  const verifOrderIds = React.useMemo(() => setAwaitingValidationOrderIds(tasksData as any), [tasksData]);
+
   const [query, setQuery] = React.useState('');
   const [filterOpen, setFilterOpen] = React.useState(false);
   type StatusFilter = 'SEMUA' | 'DITUGASKAN' | 'SELESAI' | 'VERIFIKASI' | 'BATAL';
@@ -62,12 +74,12 @@ export default function HistoryScreen() {
     .filter(o => {
       if (statusFilter === 'SEMUA') return true;
       if (statusFilter === 'DITUGASKAN') {
-        const s = String(o.status || '').toUpperCase();
-        return s === 'ASSIGNED' || s === 'DITERIMA';
+        // Use tasks to determine assigned/in-progress regardless of order.status
+        return assignedOrderIds.has(Number(o.id));
       }
       if (statusFilter === 'VERIFIKASI') {
-        const s = String(o.status || '').toUpperCase();
-        return s === 'AWAITING_VALIDATION';
+        // Orders with any task awaiting validation
+        return verifOrderIds.has(Number(o.id));
       }
       const s = String(o.status || '').toUpperCase();
       if (statusFilter === 'SELESAI') return s === 'DONE' || s === 'SELESAI';
