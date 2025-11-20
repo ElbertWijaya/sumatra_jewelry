@@ -19,101 +19,29 @@ export class DashboardService {
 
     // Count orders by status
     const [aktif, ditugaskan, selesai, verifikasi] = await Promise.all([
-      // Aktif: Pesanan yang masih aktif (hanya DITERIMA atau DALAM_PROSES)
-      this.prisma.order.count({
-        where: {
-          status: { in: ['DITERIMA', 'DALAM_PROSES'] }
-        }
-      }),
-
-      // Ditugaskan: Pesanan yang sudah ditugaskan ke role lainnya (sudah ada tasks assigned)
-      this.prisma.order.count({
-        where: {
-          tasks: { some: {} } // Has at least one task assigned
-        }
-      }),
-
-      // Selesai: Pesanan yang sudah selesai di hari tersebut (SIAP atau DIAMBIL, updatedAt hari ini)
-      this.prisma.order.count({
-        where: {
-          status: { in: ['SIAP', 'DIAMBIL'] },
-          updatedAt: { gte: startOfDay, lt: endOfDay }
-        }
-      }),
-
-      // Verifikasi: Pesanan yang membutuhkan verifikasi (tasks with AWAITING_VALIDATION)
-      this.prisma.order.count({
-        where: {
-          tasks: {
-            some: {
-              status: 'AWAITING_VALIDATION'
-            }
-          }
-        }
-      }),
+      // Aktif: status masih berjalan
+      this.prisma.order.count({ where: { status: { in: ['DITERIMA', 'DALAM_PROSES'] } } }),
+      // Ditugaskan: memiliki minimal satu task
+      this.prisma.order.count({ where: { ordertask: { some: {} } } }),
+      // Selesai hari ini: status final SIAP / DIAMBIL dan diupdate hari ini
+      this.prisma.order.count({ where: { status: { in: ['SIAP', 'DIAMBIL'] }, updated_at: { gte: startOfDay, lt: endOfDay } } }),
+      // Verifikasi: ada task menunggu validasi
+      this.prisma.order.count({ where: { ordertask: { some: { status: 'AWAITING_VALIDATION' } } } }),
     ]);
 
     // Get daily changes (today vs yesterday)
     const [aktifToday, ditugaskanToday, selesaiToday, verifikasiToday] = await Promise.all([
-      this.prisma.order.count({
-        where: {
-          status: { in: ['DITERIMA', 'DALAM_PROSES'] },
-          updatedAt: { gte: startOfDay, lt: endOfDay }
-        }
-      }),
-      this.prisma.order.count({
-        where: {
-          tasks: { some: {} },
-          updatedAt: { gte: startOfDay, lt: endOfDay }
-        }
-      }),
-      this.prisma.order.count({
-        where: {
-          status: { in: ['SIAP', 'DIAMBIL'] },
-          updatedAt: { gte: startOfDay, lt: endOfDay }
-        }
-      }),
-      this.prisma.order.count({
-        where: {
-          tasks: {
-            some: {
-              status: 'AWAITING_VALIDATION',
-              updatedAt: { gte: startOfDay, lt: endOfDay }
-            }
-          }
-        }
-      }),
+      this.prisma.order.count({ where: { status: { in: ['DITERIMA', 'DALAM_PROSES'] }, updated_at: { gte: startOfDay, lt: endOfDay } } }),
+      this.prisma.order.count({ where: { ordertask: { some: {} }, updated_at: { gte: startOfDay, lt: endOfDay } } }),
+      this.prisma.order.count({ where: { status: { in: ['SIAP', 'DIAMBIL'] }, updated_at: { gte: startOfDay, lt: endOfDay } } }),
+      this.prisma.order.count({ where: { ordertask: { some: { status: 'AWAITING_VALIDATION', updated_at: { gte: startOfDay, lt: endOfDay } } } } }),
     ]);
 
     const [aktifYesterday, ditugaskanYesterday, selesaiYesterday, verifikasiYesterday] = await Promise.all([
-      this.prisma.order.count({
-        where: {
-          status: { in: ['DITERIMA', 'DALAM_PROSES'] },
-          updatedAt: { gte: startOfYesterday, lt: endOfYesterday }
-        }
-      }),
-      this.prisma.order.count({
-        where: {
-          tasks: { some: {} },
-          updatedAt: { gte: startOfYesterday, lt: endOfYesterday }
-        }
-      }),
-      this.prisma.order.count({
-        where: {
-          status: { in: ['SIAP', 'DIAMBIL'] },
-          updatedAt: { gte: startOfYesterday, lt: endOfYesterday }
-        }
-      }),
-      this.prisma.order.count({
-        where: {
-          tasks: {
-            some: {
-              status: 'AWAITING_VALIDATION',
-              updatedAt: { gte: startOfYesterday, lt: endOfYesterday }
-            }
-          }
-        }
-      }),
+      this.prisma.order.count({ where: { status: { in: ['DITERIMA', 'DALAM_PROSES'] }, updated_at: { gte: startOfYesterday, lt: endOfYesterday } } }),
+      this.prisma.order.count({ where: { ordertask: { some: {} }, updated_at: { gte: startOfYesterday, lt: endOfYesterday } } }),
+      this.prisma.order.count({ where: { status: { in: ['SIAP', 'DIAMBIL'] }, updated_at: { gte: startOfYesterday, lt: endOfYesterday } } }),
+      this.prisma.order.count({ where: { ordertask: { some: { status: 'AWAITING_VALIDATION', updated_at: { gte: startOfYesterday, lt: endOfYesterday } } } } }),
     ]);
 
     return {

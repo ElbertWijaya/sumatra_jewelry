@@ -37,12 +37,12 @@ let InventoryService = class InventoryService {
             category: dto.category ?? null,
             material: dto.material ?? null,
             karat: dto.karat ?? null,
-            goldType: dto.goldType ?? null,
-            goldColor: dto.goldColor ?? null,
-            weightGross: dto.weightGross != null ? Number(dto.weightGross) : null,
-            weightNet: dto.weightNet != null ? Number(dto.weightNet) : null,
-            stoneCount: dto.stoneCount != null ? Number(dto.stoneCount) : null,
-            stoneWeight: dto.stoneWeight != null ? Number(dto.stoneWeight) : null,
+            gold_type: dto.goldType ?? null,
+            gold_color: dto.goldColor ?? null,
+            weight_gross: dto.weightGross != null ? Number(dto.weightGross) : null,
+            weight_net: dto.weightNet != null ? Number(dto.weightNet) : null,
+            stone_count: dto.stoneCount != null ? Number(dto.stoneCount) : null,
+            stone_weight: dto.stoneWeight != null ? Number(dto.stoneWeight) : null,
             size: dto.size ?? null,
             dimensions: dto.dimensions ?? null,
             barcode: dto.barcode ?? null,
@@ -50,23 +50,43 @@ let InventoryService = class InventoryService {
             location: dto.location ?? null,
             cost: dto.cost != null ? Number(dto.cost) : null,
             price: dto.price != null ? Number(dto.price) : null,
-            status: dto.status ?? 'IN_STOCK',
-            images: Array.isArray(dto.images) ? dto.images : undefined,
+            status: dto.status ?? null,
+            status_enum: dto.statusEnum ?? 'DRAFT',
+            images: Array.isArray(dto.images) ? JSON.stringify(dto.images) : null,
             notes: dto.notes ?? null,
-            createdById: actorUserId ?? null,
-            updatedById: actorUserId ?? null,
+            branch_location: dto.branchLocation ?? null,
+            placement_location: dto.placement ?? null,
+            created_by_id: actorUserId ?? null,
+            updated_by_id: actorUserId ?? null,
+            updated_at: new Date(),
         };
+        if ((!data.stone_count || !data.stone_weight) && Array.isArray(dto.stones) && dto.stones.length) {
+            const totalJumlah = dto.stones.reduce((s, x) => s + (x.jumlah || 0), 0);
+            const totalBerat = dto.stones.reduce((s, x) => s + (x.berat != null ? Number(x.berat) : 0), 0);
+            if (!data.stone_count)
+                data.stone_count = totalJumlah;
+            if (!data.stone_weight)
+                data.stone_weight = totalBerat;
+        }
         try {
-            const created = await this.prisma.inventoryItem.create({ data });
+            const created = await this.prisma.inventoryitem.create({
+                data: {
+                    ...data,
+                    inventorystone: Array.isArray(dto.stones) && dto.stones.length
+                        ? { create: dto.stones.map(s => ({ bentuk: s.bentuk, jumlah: s.jumlah, berat: s.berat != null ? Number(s.berat) : null })) }
+                        : undefined,
+                },
+                include: { inventorystone: true },
+            });
             try {
-                await this.prisma.orderHistory.create({
+                await this.prisma.orderhistory.create({
                     data: {
                         orderId: dto.orderId,
                         userId: actorUserId ?? null,
                         action: 'UPDATED',
                         changeSummary: 'Inventory item created',
                         field: 'inventory_item',
-                        next: created,
+                        next: JSON.stringify(created),
                         statusFrom: order.status,
                         statusTo: order.status,
                     },
@@ -74,14 +94,14 @@ let InventoryService = class InventoryService {
             }
             catch { }
             try {
-                await this.prisma.orderTask.updateMany({
+                await this.prisma.ordertask.updateMany({
                     where: {
                         orderId: dto.orderId,
-                        jobRole: 'INVENTORY',
-                        assignedToId: actorUserId ?? undefined,
+                        job_role: 'INVENTORY',
+                        assigned_to_id: actorUserId ?? undefined,
                         status: { in: ['ASSIGNED', 'IN_PROGRESS'] },
                     },
-                    data: { status: 'AWAITING_VALIDATION', requestedDoneAt: new Date() },
+                    data: { status: 'AWAITING_VALIDATION', requested_done_at: new Date(), updated_at: new Date() },
                 });
             }
             catch { }
@@ -96,21 +116,70 @@ let InventoryService = class InventoryService {
         }
     }
     async update(id, dto, actorUserId) {
-        const exists = await this.prisma.inventoryItem.findUnique({ where: { id } });
+        const exists = await this.prisma.inventoryitem.findUnique({ where: { id } });
         if (!exists)
             throw new common_1.NotFoundException('Inventory tidak ditemukan');
+        if (exists.is_deleted)
+            throw new common_1.BadRequestException('Item sudah dihapus (soft delete)');
         const data = {
-            ...dto,
-            weightGross: dto.weightGross != null ? Number(dto.weightGross) : undefined,
-            weightNet: dto.weightNet != null ? Number(dto.weightNet) : undefined,
-            stoneCount: dto.stoneCount != null ? Number(dto.stoneCount) : undefined,
-            stoneWeight: dto.stoneWeight != null ? Number(dto.stoneWeight) : undefined,
+            weight_gross: dto.weightGross != null ? Number(dto.weightGross) : undefined,
+            weight_net: dto.weightNet != null ? Number(dto.weightNet) : undefined,
+            stone_count: dto.stoneCount != null ? Number(dto.stoneCount) : undefined,
+            stone_weight: dto.stoneWeight != null ? Number(dto.stoneWeight) : undefined,
             cost: dto.cost != null ? Number(dto.cost) : undefined,
             price: dto.price != null ? Number(dto.price) : undefined,
-            updatedById: actorUserId ?? undefined,
+            updated_by_id: actorUserId ?? undefined,
+            branch_location: dto.branchLocation ?? undefined,
+            placement_location: dto.placement ?? undefined,
+            status_enum: dto.statusEnum ?? undefined,
+            updated_at: new Date(),
+            code: dto.code ?? undefined,
+            name: dto.name ?? undefined,
+            category: dto.category ?? undefined,
+            material: dto.material ?? undefined,
+            karat: dto.karat ?? undefined,
+            gold_type: dto.goldType ?? undefined,
+            gold_color: dto.goldColor ?? undefined,
+            size: dto.size ?? undefined,
+            dimensions: dto.dimensions ?? undefined,
+            barcode: dto.barcode ?? undefined,
+            sku: dto.sku ?? undefined,
+            location: dto.location ?? undefined,
+            status: dto.status ?? undefined,
+            notes: dto.notes ?? undefined,
+            images: Array.isArray(dto.images) ? JSON.stringify(dto.images) : undefined,
         };
+        const stonesOps = Array.isArray(dto.stones)
+            ? { deleteMany: {}, create: dto.stones.map(s => ({ bentuk: s.bentuk, jumlah: s.jumlah, berat: s.berat != null ? Number(s.berat) : null })) }
+            : undefined;
+        if (Array.isArray(dto.stones) && dto.stones.length) {
+            if (dto.stoneCount == null)
+                data.stone_count = dto.stones.reduce((s, x) => s + (x.jumlah || 0), 0);
+            if (dto.stoneWeight == null)
+                data.stone_weight = dto.stones.reduce((s, x) => s + (x.berat != null ? Number(x.berat) : 0), 0);
+        }
         try {
-            const updated = await this.prisma.inventoryItem.update({ where: { id }, data });
+            const updated = await this.prisma.inventoryitem.update({
+                where: { id },
+                data: {
+                    ...data,
+                    ...(stonesOps ? { inventorystone: stonesOps } : {}),
+                },
+                include: { inventorystone: true },
+            });
+            try {
+                const diff = { before: exists, after: updated };
+                await this.prisma.inventoryitemhistory.create({
+                    data: {
+                        inventoryItemId: id,
+                        action: (dto.statusEnum && dto.statusEnum !== exists.status_enum) ? 'STATUS_CHANGED' : 'UPDATED',
+                        userId: actorUserId ?? null,
+                        diff: JSON.stringify(diff),
+                        snapshot: JSON.stringify(updated),
+                    },
+                });
+            }
+            catch { }
             try {
                 this.realtime.emitAll({ type: 'inventory.updated', itemId: id, orderId: exists?.orderId ?? undefined });
             }
@@ -122,17 +191,23 @@ let InventoryService = class InventoryService {
         }
     }
     get(id) {
-        return this.prisma.inventoryItem.findUnique({ where: { id } });
+        return this.prisma.inventoryitem.findUnique({ where: { id }, include: { inventorystone: true } });
     }
     listByOrder(orderId) {
-        return this.prisma.inventoryItem.findMany({ where: { orderId }, orderBy: { createdAt: 'desc' } });
+        return this.prisma.inventoryitem.findMany({ where: { orderId, is_deleted: false }, orderBy: { created_at: 'desc' }, include: { inventorystone: true } });
     }
     async search(params) {
-        const where = {};
+        const where = { is_deleted: false };
         if (params.category)
             where.category = params.category;
         if (params.status)
             where.status = params.status;
+        if (params.branchLocation)
+            where.branch_location = params.branchLocation;
+        if (params.placement)
+            where.placement_location = params.placement;
+        if (params.statusEnum)
+            where.status_enum = params.statusEnum;
         if (params.q) {
             const q = params.q;
             where.OR = [
@@ -144,24 +219,24 @@ let InventoryService = class InventoryService {
             ];
         }
         if (params.dateFrom || params.dateTo) {
-            where.createdAt = {};
+            where.created_at = {};
             if (params.dateFrom)
-                where.createdAt.gte = new Date(params.dateFrom);
+                where.created_at.gte = new Date(params.dateFrom);
             if (params.dateTo)
-                where.createdAt.lte = new Date(params.dateTo);
+                where.created_at.lte = new Date(params.dateTo);
         }
         const take = Math.min(Number(params.limit || 50), 200);
         const skip = Math.max(Number(params.offset || 0), 0);
         const [items, total] = await this.prisma.$transaction([
-            this.prisma.inventoryItem.findMany({ where, orderBy: { createdAt: 'desc' }, take, skip }),
-            this.prisma.inventoryItem.count({ where }),
+            this.prisma.inventoryitem.findMany({ where, orderBy: { created_at: 'desc' }, take, skip, include: { inventorystone: true } }),
+            this.prisma.inventoryitem.count({ where }),
         ]);
         return { items, total, take, skip };
     }
     async listRequestsForInventory(userId) {
-        const tasks = await this.prisma.orderTask.findMany({
-            where: { jobRole: 'INVENTORY', status: { in: ['ASSIGNED', 'IN_PROGRESS'] }, ...(userId ? { assignedToId: userId } : {}) },
-            orderBy: { createdAt: 'desc' },
+        const tasks = await this.prisma.ordertask.findMany({
+            where: { job_role: 'INVENTORY', status: { in: ['ASSIGNED', 'IN_PROGRESS'] }, ...(userId ? { assigned_to_id: userId } : {}) },
+            orderBy: { created_at: 'desc' },
             include: { order: true },
         });
         const byOrder = new Map();
@@ -172,11 +247,49 @@ let InventoryService = class InventoryService {
         }
         const results = [];
         for (const [orderId, group] of byOrder.entries()) {
-            const items = await this.prisma.inventoryItem.count({ where: { orderId } });
+            const items = await this.prisma.inventoryitem.count({ where: { orderId, is_deleted: false } });
             results.push({ orderId, order: group[0]?.order, taskCount: group.length, existingItems: items });
         }
-        results.sort((a, b) => (b.order?.updatedAt ? new Date(b.order.updatedAt).getTime() : 0) - (a.order?.updatedAt ? new Date(a.order.updatedAt).getTime() : 0));
+        results.sort((a, b) => (b.order?.updated_at ? new Date(b.order.updated_at).getTime() : 0) - (a.order?.updated_at ? new Date(a.order.updated_at).getTime() : 0));
         return results;
+    }
+    async softDelete(id, actorUserId) {
+        const exists = await this.prisma.inventoryitem.findUnique({ where: { id } });
+        if (!exists)
+            throw new common_1.NotFoundException('Inventory tidak ditemukan');
+        if (exists.is_deleted)
+            return exists;
+        const deleted = await this.prisma.inventoryitem.update({ where: { id }, data: { is_deleted: true, deleted_at: new Date(), updated_at: new Date() } });
+        try {
+            await this.prisma.inventoryitemhistory.create({
+                data: { inventoryItemId: id, action: 'DELETED', userId: actorUserId ?? null, snapshot: JSON.stringify(deleted) }
+            });
+        }
+        catch { }
+        try {
+            this.realtime.emitAll({ type: 'inventory.updated', itemId: id, orderId: exists?.orderId });
+        }
+        catch { }
+        return deleted;
+    }
+    async restore(id, actorUserId) {
+        const exists = await this.prisma.inventoryitem.findUnique({ where: { id } });
+        if (!exists)
+            throw new common_1.NotFoundException('Inventory tidak ditemukan');
+        if (!exists.is_deleted)
+            return exists;
+        const restored = await this.prisma.inventoryitem.update({ where: { id }, data: { is_deleted: false, deleted_at: null, updated_at: new Date() } });
+        try {
+            await this.prisma.inventoryitemhistory.create({
+                data: { inventoryItemId: id, action: 'RESTORED', userId: actorUserId ?? null, snapshot: JSON.stringify(restored) }
+            });
+        }
+        catch { }
+        try {
+            this.realtime.emitAll({ type: 'inventory.updated', itemId: id, orderId: exists?.orderId });
+        }
+        catch { }
+        return restored;
     }
 };
 exports.InventoryService = InventoryService;

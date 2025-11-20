@@ -25,8 +25,8 @@ let InventoryController = class InventoryController {
     }
     get(id) { return this.inv.get(id); }
     listByOrder(orderId) { return this.inv.listByOrder(orderId); }
-    search(q, category, status, dateFrom, dateTo, limit, offset) {
-        return this.inv.search({ q, category, status, dateFrom, dateTo, limit: limit ? Number(limit) : undefined, offset: offset ? Number(offset) : undefined });
+    search(q, category, status, branchLocation, placement, statusEnum, dateFrom, dateTo, limit, offset) {
+        return this.inv.search({ q, category, status, dateFrom, dateTo, limit: limit ? Number(limit) : undefined, offset: offset ? Number(offset) : undefined, branchLocation, placement, statusEnum });
     }
     requests(user) {
         const role = (user?.jobRole || '').toUpperCase();
@@ -44,6 +44,12 @@ let InventoryController = class InventoryController {
                 orderBy: { changedAt: 'desc' },
             });
         });
+    }
+    remove(id, user) {
+        return this.inv.softDelete(id, user.userId);
+    }
+    restore(id, user) {
+        return this.inv.restore(id, user.userId);
     }
 };
 exports.InventoryController = InventoryController;
@@ -69,12 +75,15 @@ __decorate([
     __param(0, (0, common_1.Query)('q')),
     __param(1, (0, common_1.Query)('category')),
     __param(2, (0, common_1.Query)('status')),
-    __param(3, (0, common_1.Query)('dateFrom')),
-    __param(4, (0, common_1.Query)('dateTo')),
-    __param(5, (0, common_1.Query)('limit')),
-    __param(6, (0, common_1.Query)('offset')),
+    __param(3, (0, common_1.Query)('branchLocation')),
+    __param(4, (0, common_1.Query)('placement')),
+    __param(5, (0, common_1.Query)('statusEnum')),
+    __param(6, (0, common_1.Query)('dateFrom')),
+    __param(7, (0, common_1.Query)('dateTo')),
+    __param(8, (0, common_1.Query)('limit')),
+    __param(9, (0, common_1.Query)('offset')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String, String, String, String, String]),
+    __metadata("design:paramtypes", [String, String, String, String, String, String, String, String, String, String]),
     __metadata("design:returntype", void 0)
 ], InventoryController.prototype, "search", null);
 __decorate([
@@ -112,6 +121,24 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", void 0)
 ], InventoryController.prototype, "history", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR', 'INVENTORY'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", void 0)
+], InventoryController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Post)(':id/restore'),
+    (0, roles_decorator_1.Roles)('ADMINISTRATOR'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", void 0)
+], InventoryController.prototype, "restore", null);
 exports.InventoryController = InventoryController = __decorate([
     (0, common_1.Controller)('inventory'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

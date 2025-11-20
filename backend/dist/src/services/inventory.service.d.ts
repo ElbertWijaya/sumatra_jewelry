@@ -13,6 +13,9 @@ export declare class InventoryService {
         q?: string;
         category?: string;
         status?: string;
+        branchLocation?: string;
+        placement?: string;
+        statusEnum?: string;
         dateFrom?: string;
         dateTo?: string;
         limit?: number;
@@ -24,4 +27,6 @@ export declare class InventoryService {
         skip: number;
     }>;
     listRequestsForInventory(userId?: string): Promise<any[]>;
+    softDelete(id: number, actorUserId?: string): Promise<any>;
+    restore(id: number, actorUserId?: string): Promise<any>;
 }

@@ -25,10 +25,13 @@ export const InventoryCreateScreen: React.FC = () => {
     goldType:'',
     goldColor:'',
   });
+  const [branchLocation, setBranchLocation] = useState<'ASIA'|'SUN_PLAZA'|''>('');
+  const [placement, setPlacement] = useState<'ETALASE'|'PENYIMPANAN'|''>('');
   const [images, setImages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [stones, setStones] = useState<StoneFormItem[]>([]);
   const [expandedStoneIndex, setExpandedStoneIndex] = useState<number | null>(null);
+  const [statusEnum, setStatusEnum] = useState<'DRAFT'|'ACTIVE'|'RESERVED'|'SOLD'|'RETURNED'|'DAMAGED'>('DRAFT');
 
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -61,11 +64,15 @@ export const InventoryCreateScreen: React.FC = () => {
         goldType: form.goldType || undefined,
         goldColor: form.goldColor || undefined,
         location: form.location || undefined,
+        branchLocation: branchLocation || undefined,
+        placement: placement || undefined,
         weightNet: form.weightNet ? Number(form.weightNet) : undefined,
         stoneCount: totalCount || undefined,
         stoneWeight: totalWeight || undefined,
         dimensions: validStones.length ? JSON.stringify(validStones) : undefined,
         name: form.name || undefined,
+        statusEnum: statusEnum || 'DRAFT',
+        stones: validStones.map(s => ({ bentuk: s.bentuk, jumlah: Number(s.jumlah || 0), berat: s.berat ? Number(s.berat) : undefined })),
         images,
       });
       Alert.alert('Sukses', 'Item inventory dibuat. Menunggu verifikasi Sales.');
@@ -112,8 +119,14 @@ export const InventoryCreateScreen: React.FC = () => {
         <View style={s.divider} />
         <Text style={s.label}>Lokasi (rak/slot)</Text>
         <TextInput value={form.location} onChangeText={(v)=>setForm(f=>({...f, location:v}))} placeholder="A1-03" placeholderTextColor={COLORS.yellow} style={s.input} />
+        <Text style={s.label}>Cabang / Area</Text>
+        <InlineSelect label="" value={branchLocation} options={['ASIA','SUN_PLAZA']} onChange={(v)=> setBranchLocation(v as any)} styleHeader={s.select} />
+        <Text style={s.label}>Penempatan Fisik</Text>
+        <InlineSelect label="" value={placement} options={['ETALASE','PENYIMPANAN']} onChange={(v)=> setPlacement(v as any)} styleHeader={s.select} />
         <Text style={s.label}>Berat Bersih (gr)</Text>
         <TextInput value={form.weightNet} onChangeText={(v)=>setForm(f=>({...f, weightNet:v}))} placeholder="mis. 3.5" placeholderTextColor={COLORS.yellow} style={s.input} keyboardType="decimal-pad" />
+        <Text style={s.label}>Status Awal</Text>
+        <InlineSelect label="" value={statusEnum} options={['DRAFT','ACTIVE','RESERVED','SOLD','RETURNED','DAMAGED']} onChange={(v)=> setStatusEnum(v as any)} styleHeader={s.select} />
       </View>
 
       {/* BATU / STONE */}

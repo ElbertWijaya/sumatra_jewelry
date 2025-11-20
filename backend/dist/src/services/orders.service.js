@@ -23,53 +23,55 @@ let OrdersService = class OrdersService {
         const created = await this.prisma.$transaction(async (tx) => {
             const order = await tx.order.create({
                 data: {
-                    customerName: dto.customerName,
-                    customerAddress: dto.customerAddress,
-                    customerPhone: dto.customerPhone,
-                    jenisBarang: dto.jenisBarang,
-                    jenisEmas: dto.jenisEmas,
-                    warnaEmas: dto.warnaEmas,
-                    ringSize: dto.ringSize,
-                    hargaEmasPerGram: dto.hargaEmasPerGram,
-                    hargaPerkiraan: dto.hargaPerkiraan,
-                    hargaAkhir: dto.hargaAkhir,
-                    dp: dto.dp != null ? dto.dp : null,
-                    ...(dto.promisedReadyDate ? { promisedReadyDate: new Date(dto.promisedReadyDate) } : {}),
-                    tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : undefined,
-                    tanggalAmbil: dto.tanggalAmbil ? new Date(dto.tanggalAmbil) : undefined,
-                    catatan: dto.catatan,
-                    ...(dto.referensiGambarUrls ? { referensiGambarUrls: dto.referensiGambarUrls } : {}),
+                    customer_name: dto.customerName,
+                    customer_address: dto.customerAddress ?? null,
+                    customer_phone: dto.customerPhone ?? null,
+                    item_type: dto.jenisBarang,
+                    gold_type: dto.jenisEmas,
+                    gold_color: dto.warnaEmas,
+                    ring_size: dto.ringSize ?? null,
+                    gold_price_per_gram: dto.hargaEmasPerGram ?? null,
+                    estimated_price: dto.hargaPerkiraan ?? null,
+                    final_price: dto.hargaAkhir ?? null,
+                    down_payment: dto.dp ?? null,
+                    promised_ready_date: dto.promisedReadyDate ? new Date(dto.promisedReadyDate) : null,
+                    completed_date: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : null,
+                    pickup_date: dto.tanggalAmbil ? new Date(dto.tanggalAmbil) : null,
+                    notes: dto.catatan ?? null,
+                    reference_image_urls: dto.referensiGambarUrls ? JSON.stringify(dto.referensiGambarUrls) : null,
                     status: 'DRAFT',
-                    createdById: userId,
-                    updatedById: userId,
+                    created_by_id: userId,
+                    updated_by_id: userId,
+                    updated_at: new Date(),
                 },
             });
             let stoneCount = 0;
             let totalBerat = null;
             if (dto.stones && dto.stones.length) {
-                await tx.orderStone.createMany({
+                await tx.orderstone.createMany({
                     data: dto.stones.map(s => ({ orderId: order.id, bentuk: s.bentuk, jumlah: s.jumlah, berat: s.berat }))
                 });
-                stoneCount = dto.stones.length;
+                const totalJumlah = dto.stones.reduce((acc, s) => acc + (s.jumlah || 0), 0);
+                stoneCount = totalJumlah;
                 const sum = dto.stones.reduce((acc, s) => acc + (s.berat ? Number(s.berat) : 0), 0);
                 totalBerat = new client_1.Prisma.Decimal(sum.toFixed(2));
             }
-            const code = `TM-${dayjs(order.createdAt).format('YYYYMM')}-${String(order.id).padStart(4, '0')}`;
-            const updated = await tx.order.update({ where: { id: order.id }, data: { code, stoneCount, totalBerat: totalBerat } });
+            const code = `TM-${dayjs(order.created_at).format('YYYYMM')}-${String(order.id).padStart(4, '0')}`;
+            const updated = await tx.order.update({ where: { id: order.id }, data: { code, stone_count: stoneCount, total_stone_weight: totalBerat } });
             try {
-                await tx.orderTask.create({ data: { orderId: order.id, stage: 'Awal', status: 'OPEN' } });
+                await tx.ordertask.create({ data: { orderId: order.id, stage: 'Awal', status: 'OPEN', updated_at: new Date() } });
             }
             catch (e) {
             }
             try {
                 const user = await this.prisma.account.findUnique({ where: { id: userId }, select: { fullName: true, job_role: true } });
-                await tx.orderHistory.create({
+                await tx.orderhistory.create({
                     data: ({
                         orderId: order.id,
                         userId,
                         action: 'CREATED',
                         actorName: user?.fullName ?? null,
-                        actorRole: user?.jobRole ?? null,
+                        actorRole: user?.job_role ?? null,
                         orderCode: updated.code ?? null,
                         changeSummary: 'CREATE ORDER',
                     }),
@@ -83,12 +85,12 @@ let OrdersService = class OrdersService {
     async findAll(params) {
         return this.prisma.order.findMany({
             where: params.status ? { status: params.status } : undefined,
-            orderBy: { createdAt: 'desc' },
-            include: { stones: true },
+            orderBy: { created_at: 'desc' },
+            include: { orderstone: true },
         });
     }
     async findById(id) {
-        const order = await this.prisma.order.findUnique({ where: { id }, include: { stones: true } });
+        const order = await this.prisma.order.findUnique({ where: { id }, include: { orderstone: true } });
         if (!order)
             throw new common_1.NotFoundException('Order tidak ditemukan');
         return order;
@@ -110,42 +112,43 @@ let OrdersService = class OrdersService {
             where: { id },
             data: {
                 status: dto.status,
-                updatedById: userId,
+                updated_by_id: userId,
+                updated_at: new Date(),
             },
         });
         const user = await this.prisma.account.findUnique({ where: { id: userId }, select: { fullName: true, job_role: true } });
-        await this.prisma.orderHistory.create({
+        await this.prisma.orderhistory.create({
             data: ({
                 orderId: id,
                 userId,
                 action: 'STATUS_CHANGED',
                 actorName: user?.fullName ?? null,
-                actorRole: user?.jobRole ?? null,
+                actorRole: user?.job_role ?? null,
                 statusFrom: order.status,
                 statusTo: dto.status,
                 orderCode: order.code ?? null,
                 changeSummary: `STATUS: ${order.status} -> ${dto.status}`,
-                diff: { from: order.status, to: dto.status },
+                diff: JSON.stringify({ from: order.status, to: dto.status }),
             }),
         });
         return updated;
     }
     async history(id) {
         await this.findById(id);
-        const records = await this.prisma.orderHistory.findMany({
+        const records = await this.prisma.orderhistory.findMany({
             where: { orderId: id },
-            include: { user: { select: { id: true, fullName: true, job_role: true } } },
+            include: { account: { select: { id: true, fullName: true, job_role: true } } },
             orderBy: { changedAt: 'asc' }
         });
         return records.map((r) => ({
             id: r.id,
             changedAt: r.changedAt,
-            by: r.user ? { id: r.user.id, fullName: r.user.fullName, jobRole: r.user.jobRole ?? null } : r.actorName ? { id: r.userId, fullName: r.actorName, jobRole: r.actorRole ?? null } : null,
+            by: r.account ? { id: r.account.id, fullName: r.account.fullName, jobRole: r.account.job_role ?? null } : r.actorName ? { id: r.userId, fullName: r.actorName, jobRole: r.actorRole ?? null } : null,
             action: r.action,
             statusFrom: r.statusFrom ?? null,
             statusTo: r.statusTo ?? null,
             summary: r.changeSummary,
-            diff: r.diff,
+            diff: r.diff ? JSON.parse(r.diff) : null,
         }));
     }
     async update(id, dto, userId) {
@@ -154,23 +157,24 @@ let OrdersService = class OrdersService {
             if (!order)
                 throw new common_1.NotFoundException('Order tidak ditemukan');
             const data = {
-                customerName: dto.customerName ?? order.customerName,
-                customerAddress: dto.customerAddress ?? order.customerAddress,
-                customerPhone: dto.customerPhone ?? order.customerPhone,
-                jenisBarang: dto.jenisBarang ?? order.jenisBarang,
-                jenisEmas: dto.jenisEmas ?? order.jenisEmas,
-                warnaEmas: dto.warnaEmas ?? order.warnaEmas,
-                ringSize: dto.ringSize ?? order.ringSize,
-                dp: dto.dp ?? order.dp,
-                hargaEmasPerGram: dto.hargaEmasPerGram ?? order.hargaEmasPerGram,
-                hargaPerkiraan: dto.hargaPerkiraan ?? order.hargaPerkiraan,
-                hargaAkhir: dto.hargaAkhir ?? order.hargaAkhir,
-                promisedReadyDate: dto.promisedReadyDate ? new Date(dto.promisedReadyDate) : order.promisedReadyDate,
-                tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : order.tanggalSelesai,
-                tanggalAmbil: dto.tanggalAmbil ? new Date(dto.tanggalAmbil) : order.tanggalAmbil,
-                catatan: dto.catatan ?? order.catatan,
-                referensiGambarUrls: dto.referensiGambarUrls ?? order.referensiGambarUrls,
-                updatedBy: userId ? { connect: { id: userId } } : undefined,
+                customer_name: dto.customerName ?? order.customer_name,
+                customer_address: dto.customerAddress ?? order.customer_address,
+                customer_phone: dto.customerPhone ?? order.customer_phone,
+                item_type: dto.jenisBarang ?? order.item_type,
+                gold_type: dto.jenisEmas ?? order.gold_type,
+                gold_color: dto.warnaEmas ?? order.gold_color,
+                ring_size: dto.ringSize ?? order.ring_size,
+                down_payment: dto.dp ?? order.down_payment,
+                gold_price_per_gram: dto.hargaEmasPerGram ?? order.gold_price_per_gram,
+                estimated_price: dto.hargaPerkiraan ?? order.estimated_price,
+                final_price: dto.hargaAkhir ?? order.final_price,
+                promised_ready_date: dto.promisedReadyDate ? new Date(dto.promisedReadyDate) : order.promised_ready_date,
+                completed_date: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : order.completed_date,
+                pickup_date: dto.tanggalAmbil ? new Date(dto.tanggalAmbil) : order.pickup_date,
+                notes: dto.catatan ?? order.notes,
+                reference_image_urls: dto.referensiGambarUrls ? JSON.stringify(dto.referensiGambarUrls) : order.reference_image_urls,
+                updated_by_id: userId ?? order.updated_by_id,
+                updated_at: new Date(),
             };
             try {
                 console.log('[OrdersService.update] id=', id, 'patchKeys=', Object.keys(dto || {}));
@@ -192,33 +196,33 @@ let OrdersService = class OrdersService {
                 }
             }
             if (dto.stones) {
-                await tx.orderStone.deleteMany({ where: { orderId: id } });
+                await tx.orderstone.deleteMany({ where: { orderId: id } });
                 if (dto.stones.length) {
-                    await tx.orderStone.createMany({ data: dto.stones.map(s => ({ orderId: id, bentuk: s.bentuk, jumlah: s.jumlah, berat: s.berat })) });
+                    await tx.orderstone.createMany({ data: dto.stones.map(s => ({ orderId: id, bentuk: s.bentuk, jumlah: s.jumlah, berat: s.berat })) });
                 }
                 const stones = dto.stones;
-                const stoneCount = stones.length;
+                const stoneCount = stones.reduce((acc, s) => acc + (s.jumlah || 0), 0);
                 const sum = stones.reduce((acc, s) => acc + (s.berat ? Number(s.berat) : 0), 0);
                 const totalBerat = new client_1.Prisma.Decimal(sum.toFixed(2));
-                await tx.order.update({ where: { id }, data: { stoneCount, totalBerat: totalBerat } });
-                nextPatch['stoneCount'] = stoneCount;
-                nextPatch['totalBerat'] = totalBerat;
+                await tx.order.update({ where: { id }, data: { stone_count: stoneCount, total_stone_weight: totalBerat } });
+                nextPatch['stone_count'] = stoneCount;
+                nextPatch['total_stone_weight'] = totalBerat;
             }
             try {
                 const user = await this.prisma.account.findUnique({ where: { id: userId }, select: { fullName: true, job_role: true } });
                 const groupId = (0, crypto_1.randomUUID)();
-                await tx.orderHistory.create({
+                await tx.orderhistory.create({
                     data: ({
                         orderId: id,
                         userId,
                         action: 'UPDATED',
                         actorName: user?.fullName ?? null,
-                        actorRole: user?.jobRole ?? null,
+                        actorRole: user?.job_role ?? null,
                         orderCode: updated.code ?? null,
                         changeSummary: 'EDIT ORDER',
-                        prev: Object.keys(prevPatch).length ? prevPatch : undefined,
-                        next: Object.keys(nextPatch).length ? nextPatch : undefined,
-                        diff: dto,
+                        prev: Object.keys(prevPatch).length ? JSON.stringify(prevPatch) : undefined,
+                        next: Object.keys(nextPatch).length ? JSON.stringify(nextPatch) : undefined,
+                        diff: JSON.stringify(dto),
                         groupId,
                     }),
                 });
@@ -237,7 +241,7 @@ let OrdersService = class OrdersService {
         if (order.status === 'DIAMBIL' || order.status === 'BATAL') {
             throw new common_1.BadRequestException('Tidak dapat menghapus order history/non-aktif');
         }
-        await this.prisma.orderHistory.deleteMany({ where: { orderId: id } });
+        await this.prisma.orderhistory.deleteMany({ where: { orderId: id } });
         await this.prisma.order.delete({ where: { id } });
         return { success: true };
     }

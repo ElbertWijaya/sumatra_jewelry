@@ -6,7 +6,7 @@ export declare class InventoryController {
     constructor(inv: InventoryService);
     get(id: number): any;
     listByOrder(orderId: number): any;
-    search(q?: string, category?: string, status?: string, dateFrom?: string, dateTo?: string, limit?: string, offset?: string): Promise<{
+    search(q?: string, category?: string, status?: string, branchLocation?: string, placement?: string, statusEnum?: string, dateFrom?: string, dateTo?: string, limit?: string, offset?: string): Promise<{
         items: any;
         total: any;
         take: number;
@@ -16,4 +16,6 @@ export declare class InventoryController {
     create(dto: CreateInventoryDto, user: RequestUser): Promise<any>;
     update(id: number, dto: UpdateInventoryDto, user: RequestUser): Promise<any>;
     history(id: number): any;
+    remove(id: number, user: RequestUser): Promise<any>;
+    restore(id: number, user: RequestUser): Promise<any>;
 }

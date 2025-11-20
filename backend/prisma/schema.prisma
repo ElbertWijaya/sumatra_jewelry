@@ -1,32 +1,3 @@
-// ...existing code...
-
-model account {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  fullName  String
-  job_role  String
-  password  String
-  branch_id Int
-  phone     String?
-  address   String?
-  created_at DateTime @default(now())
-  branch    branch   @relation(fields: [branch_id], references: [id])
-  ordersCreated Order[] @relation("OrderCreatedBy")
-  ordersUpdated Order[] @relation("OrderUpdatedBy")
-  orderTasksAssigned OrderTask[] @relation("OrderTaskAssignedTo")
-  orderTasksValidated OrderTask[] @relation("OrderTaskValidatedBy")
-  orderTasksChecked OrderTask[] @relation("OrderTaskCheckedBy")
-  inventoryItemsCreated InventoryItem[] @relation("InventoryItemCreatedBy")
-  inventoryItemsUpdated InventoryItem[] @relation("InventoryItemUpdatedBy")
-  orderHistories OrderHistory[]
-}
-
-model branch {
-  id      Int      @id @default(autoincrement())
-  name    String
-  address String?
-  accounts account[]
-}
 generator client {
   provider = "prisma-client-js"
 }
@@ -36,157 +7,213 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model account {
+  id                                                 String          @id @default(uuid())
+  email                                              String          @unique
+  fullName                                           String
+  job_role                                           String
+  password                                           String
+  branch_id                                          Int
+  phone                                              String?
+  address                                            String?
+  created_at                                         DateTime        @default(now())
+  branch                                             branch          @relation(fields: [branch_id], references: [id])
+  inventoryitem_inventoryitem_created_by_idToaccount inventoryitem[] @relation("inventoryitem_created_by_idToaccount")
+  inventoryitem_inventoryitem_updated_by_idToaccount inventoryitem[] @relation("inventoryitem_updated_by_idToaccount")
+  order_order_created_by_idToaccount                 order[]         @relation("order_created_by_idToaccount")
+  order_order_updated_by_idToaccount                 order[]         @relation("order_updated_by_idToaccount")
+  orderhistory                                       orderhistory[]
+  ordertask_ordertask_assigned_to_idToaccount        ordertask[]     @relation("ordertask_assigned_to_idToaccount")
+  ordertask_ordertask_checked_by_idToaccount         ordertask[]     @relation("ordertask_checked_by_idToaccount")
+  ordertask_ordertask_validated_by_idToaccount       ordertask[]     @relation("ordertask_validated_by_idToaccount")
 
-model Order {
-  id           Int       @id @default(autoincrement()) @map("id")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  code         String?   @unique @map("code")
-  customerName String    @map("customer_name")
-  customerAddress String? @map("customer_address")
-  customerPhone String?  @map("customer_phone")
-  jenisBarang   String   @map("item_type") // previously 'jenis'
-  jenisEmas     String   @map("gold_type")
-  warnaEmas     String   @map("gold_color")
-  hargaEmasPerGram Decimal? @db.Decimal(14,2) @map("gold_price_per_gram")
-  hargaPerkiraan  Decimal? @db.Decimal(14,2) @map("estimated_price")
-  hargaAkhir      Decimal? @db.Decimal(14,2) @map("final_price")
-  dp            Decimal?  @db.Decimal(14,2) @map("down_payment")
-  promisedReadyDate DateTime? @map("promised_ready_date")
-  tanggalSelesai  DateTime? @map("completed_date")
-  tanggalAmbil    DateTime? @map("pickup_date")
-  catatan       String?  @map("notes")
-  fotoDesainUrl String?  @map("design_image_url")
-  referensiGambarUrls Json?   @map("reference_image_urls") // array of strings
-  stoneCount    Int      @default(0) @map("stone_count")
-  totalBerat    Decimal? @db.Decimal(10,2) @map("total_stone_weight")
-  status        OrderStatus @default(DRAFT) @map("status")
-  createdById   String? @map("created_by_id")
-  updatedById   String? @map("updated_by_id")
-  createdBy    account? @relation("OrderCreatedBy", fields: [createdById], references: [id])
-  updatedBy    account? @relation("OrderUpdatedBy", fields: [updatedById], references: [id])
-  histories    OrderHistory[]
-  stones       OrderStone[]
-  tasks        OrderTask[]
-  inventoryItems InventoryItem[]
-  ringSize     String?   @map("ring_size")
+  @@index([branch_id], map: "account_branch_id_fkey")
 }
 
-model OrderStone {
-  id       Int    @id @default(autoincrement())
-  order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId  Int
-  bentuk   String
-  jumlah   Int
-  berat    Decimal? @db.Decimal(10,2)
-  createdAt DateTime @default(now())
-
-  @@index([orderId])
-  @@index([bentuk])
+model branch {
+  id       Int       @id @default(autoincrement())
+  name     String
+  address  String?
+  accounts account[]
 }
 
-model OrderHistory {
-  id         Int      @id @default(autoincrement())
-  order      Order    @relation(fields: [orderId], references: [id])
-  orderId    Int
-  changedAt  DateTime @default(now())
-  user       account? @relation(fields: [userId], references: [id])
-  userId     String?
-  changeSummary String?
-  diff       Json?
-  // Richer audit fields
-  action      OrderHistoryAction @default(UPDATED)
-  actorName   String?
-  actorRole   TaskJobRole?
-  statusFrom  OrderStatus?
-  statusTo    OrderStatus?
-  field       String?
-  prev        Json?
-  next        Json?
-  context     Json?
-  groupId     String?
-  orderCode   String?
-  snapshot    Json?
+model inventoryitem {
+  id                                           Int                               @id @default(autoincrement())
+  orderId                                      Int?
+  code                                         String?
+  name                                         String?
+  category                                     String?
+  material                                     String?
+  karat                                        String?
+  gold_type                                    String?
+  gold_color                                   String?
+  weight_gross                                 Decimal?                          @db.Decimal(10, 2)
+  weight_net                                   Decimal?                          @db.Decimal(10, 2)
+  stone_count                                  Int?
+  stone_weight                                 Decimal?                          @db.Decimal(10, 2)
+  size                                         String?
+  dimensions                                   String?
+  barcode                                      String?                           @unique(map: "InventoryItem_barcode_key")
+  sku                                          String?                           @unique(map: "InventoryItem_sku_key")
+  location                                     String?
+  branch_location                              inventoryitem_branch_location?
+  placement_location                           inventoryitem_placement_location?
+  status_enum                                  inventoryitem_status              @default(DRAFT)
+  is_deleted                                   Boolean                           @default(false)
+  deleted_at                                   DateTime?
+  cost                                         Decimal?                          @db.Decimal(14, 2)
+  price                                        Decimal?                          @db.Decimal(14, 2)
+  status                                       String?
+  images                                       String?                           @db.LongText
+  notes                                        String?
+  created_at                                   DateTime                          @default(now())
+  updated_at                                   DateTime
+  created_by_id                                String?
+  updated_by_id                                String?
+  account_inventoryitem_created_by_idToaccount account?                          @relation("inventoryitem_created_by_idToaccount", fields: [created_by_id], references: [id], map: "InventoryItem_created_by_id_fkey")
+  order                                        order?                            @relation(fields: [orderId], references: [id], map: "InventoryItem_orderId_fkey")
+  account_inventoryitem_updated_by_idToaccount account?                          @relation("inventoryitem_updated_by_idToaccount", fields: [updated_by_id], references: [id], map: "InventoryItem_updated_by_id_fkey")
+  inventorystone                               inventorystone[]
+  inventoryitemhistory                         inventoryitemhistory[]
 
-  @@index([orderId, changedAt])
-  @@index([action])
-  @@index([field])
-  @@index([userId])
+  @@index([barcode], map: "InventoryItem_barcode_idx")
+  @@index([created_by_id], map: "InventoryItem_created_by_id_fkey")
+  @@index([orderId], map: "InventoryItem_orderId_idx")
+  @@index([sku], map: "InventoryItem_sku_idx")
+  @@index([updated_by_id], map: "InventoryItem_updated_by_id_fkey")
+  @@index([branch_location, placement_location, status_enum], map: "InventoryItem_loc_status_idx")
+  @@unique([code, branch_location], map: "InventoryItem_code_branch_location_key")
 }
 
-enum OrderHistoryAction {
-  CREATED
-  UPDATED
-  STATUS_CHANGED
-  NOTE_ADDED
-  TASK_EVENT
-  DELETED
+model inventorystone {
+  id              Int            @id @default(autoincrement())
+  inventoryItemId Int
+  bentuk          String
+  jumlah          Int
+  berat           Decimal?       @db.Decimal(10, 2)
+  created_at      DateTime       @default(now())
+  inventoryitem   inventoryitem  @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade, map: "InventoryStone_inventoryItemId_fkey")
+
+  @@index([bentuk], map: "InventoryStone_bentuk_idx")
+  @@index([inventoryItemId], map: "InventoryStone_inventoryItemId_idx")
 }
 
-model OrderTask {
-  id            Int       @id @default(autoincrement())
-  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+model order {
+  id                                   Int             @id @default(autoincrement())
+  code                                 String?         @unique(map: "Order_code_key")
+  status                               order_status    @default(DRAFT)
+  completed_date                       DateTime?
+  created_at                           DateTime        @default(now())
+  created_by_id                        String?
+  customer_address                     String?
+  customer_name                        String
+  customer_phone                       String?
+  design_image_url                     String?
+  down_payment                         Decimal?        @db.Decimal(14, 2)
+  estimated_price                      Decimal?        @db.Decimal(14, 2)
+  final_price                          Decimal?        @db.Decimal(14, 2)
+  gold_color                           String
+  gold_price_per_gram                  Decimal?        @db.Decimal(14, 2)
+  gold_type                            String
+  item_type                            String
+  notes                                String?
+  pickup_date                          DateTime?
+  reference_image_urls                 String?         @db.LongText
+  updated_at                           DateTime
+  updated_by_id                        String?
+  promised_ready_date                  DateTime?
+  stone_count                          Int             @default(0)
+  total_stone_weight                   Decimal?        @db.Decimal(10, 2)
+  ring_size                            String?
+  inventoryitem                        inventoryitem[]
+  account_order_created_by_idToaccount account?        @relation("order_created_by_idToaccount", fields: [created_by_id], references: [id], map: "Order_created_by_id_fkey")
+  account_order_updated_by_idToaccount account?        @relation("order_updated_by_idToaccount", fields: [updated_by_id], references: [id], map: "Order_updated_by_id_fkey")
+  orderhistory                         orderhistory[]
+  orderstone                           orderstone[]
+  ordertask                            ordertask[]
+
+  @@index([created_by_id], map: "Order_created_by_id_fkey")
+  @@index([updated_by_id], map: "Order_updated_by_id_fkey")
+}
+
+model orderhistory {
+  id            Int                      @id @default(autoincrement())
   orderId       Int
-  stage         String?   @map("stage")
-  status        TaskStatus @default(OPEN) @map("status")
-  assignedTo    account?  @relation("OrderTaskAssignedTo", fields: [assignedToId], references: [id])
-  assignedToId  String?   @map("assigned_to_id")
-  jobRole       TaskJobRole? @map("job_role")
-  requestedDoneAt DateTime? @map("requested_done_at")
-  validatedBy   account?  @relation("OrderTaskValidatedBy", fields: [validatedById], references: [id])
-  validatedById String?   @map("validated_by_id")
-  validatedAt   DateTime? @map("validated_at")
-  notes         String?   @map("notes")
-  // Progress check by assignee
-  isChecked     Boolean   @default(false) @map("is_checked")
-  checkedAt     DateTime? @map("checked_at")
-  checkedBy     account?  @relation("OrderTaskCheckedBy", fields: [checkedById], references: [id])
-  checkedById   String?   @map("checked_by_id")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  changedAt     DateTime                 @default(now())
+  userId        String?
+  changeSummary String?
+  diff          String?                  @db.LongText
+  action        orderhistory_action      @default(UPDATED)
+  actorName     String?
+  actorRole     orderhistory_actorRole?
+  context       String?                  @db.LongText
+  field         String?
+  groupId       String?
+  next          String?                  @db.LongText
+  orderCode     String?
+  prev          String?                  @db.LongText
+  snapshot      String?                  @db.LongText
+  statusFrom    orderhistory_statusFrom?
+  statusTo      orderhistory_statusTo?
+  order         order                    @relation(fields: [orderId], references: [id], map: "OrderHistory_orderId_fkey")
+  account       account?                 @relation(fields: [userId], references: [id], map: "OrderHistory_userId_fkey")
 
-  @@index([orderId])
-  @@index([assignedToId])
+  @@index([action], map: "OrderHistory_action_idx")
+  @@index([field], map: "OrderHistory_field_idx")
+  @@index([orderId, changedAt], map: "OrderHistory_orderId_changedAt_idx")
+  @@index([userId], map: "OrderHistory_userId_idx")
 }
 
-model InventoryItem {
-  id           Int       @id @default(autoincrement())
-  order        Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  orderId      Int?
-  code         String?   @map("code")
-  name         String?   @map("name")
-  category     String?   @map("category")
-  material     String?   @map("material")
-  karat        String?   @map("karat")
-  goldType     String?   @map("gold_type")
-  goldColor    String?   @map("gold_color")
-  weightGross  Decimal?  @db.Decimal(10,2) @map("weight_gross")
-  weightNet    Decimal?  @db.Decimal(10,2) @map("weight_net")
-  stoneCount   Int?      @map("stone_count")
-  stoneWeight  Decimal?  @db.Decimal(10,2) @map("stone_weight")
-  size         String?   @map("size")
-  dimensions   String?   @map("dimensions")
-  barcode      String?   @unique @map("barcode")
-  sku          String?   @unique @map("sku")
-  location     String?   @map("location")
-  cost         Decimal?  @db.Decimal(14,2) @map("cost")
-  price        Decimal?  @db.Decimal(14,2) @map("price")
-  status       String?   @map("status")
-  images       Json?     @map("images")
-  notes        String?   @map("notes")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  createdBy    account?  @relation("InventoryItemCreatedBy", fields: [createdById], references: [id])
-  createdById  String?   @map("created_by_id")
-  updatedBy    account?  @relation("InventoryItemUpdatedBy", fields: [updatedById], references: [id])
-  updatedById  String?   @map("updated_by_id")
+model orderstone {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  bentuk    String
+  jumlah    Int
+  berat     Decimal? @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+  order     order    @relation(fields: [orderId], references: [id], onDelete: Cascade, map: "OrderStone_orderId_fkey")
 
-  @@index([orderId])
-  @@index([barcode])
-  @@index([sku])
+  @@index([bentuk], map: "OrderStone_bentuk_idx")
+  @@index([orderId], map: "OrderStone_orderId_idx")
 }
 
-enum TaskStatus {
+model ordertask {
+  id                                         Int                 @id @default(autoincrement())
+  orderId                                    Int
+  stage                                      String?
+  status                                     ordertask_status    @default(OPEN)
+  assigned_to_id                             String?
+  created_at                                 DateTime            @default(now())
+  notes                                      String?
+  requested_done_at                          DateTime?
+  updated_at                                 DateTime
+  validated_at                               DateTime?
+  validated_by_id                            String?
+  job_role                                   ordertask_job_role?
+  checked_at                                 DateTime?
+  checked_by_id                              String?
+  is_checked                                 Boolean             @default(false)
+  account_ordertask_assigned_to_idToaccount  account?            @relation("ordertask_assigned_to_idToaccount", fields: [assigned_to_id], references: [id], map: "OrderTask_assigned_to_id_fkey")
+  account_ordertask_checked_by_idToaccount   account?            @relation("ordertask_checked_by_idToaccount", fields: [checked_by_id], references: [id], map: "OrderTask_checked_by_id_fkey")
+  order                                      order               @relation(fields: [orderId], references: [id], onDelete: Cascade, map: "OrderTask_orderId_fkey")
+  account_ordertask_validated_by_idToaccount account?            @relation("ordertask_validated_by_idToaccount", fields: [validated_by_id], references: [id], map: "OrderTask_validated_by_id_fkey")
+
+  @@index([assigned_to_id], map: "OrderTask_assigned_to_id_idx")
+  @@index([checked_by_id], map: "OrderTask_checked_by_id_fkey")
+  @@index([orderId], map: "OrderTask_orderId_idx")
+  @@index([validated_by_id], map: "OrderTask_validated_by_id_fkey")
+}
+
+enum order_status {
+  DRAFT
+  DITERIMA
+  DALAM_PROSES
+  SIAP
+  DIAMBIL
+  BATAL
+}
+
+enum ordertask_status {
   OPEN
   ASSIGNED
   IN_PROGRESS
@@ -195,7 +222,16 @@ enum TaskStatus {
   CANCELLED
 }
 
-enum TaskJobRole {
+enum orderhistory_action {
+  CREATED
+  UPDATED
+  STATUS_CHANGED
+  NOTE_ADDED
+  TASK_EVENT
+  DELETED
+}
+
+enum orderhistory_actorRole {
   ADMINISTRATOR
   SALES
   DESIGNER
@@ -206,8 +242,18 @@ enum TaskJobRole {
   INVENTORY
 }
 
+enum ordertask_job_role {
+  ADMINISTRATOR
+  SALES
+  DESIGNER
+  CASTER
+  CARVER
+  DIAMOND_SETTER
+  FINISHER
+  INVENTORY
+}
 
-enum OrderStatus {
+enum orderhistory_statusFrom {
   DRAFT
   DITERIMA
   DALAM_PROSES
@@ -216,4 +262,52 @@ enum OrderStatus {
   BATAL
 }
 
-/// After migration, run a script to backfill the code field: TM-YYYYMM-XXXX
+enum orderhistory_statusTo {
+  DRAFT
+  DITERIMA
+  DALAM_PROSES
+  SIAP
+  DIAMBIL
+  BATAL
+}
+
+enum inventoryitem_branch_location {
+  ASIA
+  SUN_PLAZA
+}
+
+enum inventoryitem_placement_location {
+  ETALASE
+  PENYIMPANAN
+}
+
+enum inventoryitem_status {
+  DRAFT
+  ACTIVE
+  RESERVED
+  SOLD
+  RETURNED
+  DAMAGED
+}
+
+model inventoryitemhistory {
+  id                 Int                         @id @default(autoincrement())
+  inventoryItemId    Int
+  action             inventoryitemhistory_action @default(UPDATED)
+  changed_at         DateTime                    @default(now())
+  user_id            String?
+  diff               String?                     @db.LongText
+  snapshot           String?                     @db.LongText
+  inventoryitem      inventoryitem               @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade, map: "InventoryItemHistory_inventoryItemId_fkey")
+
+  @@index([inventoryItemId], map: "InventoryItemHistory_inventoryItemId_idx")
+  @@index([changed_at], map: "InventoryItemHistory_changed_at_idx")
+}
+
+enum inventoryitemhistory_action {
+  CREATED
+  UPDATED
+  STATUS_CHANGED
+  DELETED
+  RESTORED
+}

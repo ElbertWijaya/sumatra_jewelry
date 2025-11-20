@@ -16,10 +16,18 @@ export type CreateInventoryDto = {
     barcode?: string;
     sku?: string;
     location?: string;
+    branchLocation?: 'ASIA' | 'SUN_PLAZA';
+    placement?: 'ETALASE' | 'PENYIMPANAN';
     cost?: number;
     price?: number;
     status?: string;
+    statusEnum?: 'DRAFT' | 'ACTIVE' | 'RESERVED' | 'SOLD' | 'RETURNED' | 'DAMAGED';
     images?: string[];
     notes?: string;
+    stones?: {
+        bentuk: string;
+        jumlah: number;
+        berat?: number;
+    }[];
 };
 export type UpdateInventoryDto = Partial<CreateInventoryDto>;

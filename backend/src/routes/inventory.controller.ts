@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards, Delete } from '@nestjs/common';
 import { JwtAuthGuard } from '../security/jwt-auth.guard';
 import { Roles } from '../security/roles.decorator';
 import { RolesGuard } from '../security/roles.guard';
@@ -26,12 +26,15 @@ export class InventoryController {
     @Query('q') q?: string,
     @Query('category') category?: string,
     @Query('status') status?: string,
+    @Query('branchLocation') branchLocation?: string,
+    @Query('placement') placement?: string,
+    @Query('statusEnum') statusEnum?: string,
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
-    return this.inv.search({ q, category, status, dateFrom, dateTo, limit: limit ? Number(limit) : undefined, offset: offset ? Number(offset) : undefined });
+    return this.inv.search({ q, category, status, dateFrom, dateTo, limit: limit ? Number(limit) : undefined, offset: offset ? Number(offset) : undefined, branchLocation, placement, statusEnum });
   }
 
   @Get('requests/list')
@@ -62,5 +65,17 @@ export class InventoryController {
         orderBy: { changedAt: 'desc' },
       });
     });
+  }
+
+  @Delete(':id')
+  @Roles('ADMINISTRATOR','INVENTORY')
+  remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: RequestUser) {
+    return this.inv.softDelete(id, user.userId);
+  }
+
+  @Post(':id/restore')
+  @Roles('ADMINISTRATOR')
+  restore(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: RequestUser) {
+    return this.inv.restore(id, user.userId);
   }
 }

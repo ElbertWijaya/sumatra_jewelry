@@ -16,6 +16,7 @@
     "db:reset": "ts-node -r tsconfig-paths/register src/scripts/reset-db.ts",
     "db:ensure-checklist": "ts-node -r tsconfig-paths/register src/scripts/ensure-task-checklist-columns.ts",
     "restore:appusers": "ts-node -r tsconfig-paths/register src/scripts/restore-appusers-template.ts",
+    "seed:accounts": "ts-node -r tsconfig-paths/register src/scripts/seed-accounts.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
