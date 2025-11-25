@@ -111,7 +111,7 @@ export const MyOrdersScreen: React.FC = () => {
   const badgeStyleFor = (status?: string | null) => {
     const s = String(status || '').toUpperCase();
     if (s === 'DRAFT') return { wrap: styles.badgeNeutral, text: styles.badgeNeutralText };
-    if (s === 'ASSIGNED' || s === 'DITERIMA') return { wrap: styles.badgeInfo, text: styles.badgeInfoText };
+    if (s === 'ASSIGNED' || s === 'MENUNGGU') return { wrap: styles.badgeNeutral, text: styles.badgeNeutralText };
     if (s === 'IN_PROGRESS' || s === 'DALAM_PROSES') return { wrap: styles.badgeProgress, text: styles.badgeProgressText };
     if (s === 'AWAITING_VALIDATION') return { wrap: styles.badgeWarn, text: styles.badgeWarnText };
     if (s === 'DONE' || s === 'SELESAI') return { wrap: styles.badgeSuccess, text: styles.badgeSuccessText };

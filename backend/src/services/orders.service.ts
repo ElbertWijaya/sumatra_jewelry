@@ -64,7 +64,7 @@ export class OrdersService {
           pickup_date: dto.tanggalAmbil ? new Date(dto.tanggalAmbil) : null,
           notes: dto.catatan ?? null,
           reference_image_urls: dto.referensiGambarUrls ? JSON.stringify(dto.referensiGambarUrls) : null,
-          status: 'DITERIMA',
+          status: 'MENUNGGU',
           created_by_id: userId,
           updated_by_id: userId,
           updated_at: new Date(),
@@ -132,7 +132,7 @@ export class OrdersService {
   async updateStatus(id: number, dto: UpdateOrderStatusDto, userId: string) {
     const order = await this.findById(id);
     const allowed: Record<OrderStatusEnum, OrderStatusEnum[]> = {
-      DITERIMA: ['DALAM_PROSES', 'BATAL'],
+      MENUNGGU: ['DALAM_PROSES', 'BATAL'],
       DALAM_PROSES: ['SIAP', 'BATAL'],
       SIAP: ['DIAMBIL', 'BATAL'],
       DIAMBIL: [],

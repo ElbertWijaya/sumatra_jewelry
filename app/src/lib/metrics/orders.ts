@@ -18,7 +18,7 @@ const upper = (v?: string | null) => String(v || '').toUpperCase();
 
 export function isOrderActiveStatus(status?: string | null) {
   const s = upper(status);
-  return s === 'DITERIMA' || s === 'DALAM_PROSES';
+  return s === 'MENUNGGU' || s === 'DALAM_PROSES';
 }
 
 export function setAssignedOrderIds(tasks?: AnyTask[] | null) {
