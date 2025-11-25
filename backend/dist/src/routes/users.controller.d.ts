@@ -30,16 +30,16 @@ export declare class UsersController {
         branchAddress: string;
         joinedAt: string;
         branch: {
-            address: string | null;
             name: string;
+            address: string | null;
         };
         id: string;
+        address: string | null;
         email: string;
         fullName: string;
         job_role: string;
         branch_id: number;
         phone: string | null;
-        address: string | null;
         created_at: Date;
     }>;
     changePassword(req: any, body: {

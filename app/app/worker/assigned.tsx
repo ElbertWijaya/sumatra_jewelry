@@ -5,6 +5,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@lib/context/AuthContext';
 import { api } from '@lib/api/client';
 import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 
 const COLORS = { gold:'#FFD700', yellow:'#ffe082', dark:'#181512', card:'#23201c', border:'#4e3f2c' };
 
@@ -21,6 +22,7 @@ export default function AssignedScreen() {
   const { token, user } = useAuth();
   const qc = useQueryClient();
   const userId = user?.id || user?.userId || null;
+  const router = useRouter();
 
   const { data, isLoading, isRefetching, refetch, error } = useQuery<Task[]>({
     queryKey: ['tasks','active'],
@@ -56,8 +58,7 @@ export default function AssignedScreen() {
     onError: (e: any) => Alert.alert('Gagal', String(e?.message || 'Gagal memulai tugas')),
   });
 
-  const [expanded, setExpanded] = React.useState<Record<number, boolean>>({});
-  const toggle = (orderId: number) => setExpanded(p => ({ ...p, [orderId]: !p[orderId] }));
+  // Removed inline expansion; pressing card now navigates to full order detail screen.
 
   return (
     <View style={s.container}>
@@ -68,20 +69,27 @@ export default function AssignedScreen() {
         ListHeaderComponent={<Text style={s.title}>Ditugaskan kepada saya</Text>}
         ListEmptyComponent={!isLoading ? <Text style={s.empty}>Tidak ada order yang perlu diterima.</Text> : null}
         renderItem={({ item: g }) => (
-          <TouchableOpacity style={s.card} activeOpacity={0.9} onPress={() => toggle(g.orderId)}>
+          <TouchableOpacity
+            style={s.card}
+            activeOpacity={0.9}
+            onPress={() => router.push({ pathname: '/order/[id]', params: { id: String(g.orderId), src: 'worker', fromWorker: '1' } })}
+          >
             <View style={s.cardHeader}>
-              <Text style={s.code}>{g.code}</Text>
+              <View style={s.headerLeft}>
+                <View style={s.iconBadge}><MaterialCommunityIcons name="account-tie" size={16} color={COLORS.gold} /></View>
+                <Text style={s.code} numberOfLines={1}>{g.code}</Text>
+                <View style={s.statusPill}><Text style={s.statusText}>DITUGASKAN</Text></View>
+              </View>
               <TouchableOpacity
                 style={s.btnPrimary}
                 onPress={() => mAcceptMine.mutate(g.orderId)}
                 disabled={mAcceptMine.isPending}
               >
-                {mAcceptMine.isPending ? <ActivityIndicator color="#1b1b1b" size="small" /> : <Text style={s.btnPrimaryText}>Terima Order</Text>}
+                {mAcceptMine.isPending ? <ActivityIndicator color="#1b1b1b" size="small" /> : <Text style={s.btnPrimaryText}>Terima</Text>}
               </TouchableOpacity>
             </View>
-            {expanded[g.orderId] && (
-              <OrderDetailInline orderId={g.orderId} />
-            )}
+            <View style={s.goldDivider} />
+            <OrderMetaPreview orderId={g.orderId} />
             {g.tasks.sort((a,b)=>a.id-b.id).map(t => (
               <View key={t.id} style={s.taskRow}>
                 <View style={{ flex:1 }}>
@@ -100,35 +108,19 @@ export default function AssignedScreen() {
   );
 }
 
-// Inline order detail fetch component
-const OrderDetailInline: React.FC<{ orderId: number }> = ({ orderId }) => {
-  const { token } = useAuth();
-  const { data, isLoading } = useQuery<any>({
-    queryKey: ['order', orderId],
-    queryFn: () => api.orders.get(token || '', orderId),
-    enabled: !!token && !!orderId,
-    staleTime: 0,
-  });
-  if (isLoading) return <View style={s.detailBox}><ActivityIndicator color={COLORS.gold} /></View>;
-  const det: any = data || {};
-  return (
-    <View style={s.detailBox}>
-      <View style={s.detailRow}><Text style={s.detailKey}>Customer</Text><Text style={s.detailVal} numberOfLines={1}>{det.customerName || '-'}</Text></View>
-      <View style={s.detailRow}><Text style={s.detailKey}>Jenis</Text><Text style={s.detailVal} numberOfLines={1}>{det.jenisBarang || det.jenis || '-'}</Text></View>
-      {det.ringSize ? <View style={s.detailRow}><Text style={s.detailKey}>Ukuran Cincin</Text><Text style={s.detailVal}>{det.ringSize}</Text></View> : null}
-      <View style={s.detailRow}><Text style={s.detailKey}>Perkiraan Siap</Text><Text style={s.detailVal}>{det.promisedReadyDate ? det.promisedReadyDate.slice(0,10) : '-'}</Text></View>
-      {det.catatan ? <View style={[s.detailRow,{alignItems:'flex-start'}]}><Text style={s.detailKey}>Catatan</Text><Text style={[s.detailVal,{flex:1}]} numberOfLines={3}>{det.catatan}</Text></View> : null}
-    </View>
-  );
-};
 
 const s = StyleSheet.create({
   container: { flex:1, backgroundColor: COLORS.dark, padding: 16 },
   title: { color: COLORS.gold, fontWeight:'800', fontSize: 18, marginBottom: 12 },
   empty: { color: COLORS.yellow, textAlign:'center', marginTop: 24 },
-  card: { backgroundColor: COLORS.card, borderRadius: 14, padding: 12, marginBottom: 12, borderWidth:1, borderColor: COLORS.border },
+  card: { backgroundColor: COLORS.card, borderRadius: 16, padding: 12, marginBottom: 12, borderWidth:1, borderColor: COLORS.border },
   cardHeader: { flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom: 6 },
-  code: { color: COLORS.gold, fontWeight:'800', fontSize: 14 },
+  headerLeft: { flexDirection:'row', alignItems:'center', gap:8, flex:1, minWidth:0 },
+  iconBadge: { backgroundColor:'#2b2522', padding:6, borderRadius:10, borderWidth:1, borderColor:'rgba(255,215,0,0.18)' },
+  code: { color: COLORS.gold, fontWeight:'800', fontSize: 15, letterSpacing:0.3, flexShrink:1 },
+  statusPill: { paddingHorizontal:8, paddingVertical:4, borderRadius:999, borderWidth:1, borderColor:COLORS.border, backgroundColor:'#201c18' },
+  statusText: { color: COLORS.yellow, fontWeight:'800', fontSize:10, letterSpacing:0.6 },
+  goldDivider: { height: 2, backgroundColor: 'rgba(255,215,0,0.16)', borderRadius: 999, marginVertical: 8 },
   taskRow: { flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingVertical:8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(255,215,0,0.12)' },
   taskStage: { color: COLORS.yellow, fontWeight:'700' },
   taskMeta: { color: '#bfae6a', fontSize: 12, marginTop: 2 },
@@ -136,8 +128,31 @@ const s = StyleSheet.create({
   btnPrimaryText: { color: '#1b1b1b', fontWeight:'800' },
   btnGhost: { borderWidth:1, borderColor: COLORS.border, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
   btnGhostText: { color: COLORS.gold, fontWeight:'800' },
-  detailBox: { backgroundColor:'rgba(35,32,28,0.85)', borderRadius:10, borderWidth:0.8, borderColor:COLORS.border, padding:8, marginBottom:6 },
-  detailRow: { flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:4 },
-  detailKey: { color: COLORS.gold, fontSize: 11, fontWeight:'700' },
-  detailVal: { color: COLORS.yellow, fontSize: 12, fontWeight:'700', marginLeft: 8, flexShrink: 1 },
+  // Removed inline detail styles (detailBox, detailRow, detailKey, detailVal) to avoid duplication.
 });
+
+// Small meta preview below header (lightweight info)
+const OrderMetaPreview: React.FC<{ orderId: number }> = ({ orderId }) => {
+  const { token } = useAuth();
+  const { data } = useQuery<any>({
+    queryKey: ['order','preview', orderId],
+    queryFn: () => api.orders.get(token || '', orderId),
+    enabled: !!token && !!orderId,
+    staleTime: 30_000,
+  });
+  const o = data || {};
+  const customer = o.customerName || '-';
+  const jenis = o.jenisBarang || o.jenis || '-';
+  return (
+    <View style={{ flexDirection:'row', alignItems:'center', gap:10, marginBottom:6 }}>
+      <View style={{ flex:1, minWidth:0, backgroundColor:'rgba(35,32,28,0.85)', borderRadius:10, borderWidth:0.8, borderColor:COLORS.border, paddingVertical:6, paddingHorizontal:8 }}>
+        <Text style={{ color: COLORS.gold, fontSize:11, fontWeight:'700' }}>Customer</Text>
+        <Text style={{ color: COLORS.yellow, fontSize:12, fontWeight:'800' }} numberOfLines={1}>{customer}</Text>
+      </View>
+      <View style={{ flex:1, minWidth:0, backgroundColor:'rgba(35,32,28,0.85)', borderRadius:10, borderWidth:0.8, borderColor:COLORS.border, paddingVertical:6, paddingHorizontal:8 }}>
+        <Text style={{ color: COLORS.gold, fontSize:11, fontWeight:'700' }}>Jenis</Text>
+        <Text style={{ color: COLORS.yellow, fontSize:12, fontWeight:'800' }} numberOfLines={1}>{jenis}</Text>
+      </View>
+    </View>
+  );
+};

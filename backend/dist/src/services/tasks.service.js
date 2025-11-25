@@ -25,6 +25,42 @@ let TasksService = TasksService_1 = class TasksService {
     mapTask(row) {
         if (!row)
             return row;
+        const o = row.order;
+        const mappedOrder = o ? {
+            id: o.id,
+            code: o.code ?? null,
+            status: o.status ?? null,
+            customerName: o.customer_name ?? null,
+            customer_name: o.customer_name ?? null,
+            customerPhone: o.customer_phone ?? null,
+            customer_phone: o.customer_phone ?? null,
+            customerAddress: o.customer_address ?? null,
+            customer_address: o.customer_address ?? null,
+            jenisBarang: o.item_type ?? null,
+            item_type: o.item_type ?? null,
+            jenisEmas: o.gold_type ?? null,
+            gold_type: o.gold_type ?? null,
+            warnaEmas: o.gold_color ?? null,
+            gold_color: o.gold_color ?? null,
+            ringSize: o.ring_size ?? null,
+            ring_size: o.ring_size ?? null,
+            createdAt: o.created_at ?? null,
+            created_at: o.created_at ?? null,
+            promisedReadyDate: o.promised_ready_date ?? null,
+            promised_ready_date: o.promised_ready_date ?? null,
+            tanggalSelesai: o.completed_date ?? null,
+            completed_date: o.completed_date ?? null,
+            tanggalAmbil: o.pickup_date ?? null,
+            pickup_date: o.pickup_date ?? null,
+            catatan: o.notes ?? null,
+            notes: o.notes ?? null,
+            referensiGambarUrls: o.reference_image_urls ? (() => { try {
+                return JSON.parse(o.reference_image_urls);
+            }
+            catch {
+                return [];
+            } })() : [],
+        } : null;
         return {
             id: row.id,
             orderId: row.orderId,
@@ -41,7 +77,7 @@ let TasksService = TasksService_1 = class TasksService {
             checkedAt: row.checked_at ?? null,
             checkedById: row.checked_by_id ?? null,
             isChecked: !!row.is_checked,
-            order: row.order || null,
+            order: mappedOrder,
             assignedTo: row.account_ordertask_assigned_to_idToaccount || null,
             validatedBy: row.account_ordertask_validated_by_idToaccount || null,
         };
@@ -71,7 +107,13 @@ let TasksService = TasksService_1 = class TasksService {
                 },
                 orderBy: { created_at: 'desc' },
                 include: {
-                    order: true,
+                    order: { select: {
+                            id: true, code: true, status: true,
+                            customer_name: true, customer_phone: true, customer_address: true,
+                            item_type: true, gold_type: true, gold_color: true, ring_size: true,
+                            created_at: true, promised_ready_date: true, completed_date: true, pickup_date: true,
+                            notes: true, reference_image_urls: true
+                        } },
                     account_ordertask_assigned_to_idToaccount: { select: { id: true, fullName: true, job_role: true } },
                     account_ordertask_validated_by_idToaccount: { select: { id: true, fullName: true, job_role: true } },
                 },
@@ -195,7 +237,7 @@ let TasksService = TasksService_1 = class TasksService {
                         statusTo: 'DALAM_PROSES',
                         orderCode: task.order?.code ?? null,
                         changeSummary: 'STATUS: MENUNGGU -> DALAM_PROSES',
-                        diff: { from: 'MENUNGGU', to: 'DALAM_PROSES' },
+                        diff: JSON.stringify({ from: 'MENUNGGU', to: 'DALAM_PROSES' }),
                     }),
                 }));
             }
@@ -251,7 +293,7 @@ let TasksService = TasksService_1 = class TasksService {
                         statusTo: 'DALAM_PROSES',
                         orderCode: order.code ?? null,
                         changeSummary: 'STATUS: MENUNGGU -> DALAM_PROSES',
-                        diff: { from: 'MENUNGGU', to: 'DALAM_PROSES' },
+                        diff: JSON.stringify({ from: 'MENUNGGU', to: 'DALAM_PROSES' }),
                     }),
                 }));
             }
@@ -299,7 +341,7 @@ let TasksService = TasksService_1 = class TasksService {
                         actorRole: actor?.job_role ?? null,
                         orderCode: task.order?.code ?? null,
                         changeSummary: `TASK_REQUESTED_VALIDATION (task#${id})`,
-                        diff: { taskId: id, event: 'REQUEST_VALIDATION', notes: notes ?? null },
+                        diff: JSON.stringify({ taskId: id, event: 'REQUEST_VALIDATION', notes: notes ?? null }),
                     }),
                 });
             }
@@ -330,7 +372,7 @@ let TasksService = TasksService_1 = class TasksService {
                     actorRole: actor?.job_role ?? null,
                     orderCode: task.order?.code ?? null,
                     changeSummary: `TASK_VALIDATED (task#${id})`,
-                    diff: { taskId: id, event: 'TASK_VALIDATED', notes: notes ?? null },
+                    diff: JSON.stringify({ taskId: id, event: 'TASK_VALIDATED', notes: notes ?? null }),
                 }),
             });
         }
@@ -365,7 +407,7 @@ let TasksService = TasksService_1 = class TasksService {
                     actorRole: actor?.job_role ?? null,
                     orderCode: order.code ?? null,
                     changeSummary: `TASKS_VALIDATED user=${targetUserId}`,
-                    diff: { userId: targetUserId, event: 'TASKS_VALIDATED', count: tasks.length, notes: notes ?? null },
+                    diff: JSON.stringify({ userId: targetUserId, event: 'TASKS_VALIDATED', count: tasks.length, notes: notes ?? null }),
                 }),
             });
         }
@@ -403,7 +445,7 @@ let TasksService = TasksService_1 = class TasksService {
                         actorRole: actor?.job_role ?? null,
                         orderCode: order.code ?? null,
                         changeSummary: `TASKS_REQUESTED_VALIDATION user=${requesterUserId}`,
-                        diff: { userId: requesterUserId, event: 'REQUEST_VALIDATION_BULK', count: ids.length, notes: notes ?? null },
+                        diff: JSON.stringify({ userId: requesterUserId, event: 'REQUEST_VALIDATION_BULK', count: ids.length, notes: notes ?? null }),
                     }),
                 });
             }

@@ -102,7 +102,7 @@ export const WorkerDashboardScreen: React.FC = () => {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['tasks','active'] }); },
   });
 
-  // Metrics (order-level counts) — compute from per-order groups to match lists
+  // Metrics (order-level counts) — compute from per-order groups to match lists (for non-inventory roles)
   const countAssigned = groups.filter(g => g.tasks.some(t => t.status === 'ASSIGNED')).length;
   const countInProgress = groups.filter(g => g.tasks.some(t => t.status === 'IN_PROGRESS')).length;
   const countAwaiting = groups.filter(g => g.tasks.some(t => t.status === 'AWAITING_VALIDATION')).length;
@@ -153,7 +153,7 @@ export const WorkerDashboardScreen: React.FC = () => {
       />
       <FlatList
         contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
-        data={displayedGroups.sort((a,b) => (b.orderId - a.orderId))}
+        data={isInventoryRole ? [] : displayedGroups.sort((a,b) => (b.orderId - a.orderId))}
         keyExtractor={g => String(g.orderId)}
         refreshControl={<RefreshControl refreshing={isRefetching || isLoading} onRefresh={refetch} />}
         ListHeaderComponent={(
@@ -177,7 +177,7 @@ export const WorkerDashboardScreen: React.FC = () => {
             <View style={s.statsSection}>
               <View style={s.statGrid}>
                 {/* Inventory-specific shortcuts */}
-                {isInventoryRole && (
+                {isInventoryRole ? (
                   <>
                     <TouchableOpacity style={s.statTile} activeOpacity={0.85} onPress={() => router.push('/inventory/requests')}>
                       <View style={s.tileTopRow}>
@@ -198,44 +198,46 @@ export const WorkerDashboardScreen: React.FC = () => {
                       <Text style={s.tileMeta}>Cari & filter</Text>
                     </TouchableOpacity>
                   </>
+                ) : (
+                  <>
+                    <TouchableOpacity style={s.statTile} activeOpacity={0.85} onPress={() => router.push('/worker/assigned')}>
+                      <View style={s.tileTopRow}>
+                        <View style={s.iconBadge}><MaterialCommunityIcons name="account-tie" size={18} color={COLORS.gold} /></View>
+                        <Text style={s.tileLabel}>Ditugaskan</Text>
+                      </View>
+                      <Text style={s.tileValue}>{countAssigned}</Text>
+                      <View style={s.tileBar}><View style={[s.tileBarFill, { width: `${Math.min((countAssigned/10)*100,100)}%` }]} /></View>
+                      <Text style={s.tileMeta}>Tap untuk lihat</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={s.statTile} activeOpacity={0.85} onPress={() => router.push('/worker/in-progress')}>
+                      <View style={s.tileTopRow}>
+                        <View style={s.iconBadge}><Ionicons name="construct-outline" size={18} color={COLORS.gold} /></View>
+                        <Text style={s.tileLabel}>Dalam Proses</Text>
+                      </View>
+                      <Text style={s.tileValue}>{countInProgress}</Text>
+                      <View style={s.tileBar}><View style={[s.tileBarFill, { width: `${Math.min((countInProgress/10)*100,100)}%` }]} /></View>
+                      <Text style={s.tileMeta}>Tap untuk lihat</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={s.statTile} activeOpacity={0.85} onPress={() => router.push('/worker/awaiting-validation')}>
+                      <View style={s.tileTopRow}>
+                        <View style={s.iconBadge}><Ionicons name="checkmark-done-outline" size={18} color={COLORS.gold} /></View>
+                        <Text style={s.tileLabel}>Verifikasi</Text>
+                      </View>
+                      <Text style={s.tileValue}>{countAwaiting}</Text>
+                      <View style={s.tileBar}><View style={[s.tileBarFill, { width: `${Math.min((countAwaiting/10)*100,100)}%` }]} /></View>
+                      <Text style={s.tileMeta}>Tap untuk lihat</Text>
+                    </TouchableOpacity>
+                    <View style={[s.statTile, { opacity: 0.9 }]}>
+                      <View style={s.tileTopRow}>
+                        <View style={s.iconBadge}><Ionicons name="checkmark-done-circle" size={18} color={COLORS.gold} /></View>
+                        <Text style={s.tileLabel}>Siap Ajukan</Text>
+                      </View>
+                      <Text style={s.tileValue}>{countReadySubmit}</Text>
+                      <View style={s.tileBar}><View style={[s.tileBarFill, { width: `${Math.min((countReadySubmit/10)*100,100)}%` }]} /></View>
+                      <Text style={s.tileMeta}>Semua subtask tercentang</Text>
+                    </View>
+                  </>
                 )}
-                <TouchableOpacity style={s.statTile} activeOpacity={0.85} onPress={() => router.push('/worker/assigned')}>
-                  <View style={s.tileTopRow}>
-                    <View style={s.iconBadge}><MaterialCommunityIcons name="account-tie" size={18} color={COLORS.gold} /></View>
-                    <Text style={s.tileLabel}>Ditugaskan</Text>
-                  </View>
-                  <Text style={s.tileValue}>{countAssigned}</Text>
-                  <View style={s.tileBar}><View style={[s.tileBarFill, { width: `${Math.min((countAssigned/10)*100,100)}%` }]} /></View>
-                  <Text style={s.tileMeta}>Tap untuk lihat</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={s.statTile} activeOpacity={0.85} onPress={() => router.push('/worker/in-progress')}>
-                  <View style={s.tileTopRow}>
-                    <View style={s.iconBadge}><Ionicons name="construct-outline" size={18} color={COLORS.gold} /></View>
-                    <Text style={s.tileLabel}>Dalam Proses</Text>
-                  </View>
-                  <Text style={s.tileValue}>{countInProgress}</Text>
-                  <View style={s.tileBar}><View style={[s.tileBarFill, { width: `${Math.min((countInProgress/10)*100,100)}%` }]} /></View>
-                  <Text style={s.tileMeta}>Tap untuk lihat</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={s.statTile} activeOpacity={0.85} onPress={() => router.push('/worker/awaiting-validation')}>
-                  <View style={s.tileTopRow}>
-                    <View style={s.iconBadge}><Ionicons name="checkmark-done-outline" size={18} color={COLORS.gold} /></View>
-                    <Text style={s.tileLabel}>Verifikasi</Text>
-                  </View>
-                  <Text style={s.tileValue}>{countAwaiting}</Text>
-                  <View style={s.tileBar}><View style={[s.tileBarFill, { width: `${Math.min((countAwaiting/10)*100,100)}%` }]} /></View>
-                  <Text style={s.tileMeta}>Tap untuk lihat</Text>
-                </TouchableOpacity>
-                <View style={[s.statTile, { opacity: 0.9 }]}
-                >
-                  <View style={s.tileTopRow}>
-                    <View style={s.iconBadge}><Ionicons name="checkmark-done-circle" size={18} color={COLORS.gold} /></View>
-                    <Text style={s.tileLabel}>Siap Ajukan</Text>
-                  </View>
-                  <Text style={s.tileValue}>{countReadySubmit}</Text>
-                  <View style={s.tileBar}><View style={[s.tileBarFill, { width: `${Math.min((countReadySubmit/10)*100,100)}%` }]} /></View>
-                  <Text style={s.tileMeta}>Semua subtask tercentang</Text>
-                </View>
               </View>
             </View>
 
@@ -307,30 +309,32 @@ export const WorkerDashboardScreen: React.FC = () => {
               </View>
             </View>
 
-            {/* Recent */}
-            <View style={{ marginBottom: 16 }}>
-              <View style={s.sectionHeader}><Ionicons name="flash" size={20} color={COLORS.gold} /><Text style={s.sectionTitle}>Aktivitas Terbaru</Text></View>
-              {recent.length === 0 ? (
-                <Text style={s.empty}>Belum ada aktivitas.</Text>
-              ) : (
-                <View style={{ paddingHorizontal: 4 }}>
-                  {recent.map((t, idx) => (
-                    <View key={`${t.id}-${idx}`} style={s.activityItem}>
-                      <View style={s.activityDot} />
-                      <View style={{ flex:1 }}>
-                        <Text style={s.activityText} numberOfLines={1}>{t.stage || 'Sub-tugas'} • {t.order?.code || `#${t.orderId}`}</Text>
-                        <Text style={s.activityMeta}>{prettyStatus(t.status)}</Text>
+            {/* Recent - hidden for inventory role to keep focus on inventory */}
+            {!isInventoryRole && (
+              <View style={{ marginBottom: 16 }}>
+                <View style={s.sectionHeader}><Ionicons name="flash" size={20} color={COLORS.gold} /><Text style={s.sectionTitle}>Aktivitas Terbaru</Text></View>
+                {recent.length === 0 ? (
+                  <Text style={s.empty}>Belum ada aktivitas.</Text>
+                ) : (
+                  <View style={{ paddingHorizontal: 4 }}>
+                    {recent.map((t, idx) => (
+                      <View key={`${t.id}-${idx}`} style={s.activityItem}>
+                        <View style={s.activityDot} />
+                        <View style={{ flex:1 }}>
+                          <Text style={s.activityText} numberOfLines={1}>{t.stage || 'Sub-tugas'}  b7 {t.order?.code || `#${t.orderId}`}</Text>
+                          <Text style={s.activityMeta}>{prettyStatus(t.status)}</Text>
+                        </View>
                       </View>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
 
             {error ? <Text style={s.errorText}>{String((error as any).message)}</Text> : null}
           </View>
         )}
-        ListEmptyComponent={!isLoading ? <Text style={s.empty}>Tidak ada tugas untuk Anda.</Text> : null}
+        ListEmptyComponent={!isLoading && !isInventoryRole ? <Text style={s.empty}>Tidak ada tugas untuk Anda.</Text> : null}
         renderItem={({ item: g }) => {
           const disabledAccept = mAcceptMine.isPending;
           const disabledReqDone = !canRequestDone(g) || mRequestDoneMine.isPending;
@@ -340,6 +344,7 @@ export const WorkerDashboardScreen: React.FC = () => {
           const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
           const anyAssigned = g.tasks.some(t => t.status === 'ASSIGNED');
           const promised = g.tasks.find(t => t.order?.promisedReadyDate)?.order?.promisedReadyDate || null;
+          // For non-inventory workers we still show order checklist & Ajukan flow
           return (
             <View style={s.orderCard}>
               {/* Order header */}

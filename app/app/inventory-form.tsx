@@ -24,7 +24,6 @@ export default function InventoryFormScreen() {
   const [dimensions, setDimensions] = useState('');
   const [barcode, setBarcode] = useState('');
   const [sku, setSku] = useState('');
-  const [location, setLocation] = useState('');
   const [cost, setCost] = useState('');
   const [price, setPrice] = useState('');
   const [notes, setNotes] = useState('');
@@ -51,7 +50,6 @@ export default function InventoryFormScreen() {
         dimensions: dimensions || undefined,
         barcode: barcode || undefined,
         sku: sku || undefined,
-        location: location || undefined,
         cost: cost ? Number(cost) : undefined,
         price: price ? Number(price) : undefined,
         notes: notes || undefined,
@@ -83,7 +81,6 @@ export default function InventoryFormScreen() {
         ['Dimensi', dimensions, setDimensions],
         ['Barcode', barcode, setBarcode],
         ['SKU', sku, setSku],
-        ['Lokasi', location, setLocation],
         ['Harga Pokok', cost, setCost],
         ['Harga Jual', price, setPrice],
       ].map(([label, val, setter], idx) => (

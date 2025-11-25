@@ -19,26 +19,49 @@ export const InventoryDetailScreen: React.FC = () => {
   const { data, isLoading, refetch } = useQuery<any>({ queryKey: ['inventory','detail', invId], queryFn: () => api.inventory.get(token || '', invId), enabled: !!token && !!invId });
   const item = data || {};
   const [form, setForm] = React.useState({
-    code:'', category:'', name:'', location:'', weightNet:'', goldType:'', goldColor:'', branchLocation:'', placement:'', statusEnum:'', stones: [] as { bentuk:string; jumlah:number; berat?:number }[]
+    code:'',
+    category:'',
+    name:'',
+    weightNet:'',
+    goldType:'',
+    goldColor:'',
+    branchLocation:'',
+    placement:'',
+    statusEnum:'',
+    stones: [] as { bentuk:string; jumlah:number; berat?:number }[],
   });
-  React.useEffect(()=>{ if (item?.id) setForm({
-    code:item.code||'',
-    category:item.category||'',
-    name:item.name||'',
-    location:item.location||'',
-    weightNet: item.weightNet!=null ? String(item.weightNet) : '',
-    goldType: item.goldType || '',
-    goldColor: item.goldColor || '',
-    branchLocation: item.branchLocation || '',
-    placement: item.placement || '',
-    statusEnum: item.statusEnum || 'DRAFT',
-    stones: Array.isArray(item.inventorystone) ? item.inventorystone.map((s:any)=> ({ bentuk:s.bentuk, jumlah:s.jumlah, berat: s.berat != null ? Number(s.berat) : undefined })) : []
-  }); }, [item?.id]);
+
+  const normalizeInventory = React.useCallback((raw: any) => {
+    if (!raw) return null;
+    const toNumberString = (val: any) => (val != null && val !== '' ? String(val) : '');
+    return {
+      code: raw.code || '',
+      category: raw.category || '',
+      name: raw.name || '',
+      weightNet: toNumberString(raw.weightNet ?? raw.weight_net ?? ''),
+      goldType: raw.goldType || raw.gold_type || '',
+      goldColor: raw.goldColor || raw.gold_color || '',
+      branchLocation: raw.branchLocation || raw.branch_location || '',
+      placement: raw.placement || raw.placement_location || '',
+      statusEnum: raw.statusEnum || raw.status_enum || 'DRAFT',
+      stones: Array.isArray(raw.inventorystone)
+        ? raw.inventorystone.map((s: any) => ({
+            bentuk: s.bentuk,
+            jumlah: Number(s.jumlah) || 0,
+            berat: s.berat != null ? Number(s.berat) : undefined,
+          }))
+        : [],
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const normalized = normalizeInventory(item);
+    if (normalized) setForm(normalized);
+  }, [item?.id, normalizeInventory]);
   const mUpdate = useMutation({ mutationFn: async () => api.inventory.update(token || '', invId, {
     code: form.code,
     category: form.category,
     name: form.name,
-    location: form.location,
     weightNet: form.weightNet ? Number(form.weightNet) : undefined,
     goldType: form.goldType || undefined,
     goldColor: form.goldColor || undefined,
@@ -55,8 +78,6 @@ export const InventoryDetailScreen: React.FC = () => {
       <TextInput editable={canEdit} value={form.category} onChangeText={(v)=>setForm(f=>({...f, category:v}))} style={s.input} />
       <Text style={s.label}>Nama</Text>
       <TextInput editable={canEdit} value={form.name} onChangeText={(v)=>setForm(f=>({...f, name:v}))} style={s.input} />
-      <Text style={s.label}>Lokasi (rak/slot)</Text>
-      <TextInput editable={canEdit} value={form.location} onChangeText={(v)=>setForm(f=>({...f, location:v}))} style={s.input} />
       <Text style={s.label}>Cabang / Area</Text>
       <InlineSelect label="" value={form.branchLocation} options={['ASIA','SUN_PLAZA']} onChange={(v)=> setForm(f=>({...f, branchLocation:v}))} styleHeader={s.select} disabled={!canEdit} />
       <Text style={s.label}>Penempatan Fisik</Text>

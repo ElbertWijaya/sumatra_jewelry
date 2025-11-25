@@ -12,11 +12,25 @@ export class InventoryService {
     if (!order) throw new NotFoundException('Order not found');
     // Business rule: code unik per kategori (case-insensitive) jika keduanya ada
     if (dto.code && dto.category) {
-      const existsSame = await (this.prisma as any).inventoryItem.findFirst({
-        where: { category: dto.category, code: { equals: dto.code, mode: 'insensitive' } },
-        select: { id: true },
-      });
-      if (existsSame) throw new BadRequestException('Kode inventory sudah dipakai dalam kategori tersebut');
+      // Prisma versi saat ini tidak mendukung 'mode: "insensitive"' pada equals.
+      // Gunakan raw query LOWER(...) untuk jamin case-insensitive, lalu fallback ke ORM strict equals.
+      try {
+        const dup: any[] = await (this.prisma as any).$queryRawUnsafe(
+          'SELECT id FROM InventoryItem WHERE category = ? AND LOWER(code) = LOWER(?) LIMIT 1',
+          dto.category,
+          dto.code,
+        );
+        if (dup && dup.length) {
+          throw new BadRequestException('Kode inventory sudah dipakai dalam kategori tersebut');
+        }
+      } catch (err) {
+        // If raw query fails for any reason, fallback to ORM exact match
+        const existsSame = await (this.prisma as any).inventoryitem.findFirst({
+          where: { category: dto.category, code: dto.code },
+          select: { id: true },
+        });
+        if (existsSame) throw new BadRequestException('Kode inventory sudah dipakai dalam kategori tersebut');
+      }
     }
     const data: any = {
       orderId: dto.orderId,

@@ -23,12 +23,20 @@ let InventoryService = class InventoryService {
         if (!order)
             throw new common_1.NotFoundException('Order not found');
         if (dto.code && dto.category) {
-            const existsSame = await this.prisma.inventoryItem.findFirst({
-                where: { category: dto.category, code: { equals: dto.code, mode: 'insensitive' } },
-                select: { id: true },
-            });
-            if (existsSame)
-                throw new common_1.BadRequestException('Kode inventory sudah dipakai dalam kategori tersebut');
+            try {
+                const dup = await this.prisma.$queryRawUnsafe('SELECT id FROM InventoryItem WHERE category = ? AND LOWER(code) = LOWER(?) LIMIT 1', dto.category, dto.code);
+                if (dup && dup.length) {
+                    throw new common_1.BadRequestException('Kode inventory sudah dipakai dalam kategori tersebut');
+                }
+            }
+            catch (err) {
+                const existsSame = await this.prisma.inventoryitem.findFirst({
+                    where: { category: dto.category, code: dto.code },
+                    select: { id: true },
+                });
+                if (existsSame)
+                    throw new common_1.BadRequestException('Kode inventory sudah dipakai dalam kategori tersebut');
+            }
         }
         const data = {
             orderId: dto.orderId,

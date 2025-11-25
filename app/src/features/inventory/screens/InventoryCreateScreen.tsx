@@ -19,7 +19,6 @@ export const InventoryCreateScreen: React.FC = () => {
   const [form, setForm] = useState({
     code:'',
     category:'', // will store Jenis Barang
-    location:'',
     weightNet:'',
     name:'',
     goldType:'',
@@ -31,21 +30,46 @@ export const InventoryCreateScreen: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [stones, setStones] = useState<StoneFormItem[]>([]);
   const [expandedStoneIndex, setExpandedStoneIndex] = useState<number | null>(null);
-  const [statusEnum, setStatusEnum] = useState<'DRAFT'|'ACTIVE'|'RESERVED'|'SOLD'|'RETURNED'|'DAMAGED'>('DRAFT');
+  // Status awal tidak diperlukan di form input inventory; gunakan default backend.
 
-  const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) { Alert.alert('Izin dibutuhkan', 'Mohon izinkan akses galeri.'); return; }
-    const pickerResult = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, quality: 0.7 });
-    if (pickerResult.canceled) return;
-    const asset = pickerResult.assets?.[0];
-    if (!asset?.uri) return;
+  const [uploading, setUploading] = useState(false);
+
+  const pickFromGallery = async () => {
+    if (uploading) return;
+    if (!token) { Alert.alert('Tidak ada token','Silakan login ulang.'); return; }
     try {
+      setUploading(true);
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) { Alert.alert('Izin ditolak'); return; }
+      const pickerResult = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85, allowsEditing: false });
+      if (pickerResult.canceled) return;
+      const asset = pickerResult.assets?.[0];
+      if (!asset?.uri) return;
       const f = new FormData();
-      f.append('file', { uri: asset.uri, name: 'photo.jpg', type: 'image/jpeg' } as any);
+      f.append('file', { uri: asset.uri, name: asset.fileName || 'photo.jpg', type: asset.mimeType || 'image/jpeg' } as any);
       const res: any = await api.files.upload(token || '', f);
       if (res?.url) setImages(prev => [...prev, res.url]);
-    } catch(e:any) { Alert.alert('Gagal upload', e.message || String(e)); }
+    } catch(e:any) { Alert.alert('Upload gagal', e.message || String(e)); }
+    finally { setUploading(false); }
+  };
+
+  const takePhoto = async () => {
+    if (uploading) return;
+    if (!token) { Alert.alert('Tidak ada token','Silakan login ulang.'); return; }
+    try {
+      setUploading(true);
+      const perm = await ImagePicker.requestCameraPermissionsAsync();
+      if (!perm.granted) { Alert.alert('Izin kamera ditolak'); return; }
+      const result = await ImagePicker.launchCameraAsync({ quality: 0.85, allowsEditing: false });
+      if (result.canceled) return;
+      const asset = result.assets?.[0];
+      if (!asset?.uri) return;
+      const f = new FormData();
+      f.append('file', { uri: asset.uri, name: asset.fileName || 'camera.jpg', type: asset.mimeType || 'image/jpeg' } as any);
+      const res: any = await api.files.upload(token || '', f);
+      if (res?.url) setImages(prev => [...prev, res.url]);
+    } catch(e:any) { Alert.alert('Gagal ambil foto', e.message || String(e)); }
+    finally { setUploading(false); }
   };
 
   const canSubmit = useMemo(() => !saving && ordId && form.category && form.code && images.length > 0, [saving, ordId, form, images]);
@@ -63,7 +87,6 @@ export const InventoryCreateScreen: React.FC = () => {
         category: form.category,
         goldType: form.goldType || undefined,
         goldColor: form.goldColor || undefined,
-        location: form.location || undefined,
         branchLocation: branchLocation || undefined,
         placement: placement || undefined,
         weightNet: form.weightNet ? Number(form.weightNet) : undefined,
@@ -71,7 +94,6 @@ export const InventoryCreateScreen: React.FC = () => {
         stoneWeight: totalWeight || undefined,
         dimensions: validStones.length ? JSON.stringify(validStones) : undefined,
         name: form.name || undefined,
-        statusEnum: statusEnum || 'DRAFT',
         stones: validStones.map(s => ({ bentuk: s.bentuk, jumlah: Number(s.jumlah || 0), berat: s.berat ? Number(s.berat) : undefined })),
         images,
       });
@@ -117,16 +139,12 @@ export const InventoryCreateScreen: React.FC = () => {
           <Text style={s.sectionTitle}>BERAT & LOKASI</Text>
         </View>
         <View style={s.divider} />
-        <Text style={s.label}>Lokasi (rak/slot)</Text>
-        <TextInput value={form.location} onChangeText={(v)=>setForm(f=>({...f, location:v}))} placeholder="A1-03" placeholderTextColor={COLORS.yellow} style={s.input} />
         <Text style={s.label}>Cabang / Area</Text>
         <InlineSelect label="" value={branchLocation} options={['ASIA','SUN_PLAZA']} onChange={(v)=> setBranchLocation(v as any)} styleHeader={s.select} />
         <Text style={s.label}>Penempatan Fisik</Text>
         <InlineSelect label="" value={placement} options={['ETALASE','PENYIMPANAN']} onChange={(v)=> setPlacement(v as any)} styleHeader={s.select} />
         <Text style={s.label}>Berat Bersih (gr)</Text>
         <TextInput value={form.weightNet} onChangeText={(v)=>setForm(f=>({...f, weightNet:v}))} placeholder="mis. 3.5" placeholderTextColor={COLORS.yellow} style={s.input} keyboardType="decimal-pad" />
-        <Text style={s.label}>Status Awal</Text>
-        <InlineSelect label="" value={statusEnum} options={['DRAFT','ACTIVE','RESERVED','SOLD','RETURNED','DAMAGED']} onChange={(v)=> setStatusEnum(v as any)} styleHeader={s.select} />
       </View>
 
       {/* BATU / STONE */}
@@ -188,7 +206,28 @@ export const InventoryCreateScreen: React.FC = () => {
           {images.map((u,idx)=> (
             <Image key={`${u}-${idx}`} source={{ uri: toDisplayUrl(u) }} style={s.thumb} />
           ))}
-          <TouchableOpacity onPress={pickImage} style={s.addThumb}><Text style={{ color: COLORS.gold, fontWeight:'800' }}>+</Text></TouchableOpacity>
+        </View>
+        <View style={s.imageBtnRow}>
+          <View style={{alignItems:'center', marginRight:8}}>
+            <TouchableOpacity style={s.imageIconBtn} onPress={pickFromGallery} disabled={uploading}>
+              <Ionicons name="image" size={22} color={COLORS.gold} />
+            </TouchableOpacity>
+            <Text style={s.imageIconLabel}>Dari Galeri</Text>
+          </View>
+          <View style={{alignItems:'center', marginRight:8}}>
+            <TouchableOpacity style={s.imageIconBtn} onPress={takePhoto} disabled={uploading}>
+              <Ionicons name="camera" size={22} color={COLORS.gold} />
+            </TouchableOpacity>
+            <Text style={s.imageIconLabel}>Foto Baru</Text>
+          </View>
+          {images.length > 0 && (
+            <View style={{alignItems:'center'}}>
+              <TouchableOpacity style={s.imageIconBtn} onPress={()=> setImages([])} disabled={uploading}>
+                <Ionicons name="trash" size={22} color="#b22" />
+              </TouchableOpacity>
+              <Text style={[s.imageIconLabel,{color:'#b22'}]}>Reset</Text>
+            </View>
+          )}
         </View>
       </View>
 
@@ -209,7 +248,9 @@ const s = StyleSheet.create({
   divider: { height: 2, backgroundColor: COLORS.gold, borderRadius: 2, marginBottom: 12, opacity: 0.18 },
   imagesRow: { flexDirection:'row', alignItems:'center', gap: 8, marginTop: 6 },
   thumb: { width: 64, height: 64, borderRadius: 8, borderWidth:1, borderColor: COLORS.border },
-  addThumb: { width: 64, height: 64, borderRadius: 8, borderWidth:1, borderColor: COLORS.border, alignItems:'center', justifyContent:'center' },
+  imageBtnRow: { flexDirection:'row', alignItems:'center', gap:12, marginTop:10 },
+  imageIconBtn: { backgroundColor:'rgba(35,32,28,0.85)', borderRadius:12, borderWidth:1, borderColor:COLORS.border, padding:8 },
+  imageIconLabel: { color: COLORS.gold, fontSize: 11, fontWeight: '500', marginTop: 2, textAlign: 'center', letterSpacing: 0.1 },
   submitBtn: { marginTop: 16, backgroundColor: COLORS.gold, paddingVertical: 12, borderRadius: 12, alignItems:'center' },
   submitTxt: { color:'#1b1b1b', fontWeight:'900' }
 });

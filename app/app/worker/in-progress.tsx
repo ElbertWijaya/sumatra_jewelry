@@ -15,7 +15,8 @@ type Task = {
   status?: string | null;
   isChecked?: boolean;
   assignedToId?: string | null;
-  order?: { id: number; code?: string | null; promisedReadyDate?: string | null } | null;
+  // backend returns enriched order object; keep loose typing here
+  order?: any | null;
 };
 
 function formatDate(s?: string | null) {
@@ -56,12 +57,27 @@ export default function InProgressScreen() {
 
   const tasks = Array.isArray(data) ? data : [];
   const mine = tasks.filter(t => String(t.assignedToId || '') === String(userId || ''));
-  const groupsRaw = Object.values(mine.reduce((acc: Record<string, { orderId: number; code: string; promised?: string | null; tasks: Task[] }>, t) => {
+  type Group = {
+    orderId: number;
+    code: string;
+    promised?: string | null;
+    customerName?: string | null;
+    jenisBarang?: string | null;
+    jenisEmas?: string | null;
+    ringSize?: string | null;
+    tasks: Task[];
+  };
+  const groupsRaw = Object.values(mine.reduce((acc: Record<string, Group>, t) => {
     if (t.status !== 'IN_PROGRESS') return acc;
     const key = String(t.orderId);
-    const code = t.order?.code || `(Order #${t.orderId})`;
-    const promised = t.order?.promisedReadyDate || null;
-    if (!acc[key]) acc[key] = { orderId: t.orderId, code, promised, tasks: [] };
+    const o = t.order || {};
+    const code = o.code || `(Order #${t.orderId})`;
+    const promised = o.promisedReadyDate || o.promised_ready_date || null;
+    const customerName = o.customerName || o.customer_name || null;
+    const jenisBarang = o.jenisBarang || o.jenis || o.itemType || o.item_type || null;
+    const jenisEmas = o.jenisEmas || o.gold_type || null;
+    const ringSize = o.ringSize || o.ring_size || null;
+    if (!acc[key]) acc[key] = { orderId: t.orderId, code, promised, customerName, jenisBarang, jenisEmas, ringSize, tasks: [] };
     acc[key].tasks.push(t);
     return acc;
   }, {} as any));
@@ -145,7 +161,7 @@ export default function InProgressScreen() {
         windowSize={8}
         maxToRenderPerBatch={10}
         removeClippedSubviews
-        renderItem={({ item: g }) => {
+        renderItem={({ item: g }: { item: Group }) => {
           const inprog = g.tasks.filter(t => t.status==='IN_PROGRESS');
           const checked = inprog.filter(t => !!t.isChecked).length;
           const total = inprog.length;
@@ -163,28 +179,55 @@ export default function InProgressScreen() {
                 <View style={{ flex:1 }}>
                   <View style={s.headerLeft}>
                     <OrderThumb orderId={g.orderId} />
-                    <Text style={s.code} numberOfLines={1}>{g.code}</Text>
-                  </View>
-                  <View style={s.metaRow}>
-                    <View style={s.pillDate}>
-                      <Ionicons name='calendar' size={12} color={COLORS.gold} />
-                      <Text style={s.metaText}>{formatDate(g.promised)}</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.code} numberOfLines={1}>{g.code}</Text>
+                      <View style={s.metaRow}>
+                        <View style={s.pillDate}>
+                          <Ionicons name='calendar' size={12} color={COLORS.gold} />
+                          <Text style={s.metaText}>{formatDate(g.promised)}</Text>
+                        </View>
+                        {!!g.promised && <Text style={s.dday}>{dday(g.promised)}</Text>}
+                      </View>
                     </View>
-                    {!!g.promised && <Text style={s.dday}>{dday(g.promised)}</Text>}
+                  </View>
+
+                  <View style={s.infoRow}>
+                    <View style={s.infoPillPrimary}>
+                      <Text style={s.infoLabel}>Customer</Text>
+                      <Text style={s.infoValue} numberOfLines={1}>{g.customerName || '-'}</Text>
+                    </View>
+                  </View>
+                  <View style={s.infoRow}>
+                    <View style={[s.infoPill, { flex: 1.1 }]}>
+                      <Text style={s.infoLabel}>Jenis Perhiasan</Text>
+                      <Text style={s.infoValue} numberOfLines={1}>{g.jenisBarang || '-'}</Text>
+                    </View>
+                    <View style={[s.infoPill, { flex: 0.9 }] }>
+                      <Text style={s.infoLabel}>Jenis Emas</Text>
+                      <Text style={s.infoValue} numberOfLines={1}>{g.jenisEmas || '-'}</Text>
+                    </View>
                   </View>
                 </View>
                 <View style={s.rightCol}>
                   <Ionicons name="chevron-forward" size={16} color={COLORS.gold} style={{ marginBottom:6, opacity:0.9 }} />
                   <View style={s.pctPill}><Text style={s.pctText}>{pct}%</Text></View>
-                  {ready && (
-                    <TouchableOpacity style={s.smallPrimary} onPress={() => mRequestDone.mutate(g.orderId)} disabled={mRequestDone.isPending}>
-                      {mRequestDone.isPending ? <ActivityIndicator color="#1b1b1b" size="small" /> : <Text style={s.smallPrimaryText}>Ajukan</Text>}
-                    </TouchableOpacity>
-                  )}
                 </View>
               </View>
               <View style={s.progressBar}><View style={[s.progressFill,{ width: `${pct}%` }]} /></View>
-              {g.tasks.sort((a,b)=>a.id-b.id).map(t => (
+              {ready && (
+                <TouchableOpacity
+                  style={s.fullWidthCta}
+                  onPress={() => mRequestDone.mutate(g.orderId)}
+                  disabled={mRequestDone.isPending}
+                >
+                  {mRequestDone.isPending ? (
+                    <ActivityIndicator color="#1b1b1b" size="small" />
+                  ) : (
+                    <Text style={s.fullWidthCtaText}>Ajukan Verifikasi</Text>
+                  )}
+                </TouchableOpacity>
+              )}
+              {g.tasks.sort((a: Task, b: Task)=>a.id-b.id).map((t: Task) => (
                 <View key={t.id} style={s.taskRow}>
                   <Text style={s.taskStage} numberOfLines={1}>{t.stage || 'Sub-tugas'}</Text>
                   <TouchableOpacity style={[s.checkBtn, t.isChecked && s.checked]} disabled={mCheck.isPending}
@@ -271,10 +314,16 @@ const s = StyleSheet.create({
   sortTxt: { color:COLORS.gold, fontWeight:'700', marginLeft:6, fontSize:12 },
   refreshBtn: { borderWidth:1, borderColor:COLORS.border, paddingHorizontal:10, paddingVertical:6, borderRadius:8, backgroundColor:'#201c18' },
   empty: { color: COLORS.yellow, textAlign:'center', marginTop: 24 },
-  card: { backgroundColor: COLORS.card, borderRadius: 12, padding: 10, borderWidth:1, borderColor: COLORS.border },
-  cardHeader: { flexDirection:'row', alignItems:'flex-start', justifyContent:'space-between', marginBottom: 6 },
-  code: { color: COLORS.gold, fontWeight:'800', fontSize: 14, marginBottom: 2 },
-  metaRow: { flexDirection:'row', alignItems:'center', gap: 8 },
+  card: { backgroundColor: COLORS.card, borderRadius: 16, padding: 12, borderWidth:1, borderColor: COLORS.border },
+  cardHeader: { flexDirection:'row', alignItems:'flex-start', justifyContent:'space-between', marginBottom: 8 },
+  code: { color: COLORS.gold, fontWeight:'800', fontSize: 15, marginBottom: 4, letterSpacing: 0.5 },
+  metaRow: { flexDirection:'row', alignItems:'center', gap: 8, marginTop: 2 },
+  metaLine: { color: COLORS.yellow, fontWeight:'700', fontSize:11, marginTop:4 },
+  infoRow: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  infoPillPrimary: { flex: 1, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,215,0,0.45)', backgroundColor: 'rgba(255,215,0,0.08)' },
+  infoPill: { paddingHorizontal: 10, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, backgroundColor: '#201c18' },
+  infoLabel: { color: '#bfae6a', fontSize: 10, fontWeight:'700', textTransform:'uppercase', letterSpacing: 0.6, marginBottom: 2 },
+  infoValue: { color: COLORS.yellow, fontSize: 13, fontWeight:'800' },
   headerLeft: { flexDirection:'row', alignItems:'center', gap:8 },
   thumbWrap: { width: 40, height: 40, borderRadius: 8, overflow: 'hidden', borderWidth:1, borderColor:COLORS.border, backgroundColor:'#201c18' },
   thumbImg: { width: 40, height: 40, resizeMode:'cover' },
@@ -282,11 +331,13 @@ const s = StyleSheet.create({
   pillDate: { flexDirection:'row', alignItems:'center', gap:6, borderWidth:1, borderColor:COLORS.border, paddingHorizontal:8, paddingVertical:2, borderRadius:8, backgroundColor:'#201c18' },
   metaText: { color: COLORS.yellow, fontWeight:'700', fontSize:12 },
   dday: { color:'#bfae6a', fontWeight:'800', fontSize:12 },
-  rightCol: { alignItems:'flex-end' },
+  rightCol: { alignItems:'flex-end', justifyContent:'space-between', paddingLeft: 8 },
   pctPill: { paddingHorizontal:8, paddingVertical:2, borderRadius:8, backgroundColor:'rgba(255,215,0,0.12)', borderWidth:1, borderColor:'rgba(255,215,0,0.28)', marginBottom:6 },
   pctText: { color:COLORS.gold, fontWeight:'800', fontSize:12 },
   smallPrimary: { backgroundColor: COLORS.gold, paddingHorizontal:10, paddingVertical:6, borderRadius:8 },
   smallPrimaryText: { color:'#1b1b1b', fontWeight:'800', fontSize:12 },
+  fullWidthCta: { marginTop: 8, backgroundColor: COLORS.gold, paddingVertical:8, borderRadius:10, alignItems:'center', justifyContent:'center' },
+  fullWidthCtaText: { color:'#1b1b1b', fontWeight:'800', fontSize:13, letterSpacing:0.5 },
   progressBar: { height: 3, backgroundColor: 'rgba(255,215,0,0.16)', borderRadius: 999, overflow: 'hidden', marginBottom: 6 },
   progressFill: { height: '100%', backgroundColor: COLORS.gold },
   detailBox: { backgroundColor:'rgba(35,32,28,0.85)', borderRadius:10, borderWidth:0.8, borderColor:COLORS.border, padding:8, marginTop:6 },
