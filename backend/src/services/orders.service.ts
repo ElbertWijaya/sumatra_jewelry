@@ -10,6 +10,39 @@ import { CreateOrderDto, UpdateOrderStatusDto, OrderStatusEnum, UpdateOrderDto }
 export class OrdersService {
   constructor(private prisma: PrismaService) {}
 
+  private mapOrder(o: any) {
+    if (!o) return o;
+    return {
+      id: o.id,
+      code: o.code ?? null,
+      status: o.status ?? null,
+      customerName: o.customer_name ?? null,
+      customerAddress: o.customer_address ?? null,
+      customerPhone: o.customer_phone ?? null,
+      jenisBarang: o.item_type ?? null,
+      jenisEmas: o.gold_type ?? null,
+      warnaEmas: o.gold_color ?? null,
+      ringSize: o.ring_size ?? null,
+      dp: o.down_payment != null ? Number(o.down_payment) : null,
+      hargaEmasPerGram: o.gold_price_per_gram != null ? Number(o.gold_price_per_gram) : null,
+      hargaPerkiraan: o.estimated_price != null ? Number(o.estimated_price) : null,
+      hargaAkhir: o.final_price != null ? Number(o.final_price) : null,
+      promisedReadyDate: o.promised_ready_date ?? null,
+      tanggalSelesai: o.completed_date ?? null,
+      tanggalAmbil: o.pickup_date ?? null,
+      catatan: o.notes ?? null,
+      referensiGambarUrls: o.reference_image_urls ? (() => { try { return JSON.parse(o.reference_image_urls); } catch { return []; } })() : [],
+      stoneCount: o.stone_count ?? 0,
+      totalBerat: o.total_stone_weight != null ? Number(o.total_stone_weight) : null,
+      totalStoneWeight: o.total_stone_weight != null ? Number(o.total_stone_weight) : null,
+      createdAt: o.created_at ?? null,
+      updatedAt: o.updated_at ?? null,
+      createdById: o.created_by_id ?? null,
+      updatedById: o.updated_by_id ?? null,
+      stones: Array.isArray(o.orderstone) ? o.orderstone.map((s: any) => ({ id: s.id, bentuk: s.bentuk, jumlah: s.jumlah, berat: s.berat != null ? Number(s.berat) : null })) : [],
+    };
+  }
+
   async create(dto: CreateOrderDto, userId: string) {
     // Transaction: create order, insert stones, update summaries, set code
     const created = await this.prisma.$transaction(async (tx) => {
@@ -31,7 +64,7 @@ export class OrdersService {
           pickup_date: dto.tanggalAmbil ? new Date(dto.tanggalAmbil) : null,
           notes: dto.catatan ?? null,
           reference_image_urls: dto.referensiGambarUrls ? JSON.stringify(dto.referensiGambarUrls) : null,
-          status: 'DRAFT',
+          status: 'DITERIMA',
           created_by_id: userId,
           updated_by_id: userId,
           updated_at: new Date(),
@@ -82,30 +115,31 @@ export class OrdersService {
   }
 
   async findAll(params: { status?: OrderStatusEnum }) {
-    return this.prisma.order.findMany({
+    const rows = await this.prisma.order.findMany({
       where: params.status ? { status: params.status as any } : undefined,
       orderBy: { created_at: 'desc' },
       include: { orderstone: true },
     });
+    return rows.map(r => this.mapOrder(r));
   }
 
   async findById(id: number) {
-  const order = await this.prisma.order.findUnique({ where: { id }, include: { orderstone: true } });
+    const order = await this.prisma.order.findUnique({ where: { id }, include: { orderstone: true } });
     if (!order) throw new NotFoundException('Order tidak ditemukan');
-    return order;
+    return this.mapOrder(order);
   }
 
   async updateStatus(id: number, dto: UpdateOrderStatusDto, userId: string) {
     const order = await this.findById(id);
     const allowed: Record<OrderStatusEnum, OrderStatusEnum[]> = {
-      DRAFT: ['DITERIMA', 'BATAL'],
       DITERIMA: ['DALAM_PROSES', 'BATAL'],
       DALAM_PROSES: ['SIAP', 'BATAL'],
       SIAP: ['DIAMBIL', 'BATAL'],
       DIAMBIL: [],
       BATAL: [],
     };
-    if (!allowed[order.status].includes(dto.status)) {
+    const currentStatus = order.status as OrderStatusEnum;
+    if (!allowed[currentStatus].includes(dto.status)) {
       throw new BadRequestException('Transition status tidak valid');
     }
     const updated = await this.prisma.order.update({
@@ -131,7 +165,7 @@ export class OrdersService {
         diff: JSON.stringify({ from: order.status, to: dto.status }),
       }) as any,
     });
-    return updated;
+    return this.mapOrder(updated);
   }
 
   async history(id: number) {

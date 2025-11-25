@@ -19,7 +19,7 @@ export class DashboardService {
 
     // Count orders by status
     const [aktif, ditugaskan, selesai, verifikasi] = await Promise.all([
-      // Aktif: status masih berjalan
+      // Aktif: status berjalan (tanpa DRAFT yang sudah dihapus)
       this.prisma.order.count({ where: { status: { in: ['DITERIMA', 'DALAM_PROSES'] } } }),
       // Ditugaskan: memiliki minimal satu task
       this.prisma.order.count({ where: { ordertask: { some: {} } } }),

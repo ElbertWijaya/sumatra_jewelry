@@ -5,6 +5,7 @@ export declare class TasksService {
     private readonly logger;
     constructor(prisma: PrismaService);
     private isOrderActive;
+    private mapTask;
     backfillActive(): Promise<{
         created: number;
     }>;

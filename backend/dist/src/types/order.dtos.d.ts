@@ -1,4 +1,4 @@
-export declare const ORDER_STATUS_VALUES: readonly ["DRAFT", "DITERIMA", "DALAM_PROSES", "SIAP", "DIAMBIL", "BATAL"];
+export declare const ORDER_STATUS_VALUES: readonly ["DITERIMA", "DALAM_PROSES", "SIAP", "DIAMBIL", "BATAL"];
 export type OrderStatusEnum = typeof ORDER_STATUS_VALUES[number];
 export interface RequestUser {
     userId: string;

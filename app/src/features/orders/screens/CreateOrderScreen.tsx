@@ -393,7 +393,7 @@ export const CreateOrderScreen: React.FC<{ onCreated?: () => void }> = ({ onCrea
                 <TextInput placeholder='Jumlah' style={{flex:1, marginHorizontal:4, color:'#ffe082', backgroundColor:'#23201c', borderRadius:6, borderWidth:1, borderColor:'#FFD700', textAlign:'left', fontWeight:'600', height:36, paddingLeft:8}} placeholderTextColor="#ffe082" value={s.jumlah} onChangeText={v=>updateStone(idx,{jumlah:v})} keyboardType='numeric' />
                 <View style={{flex:1, marginHorizontal:4, flexDirection:'row', alignItems:'center', backgroundColor:'#23201c', borderRadius:6, borderWidth:1, borderColor:'#FFD700', height:36, paddingLeft:8}}>
                   <TextInput placeholder='Berat' style={{flex:1, color:'#ffe082', fontWeight:'600', padding:0}} placeholderTextColor="#ffe082" value={s.berat} onChangeText={v=>updateStone(idx,{berat:v})} keyboardType='numeric' />
-                  <Text style={{ color:'#ffe082', fontWeight:'800', paddingHorizontal:8 }}>Gr</Text>
+                  <Text style={{ color:'#ffe082', fontWeight:'800', paddingHorizontal:8 }}>ct</Text>
                 </View>
                 <TouchableOpacity onPress={()=>removeStone(idx)} style={{width:32, alignItems:'center', justifyContent:'center'}}>
                   <Ionicons name="close-circle" size={22} color="#b22" />

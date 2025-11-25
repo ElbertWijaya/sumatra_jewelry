@@ -205,7 +205,6 @@ model ordertask {
 }
 
 enum order_status {
-  DRAFT
   DITERIMA
   DALAM_PROSES
   SIAP
@@ -254,7 +253,6 @@ enum ordertask_job_role {
 }
 
 enum orderhistory_statusFrom {
-  DRAFT
   DITERIMA
   DALAM_PROSES
   SIAP
@@ -263,7 +261,6 @@ enum orderhistory_statusFrom {
 }
 
 enum orderhistory_statusTo {
-  DRAFT
   DITERIMA
   DALAM_PROSES
   SIAP

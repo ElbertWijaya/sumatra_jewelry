@@ -17,6 +17,7 @@
     "db:ensure-checklist": "ts-node -r tsconfig-paths/register src/scripts/ensure-task-checklist-columns.ts",
     "restore:appusers": "ts-node -r tsconfig-paths/register src/scripts/restore-appusers-template.ts",
     "seed:accounts": "ts-node -r tsconfig-paths/register src/scripts/seed-accounts.ts",
+    "migrate:draft": "ts-node -r tsconfig-paths/register src/scripts/migrate-draft-to-diterima.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",

@@ -1,7 +1,7 @@
 import { IsDateString, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export const ORDER_STATUS_VALUES = ['DRAFT','DITERIMA','DALAM_PROSES','SIAP','DIAMBIL','BATAL'] as const;
+export const ORDER_STATUS_VALUES = ['DITERIMA','DALAM_PROSES','SIAP','DIAMBIL','BATAL'] as const;
 export type OrderStatusEnum = typeof ORDER_STATUS_VALUES[number];
 
 export interface RequestUser {

@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateOrderDto = exports.UpdateOrderStatusDto = exports.StoneDto = exports.CreateOrderDto = exports.ORDER_STATUS_VALUES = void 0;
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
-exports.ORDER_STATUS_VALUES = ['DRAFT', 'DITERIMA', 'DALAM_PROSES', 'SIAP', 'DIAMBIL', 'BATAL'];
+exports.ORDER_STATUS_VALUES = ['DITERIMA', 'DALAM_PROSES', 'SIAP', 'DIAMBIL', 'BATAL'];
 class CreateOrderDto {
 }
 exports.CreateOrderDto = CreateOrderDto;
