@@ -23,6 +23,7 @@ export const InventoryCreateScreen: React.FC = () => {
     name:'',
     goldType:'',
     goldColor:'',
+    barcode:'',
   });
   const [branchLocation, setBranchLocation] = useState<'ASIA'|'SUN_PLAZA'|''>('');
   const [placement, setPlacement] = useState<'ETALASE'|'PENYIMPANAN'|''>('');
@@ -72,6 +73,12 @@ export const InventoryCreateScreen: React.FC = () => {
     finally { setUploading(false); }
   };
 
+  // Total batu (ct) untuk karat; digunakan sebagai nilai otomatis
+  const totalStoneWeightCt = useMemo(() => {
+    const validStones = stones.filter(s => s.bentuk && (s.jumlah || s.berat));
+    return validStones.reduce((acc, s) => acc + (Number(s.berat || 0) || 0), 0);
+  }, [stones]);
+
   const canSubmit = useMemo(() => !saving && ordId && form.category && form.code && images.length > 0, [saving, ordId, form, images]);
 
   const submit = async () => {
@@ -92,8 +99,10 @@ export const InventoryCreateScreen: React.FC = () => {
         weightNet: form.weightNet ? Number(form.weightNet) : undefined,
         stoneCount: totalCount || undefined,
         stoneWeight: totalWeight || undefined,
+        karat: totalWeight ? String(totalWeight) : undefined,
         dimensions: validStones.length ? JSON.stringify(validStones) : undefined,
         name: form.name || undefined,
+        barcode: form.barcode || undefined,
         stones: validStones.map(s => ({ bentuk: s.bentuk, jumlah: Number(s.jumlah || 0), berat: s.berat ? Number(s.berat) : undefined })),
         images,
       });
@@ -130,6 +139,8 @@ export const InventoryCreateScreen: React.FC = () => {
         <InlineSelect label="" value={form.goldType} options={JENIS_EMAS_OPTIONS} onChange={(v)=> setForm(f=> ({ ...f, goldType: v }))} styleHeader={s.select} />
         <Text style={s.label}>Warna Emas</Text>
         <InlineSelect label="" value={form.goldColor} options={WARNA_EMAS_OPTIONS} onChange={(v)=> setForm(f=> ({ ...f, goldColor: v }))} styleHeader={s.select} />
+        <Text style={s.label}>Barcode</Text>
+        <TextInput value={form.barcode} onChangeText={(v)=>setForm(f=>({...f, barcode:v}))} placeholder="Scan/ketik barcode" placeholderTextColor={COLORS.yellow} style={s.input} />
       </View>
 
       {/* BERAT & LOKASI */}
@@ -145,6 +156,8 @@ export const InventoryCreateScreen: React.FC = () => {
         <InlineSelect label="" value={placement} options={['ETALASE','PENYIMPANAN']} onChange={(v)=> setPlacement(v as any)} styleHeader={s.select} />
         <Text style={s.label}>Berat Bersih (gr)</Text>
         <TextInput value={form.weightNet} onChangeText={(v)=>setForm(f=>({...f, weightNet:v}))} placeholder="mis. 3.5" placeholderTextColor={COLORS.yellow} style={s.input} keyboardType="decimal-pad" />
+        <Text style={s.label}>Karat (otomatis dari total ct batu)</Text>
+        <View style={s.valueBox}><Text style={{ color: COLORS.yellow }}>{totalStoneWeightCt ? `${totalStoneWeightCt} ct` : '-'}</Text></View>
       </View>
 
       {/* BATU / STONE */}

@@ -43,7 +43,6 @@ let InventoryService = class InventoryService {
             code: dto.code ?? null,
             name: dto.name ?? null,
             category: dto.category ?? null,
-            material: dto.material ?? null,
             karat: dto.karat ?? null,
             gold_type: dto.goldType ?? null,
             gold_color: dto.goldColor ?? null,
@@ -55,26 +54,26 @@ let InventoryService = class InventoryService {
             dimensions: dto.dimensions ?? null,
             barcode: dto.barcode ?? null,
             sku: dto.sku ?? null,
-            location: dto.location ?? null,
             cost: dto.cost != null ? Number(dto.cost) : null,
             price: dto.price != null ? Number(dto.price) : null,
             status: dto.status ?? null,
             status_enum: dto.statusEnum ?? 'DRAFT',
             images: Array.isArray(dto.images) ? JSON.stringify(dto.images) : null,
-            notes: dto.notes ?? null,
             branch_location: dto.branchLocation ?? null,
             placement_location: dto.placement ?? null,
             created_by_id: actorUserId ?? null,
             updated_by_id: actorUserId ?? null,
             updated_at: new Date(),
         };
-        if ((!data.stone_count || !data.stone_weight) && Array.isArray(dto.stones) && dto.stones.length) {
+        if ((!data.stone_count || !data.stone_weight || !data.karat) && Array.isArray(dto.stones) && dto.stones.length) {
             const totalJumlah = dto.stones.reduce((s, x) => s + (x.jumlah || 0), 0);
             const totalBerat = dto.stones.reduce((s, x) => s + (x.berat != null ? Number(x.berat) : 0), 0);
             if (!data.stone_count)
                 data.stone_count = totalJumlah;
             if (!data.stone_weight)
                 data.stone_weight = totalBerat;
+            if (!data.karat)
+                data.karat = String(totalBerat);
         }
         try {
             const created = await this.prisma.inventoryitem.create({
@@ -144,7 +143,6 @@ let InventoryService = class InventoryService {
             code: dto.code ?? undefined,
             name: dto.name ?? undefined,
             category: dto.category ?? undefined,
-            material: dto.material ?? undefined,
             karat: dto.karat ?? undefined,
             gold_type: dto.goldType ?? undefined,
             gold_color: dto.goldColor ?? undefined,
@@ -152,9 +150,7 @@ let InventoryService = class InventoryService {
             dimensions: dto.dimensions ?? undefined,
             barcode: dto.barcode ?? undefined,
             sku: dto.sku ?? undefined,
-            location: dto.location ?? undefined,
             status: dto.status ?? undefined,
-            notes: dto.notes ?? undefined,
             images: Array.isArray(dto.images) ? JSON.stringify(dto.images) : undefined,
         };
         const stonesOps = Array.isArray(dto.stones)
@@ -223,7 +219,6 @@ let InventoryService = class InventoryService {
                 { name: { contains: q, mode: 'insensitive' } },
                 { barcode: { contains: q, mode: 'insensitive' } },
                 { sku: { contains: q, mode: 'insensitive' } },
-                { location: { contains: q, mode: 'insensitive' } },
             ];
         }
         if (params.dateFrom || params.dateTo) {

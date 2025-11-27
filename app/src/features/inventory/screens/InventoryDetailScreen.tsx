@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@lib/context/AuthContext';
 import { api } from '@lib/api/client';
@@ -12,11 +12,10 @@ const COLORS = { gold:'#FFD700', yellow:'#ffe082', dark:'#181512', card:'#23201c
 export const InventoryDetailScreen: React.FC = () => {
   const { token, user } = useAuth();
   const qc = useQueryClient();
-  const router = useRouter();
   const { id } = useLocalSearchParams();
   const invId = Number(id);
   const canEdit = ['ADMINISTRATOR','INVENTORY'].includes(String(user?.jobRole || user?.job_role || '').toUpperCase());
-  const { data, isLoading, refetch } = useQuery<any>({ queryKey: ['inventory','detail', invId], queryFn: () => api.inventory.get(token || '', invId), enabled: !!token && !!invId });
+  const { data } = useQuery<any>({ queryKey: ['inventory','detail', invId], queryFn: () => api.inventory.get(token || '', invId), enabled: !!token && !!invId });
   const item = data || {};
   const [form, setForm] = React.useState({
     code:'',

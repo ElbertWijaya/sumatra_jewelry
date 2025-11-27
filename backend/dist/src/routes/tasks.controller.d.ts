@@ -4,33 +4,21 @@ import { RequestUser } from '../types/order.dtos';
 export declare class TasksController {
     private tasks;
     constructor(tasks: TasksService);
-    list(): Promise<any>;
-    create(dto: CreateTaskDto): Promise<any>;
-    update(id: number, dto: UpdateTaskDto): Promise<any>;
-    remove(id: number): Promise<{
-        success: boolean;
-    }>;
-    assign(id: number, dto: AssignTaskDto, user: RequestUser): Promise<any>;
-    assignBulk(dto: AssignBulkDto, user: RequestUser): Promise<{
-        created: number;
-    }>;
-    requestDone(id: number, dto: RequestDoneDto, user: RequestUser): Promise<any>;
-    requestDoneMine(orderId: number, user: RequestUser, dto: RequestDoneDto): Promise<{
-        updated: number;
-    }>;
-    acceptMine(orderId: number, user: RequestUser): Promise<{
-        accepted: number;
-    }>;
-    start(id: number, user: RequestUser): Promise<any>;
-    validate(id: number, dto: ValidateTaskDto, user: RequestUser): Promise<any>;
-    validateUserForOrder(orderId: number, userId: string, user: RequestUser, dto: ValidateTaskDto): Promise<{
-        updated: number;
-    }>;
-    check(id: number, user: RequestUser): Promise<any>;
-    uncheck(id: number, user: RequestUser): Promise<any>;
-    awaitingValidation(orderId: number): Promise<any>;
-    listByOrder(orderId: number): Promise<any>;
-    backfill(): Promise<{
-        created: number;
-    }>;
+    list(): unknown;
+    create(dto: CreateTaskDto): unknown;
+    update(id: number, dto: UpdateTaskDto): unknown;
+    remove(id: number): unknown;
+    assign(id: number, dto: AssignTaskDto, user: RequestUser): unknown;
+    assignBulk(dto: AssignBulkDto, user: RequestUser): unknown;
+    requestDone(id: number, dto: RequestDoneDto, user: RequestUser): unknown;
+    requestDoneMine(orderId: number, user: RequestUser, dto: RequestDoneDto): unknown;
+    acceptMine(orderId: number, user: RequestUser): unknown;
+    start(id: number, user: RequestUser): unknown;
+    validate(id: number, dto: ValidateTaskDto, user: RequestUser): unknown;
+    validateUserForOrder(orderId: number, userId: string, user: RequestUser, dto: ValidateTaskDto): unknown;
+    check(id: number, user: RequestUser): unknown;
+    uncheck(id: number, user: RequestUser): unknown;
+    awaitingValidation(orderId: number): unknown;
+    listByOrder(orderId: number): unknown;
+    backfill(): unknown;
 }

@@ -5,8 +5,8 @@ export declare class InventoryService {
     private prisma;
     private realtime;
     constructor(prisma: PrismaService, realtime: RealtimeService);
-    create(dto: CreateInventoryDto, actorUserId?: string): Promise<any>;
-    update(id: number, dto: UpdateInventoryDto, actorUserId?: string): Promise<any>;
+    create(dto: CreateInventoryDto, actorUserId?: string): unknown;
+    update(id: number, dto: UpdateInventoryDto, actorUserId?: string): unknown;
     get(id: number): any;
     listByOrder(orderId: number): any;
     search(params: {
@@ -20,13 +20,8 @@ export declare class InventoryService {
         dateTo?: string;
         limit?: number;
         offset?: number;
-    }): Promise<{
-        items: any;
-        total: any;
-        take: number;
-        skip: number;
-    }>;
-    listRequestsForInventory(userId?: string): Promise<any[]>;
-    softDelete(id: number, actorUserId?: string): Promise<any>;
-    restore(id: number, actorUserId?: string): Promise<any>;
+    }): unknown;
+    listRequestsForInventory(userId?: string): unknown;
+    softDelete(id: number, actorUserId?: string): unknown;
+    restore(id: number, actorUserId?: string): unknown;
 }

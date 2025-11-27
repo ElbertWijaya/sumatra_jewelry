@@ -43,7 +43,6 @@ model inventoryitem {
   code                                         String?
   name                                         String?
   category                                     String?
-  material                                     String?
   karat                                        String?
   gold_type                                    String?
   gold_color                                   String?
@@ -55,7 +54,6 @@ model inventoryitem {
   dimensions                                   String?
   barcode                                      String?                           @unique(map: "InventoryItem_barcode_key")
   sku                                          String?                           @unique(map: "InventoryItem_sku_key")
-  location                                     String?
   branch_location                              inventoryitem_branch_location?
   placement_location                           inventoryitem_placement_location?
   status_enum                                  inventoryitem_status              @default(DRAFT)
@@ -65,7 +63,6 @@ model inventoryitem {
   price                                        Decimal?                          @db.Decimal(14, 2)
   status                                       String?
   images                                       String?                           @db.LongText
-  notes                                        String?
   created_at                                   DateTime                          @default(now())
   updated_at                                   DateTime
   created_by_id                                String?

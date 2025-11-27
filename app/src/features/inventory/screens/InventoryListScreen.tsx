@@ -92,7 +92,20 @@ export const InventoryListScreen: React.FC = () => {
               <Text style={s.badge}>{item.category || '-'}</Text>
             </View>
             <Text style={s.meta}>{item.name || '-'}</Text>
-            <Text style={s.meta}>{item.location || '-'}</Text>
+            <Text style={s.meta}>
+              {(item.branchLocation || item.branch_location || '-')}
+              {' • '}
+              {(item.placement || item.placement_location || '-')}
+            </Text>
+            <Text style={s.meta}>
+              Status: {(item.statusEnum || item.status_enum || 'DRAFT')}
+              {' • Berat Bersih: '}
+              {item.weightNet != null && item.weightNet !== ''
+                ? `${item.weightNet} gr`
+                : item.weight_net != null && item.weight_net !== ''
+                ? `${item.weight_net} gr`
+                : '-'}
+            </Text>
           </TouchableOpacity>
         )}
       />

@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InventoryController = void 0;
 const common_1 = require("@nestjs/common");
@@ -110,7 +111,7 @@ __decorate([
     __param(1, (0, common_1.Body)()),
     __param(2, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Object, Object]),
+    __metadata("design:paramtypes", [Number, typeof (_a = typeof inventory_dtos_1.UpdateInventoryDto !== "undefined" && inventory_dtos_1.UpdateInventoryDto) === "function" ? _a : Object, Object]),
     __metadata("design:returntype", void 0)
 ], InventoryController.prototype, "update", null);
 __decorate([
