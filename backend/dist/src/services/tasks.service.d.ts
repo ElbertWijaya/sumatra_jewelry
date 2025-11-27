@@ -6,23 +6,27 @@ export declare class TasksService {
     constructor(prisma: PrismaService);
     private isOrderActive;
     private mapTask;
-    backfillActive(): unknown;
-    listActive(): unknown;
-    listByOrder(orderId: number): unknown;
-    listAwaitingValidationByOrder(orderId: number): unknown;
+    backfillActive(): Promise<{
+        created: number;
+    }>;
+    listActive(): Promise<any>;
+    listByOrder(orderId: number): Promise<any>;
+    listAwaitingValidationByOrder(orderId: number): Promise<any>;
     create(data: {
         orderId: number;
         stage?: string;
         notes?: string;
-    }): unknown;
+    }): Promise<any>;
     update(id: number, patch: {
         stage?: string;
         notes?: string;
         status?: TaskStatus;
         assignedToId?: string | null;
-    }): unknown;
-    remove(id: number): unknown;
-    assign(id: number, assignedToId: string, actorUserId?: string): unknown;
+    }): Promise<any>;
+    remove(id: number): Promise<{
+        success: boolean;
+    }>;
+    assign(id: number, assignedToId: string, actorUserId?: string): Promise<any>;
     assignBulk(params: {
         orderId: number;
         role: 'DESIGNER' | 'CASTER' | 'CARVER' | 'DIAMOND_SETTER' | 'FINISHER' | 'INVENTORY';
@@ -32,12 +36,20 @@ export declare class TasksService {
             notes?: string;
         }[];
         actorUserId?: string;
-    }): unknown;
-    requestDone(id: number, requesterUserId: string, notes?: string): unknown;
-    validateDone(id: number, validatorUserId: string, notes?: string): unknown;
-    validateAllForOrderAndUser(orderId: number, targetUserId: string, validatorUserId: string, notes?: string): unknown;
-    requestDoneForOrderForUser(orderId: number, requesterUserId: string, notes?: string): unknown;
-    setChecked(id: number, actorUserId: string, value: boolean): unknown;
-    start(id: number, actorUserId: string): unknown;
-    acceptOrderForUser(orderId: number, actorUserId: string): unknown;
+    }): Promise<{
+        created: number;
+    }>;
+    requestDone(id: number, requesterUserId: string, notes?: string): Promise<any>;
+    validateDone(id: number, validatorUserId: string, notes?: string): Promise<any>;
+    validateAllForOrderAndUser(orderId: number, targetUserId: string, validatorUserId: string, notes?: string): Promise<{
+        updated: number;
+    }>;
+    requestDoneForOrderForUser(orderId: number, requesterUserId: string, notes?: string): Promise<{
+        updated: number;
+    }>;
+    setChecked(id: number, actorUserId: string, value: boolean): Promise<any>;
+    start(id: number, actorUserId: string): Promise<any>;
+    acceptOrderForUser(orderId: number, actorUserId: string): Promise<{
+        accepted: number;
+    }>;
 }

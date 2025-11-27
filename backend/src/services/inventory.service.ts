@@ -150,6 +150,7 @@ export class InventoryService {
     if (Array.isArray(dto.stones) && dto.stones.length) {
       if (dto.stoneCount == null) data.stone_count = dto.stones.reduce((s, x) => s + (x.jumlah || 0), 0);
       if (dto.stoneWeight == null) data.stone_weight = dto.stones.reduce((s, x) => s + (x.berat != null ? Number(x.berat) : 0), 0);
+      if (dto.karat == null) data.karat = String(dto.stones.reduce((s, x) => s + (x.berat != null ? Number(x.berat) : 0), 0));
     }
     try {
       const updated = await (this.prisma as any).inventoryitem.update({

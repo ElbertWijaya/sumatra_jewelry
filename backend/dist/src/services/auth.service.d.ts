@@ -4,12 +4,39 @@ export declare class AuthService {
     private prisma;
     private jwt;
     constructor(prisma: PrismaService, jwt: JwtService);
-    validateUser(email: string, password: string): unknown;
-    login(email: string, password: string): unknown;
+    validateUser(email: string, password: string): Promise<{
+        id: string;
+        email: string;
+        fullName: string;
+        job_role: string;
+        password: string;
+        branch_id: number;
+        phone: string | null;
+        address: string | null;
+        created_at: Date;
+    }>;
+    login(email: string, password: string): Promise<{
+        accessToken: string;
+        user: {
+            id: string;
+            email: string;
+            fullName: string;
+            job_role: string;
+            phone: string | null;
+            address: string | null;
+            branch_id: number;
+            branchName: string;
+            branchAddress: string | null;
+            joinedAt: Date;
+        };
+    }>;
     register(data: {
         email: string;
         password: string;
         fullName: string;
         jobRole?: string | null;
-    }): unknown;
+    }): Promise<{
+        id: string;
+        email: string;
+    }>;
 }

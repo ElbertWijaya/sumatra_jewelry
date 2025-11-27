@@ -12,7 +12,24 @@ declare class RegisterDto {
 export declare class AuthController {
     private auth;
     constructor(auth: AuthService);
-    login(dto: LoginDto): unknown;
-    register(dto: RegisterDto): unknown;
+    login(dto: LoginDto): Promise<{
+        accessToken: string;
+        user: {
+            id: string;
+            email: string;
+            fullName: string;
+            job_role: string;
+            phone: string | null;
+            address: string | null;
+            branch_id: number;
+            branchName: string;
+            branchAddress: string | null;
+            joinedAt: Date;
+        };
+    }>;
+    register(dto: RegisterDto): Promise<{
+        id: string;
+        email: string;
+    }>;
 }
 export {};

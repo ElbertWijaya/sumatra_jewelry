@@ -8,7 +8,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateOrderDto = exports.UpdateOrderStatusDto = exports.StoneDto = exports.CreateOrderDto = exports.ORDER_STATUS_VALUES = void 0;
 const class_validator_1 = require("class-validator");
@@ -130,7 +129,7 @@ class UpdateOrderStatusDto {
 exports.UpdateOrderStatusDto = UpdateOrderStatusDto;
 __decorate([
     (0, class_validator_1.IsIn)(exports.ORDER_STATUS_VALUES),
-    __metadata("design:type", typeof (_a = typeof OrderStatusEnum !== "undefined" && OrderStatusEnum) === "function" ? _a : Object)
+    __metadata("design:type", String)
 ], UpdateOrderStatusDto.prototype, "status", void 0);
 class UpdateOrderDto {
 }
