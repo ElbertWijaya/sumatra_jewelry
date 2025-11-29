@@ -54,9 +54,14 @@ export const OrderDetailScreen: React.FC = () => {
 
   // Determine if accessed from worker context (hide verification tab)
   const isWorkerView = React.useMemo(() => (src === 'worker' || fromWorker === '1'), [src, fromWorker]);
+  // Hide verification tab for completed orders
+  const isCompleted = React.useMemo(() => {
+    const s = String(det?.status || '').toUpperCase();
+    return s === 'DONE' || s === 'SELESAI' || s === 'SIAP';
+  }, [det?.status]);
   // Tabs state: 'detail' | 'verif' (force to detail for worker view)
   const [tab, setTab] = React.useState<'detail'|'verif'>('detail');
-  React.useEffect(() => { if (isWorkerView && tab !== 'detail') setTab('detail'); }, [isWorkerView, tab]);
+  React.useEffect(() => { if ((isWorkerView || isCompleted) && tab !== 'detail') setTab('detail'); }, [isWorkerView, isCompleted, tab]);
 
   // Edit modal state
   const [editOpen, setEditOpen] = React.useState(false);
@@ -198,7 +203,7 @@ export const OrderDetailScreen: React.FC = () => {
           <TouchableOpacity onPress={() => setTab('detail')} style={[styles.tabItem, tab==='detail' && styles.tabItemActive]}>
             <Text style={[styles.tabText, tab==='detail' && styles.tabTextActive]}>Detail Pesanan</Text>
           </TouchableOpacity>
-          {!isWorkerView && (
+          {!isWorkerView && !isCompleted && (
             <TouchableOpacity onPress={() => setTab('verif')} style={[styles.tabItem, tab==='verif' && styles.tabItemActive]}>
               <Text style={[styles.tabText, tab==='verif' && styles.tabTextActive]}>Verifikasi Pekerja</Text>
             </TouchableOpacity>

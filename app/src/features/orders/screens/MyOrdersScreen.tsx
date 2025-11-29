@@ -338,11 +338,12 @@ export const MyOrdersScreen: React.FC = () => {
                   </Text>
                 </View>
               </View>
-              {/* Sales real-time checklist viewer */}
+              {/* Sales real-time checklist viewer: only show in Ditugaskan indicator */}
               {(() => {
                 const role = String(user?.jobRole || user?.role || '').toUpperCase();
                 const canSee = role === 'SALES' || role === 'ADMINISTRATOR';
                 if (!canSee) return null;
+                if (statusFilter !== 'DITUGASKAN') return null;
                 return (
                   <View style={{ flexDirection:'row', justifyContent:'flex-end', marginTop: 8 }}>
                     <TouchableOpacity
