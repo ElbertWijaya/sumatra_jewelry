@@ -273,14 +273,23 @@ export const OrderDetailScreen: React.FC = () => {
             </ScrollView>
           </View>
         )}
-        <View style={styles.card}>
-          <Text style={styles.title}>Ringkasan Pembayaran</Text>
-          <View style={styles.divider} />
-          <Text style={styles.row}><Text style={styles.key}>Harga Emas/gram:</Text> <Text style={styles.val}>{formatIDR(det.hargaEmasPerGram)}</Text></Text>
-          <Text style={styles.row}><Text style={styles.key}>Harga Perkiraan:</Text> <Text style={styles.val}>{formatIDR(det.hargaPerkiraan)}</Text></Text>
-          <Text style={styles.row}><Text style={styles.key}>DP:</Text> <Text style={styles.val}>{formatIDR(det.dp)}</Text></Text>
-          <Text style={styles.row}><Text style={styles.key}>Harga Akhir:</Text> <Text style={styles.val}>{formatIDR(det.hargaAkhir)}</Text></Text>
-        </View>
+        {/* Ringkasan Pembayaran hanya untuk SALES / ADMINISTRATOR */}
+        {(() => {
+          const role = String((det?.createdByRole) || (det?.updatedByRole) || '').toUpperCase();
+          const userRole = String((require('@lib/context/AuthContext')).useAuth().user?.jobRole || (require('@lib/context/AuthContext')).useAuth().user?.job_role || '').toUpperCase();
+          const canSeePrice = ['SALES','ADMINISTRATOR'].includes(userRole);
+          if (!canSeePrice) return null;
+          return (
+            <View style={styles.card}>
+              <Text style={styles.title}>Ringkasan Pembayaran</Text>
+              <View style={styles.divider} />
+              <Text style={styles.row}><Text style={styles.key}>Harga Emas/gram:</Text> <Text style={styles.val}>{formatIDR(det.hargaEmasPerGram)}</Text></Text>
+              <Text style={styles.row}><Text style={styles.key}>Harga Perkiraan:</Text> <Text style={styles.val}>{formatIDR(det.hargaPerkiraan)}</Text></Text>
+              <Text style={styles.row}><Text style={styles.key}>DP:</Text> <Text style={styles.val}>{formatIDR(det.dp)}</Text></Text>
+              <Text style={styles.row}><Text style={styles.key}>Harga Akhir:</Text> <Text style={styles.val}>{formatIDR(det.hargaAkhir)}</Text></Text>
+            </View>
+          );
+        })()}
 
         <View style={styles.card}>
           <Text style={styles.title}>Catatan</Text>

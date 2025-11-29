@@ -3,7 +3,7 @@ export const JENIS_BARANG_OPTIONS = [
   'Bangle', 'Earring', 'Pendant', 'Necklace', 'Women Ring', 'Men Ring'
 ];
 export const JENIS_EMAS_OPTIONS = [
-  '24K','22K','18K','14K','12K','10K','9K'
+  '24K','22K','18K','17K','16K','14K','12K','10K','9K'
 ];
 export const WARNA_EMAS_OPTIONS = [
   'White Gold','Rose Gold','Yellow Gold'

@@ -8,6 +8,7 @@ import { setAwaitingValidationOrderIds, setAssignedOrderIds, isOrderActiveStatus
 import { useAuth } from '@lib/context/AuthContext';
 import { OrderActionsModal } from './OrderActionsModal';
 import { OrderVerificationModal } from './OrderVerificationModal';
+import { SalesChecklistModal } from '@features/sales/components/SalesChecklistModal';
 
 const COLORS = { gold:'#FFD700', yellow:'#ffe082', dark:'#181512', card:'#23201c', border:'#4e3f2c' };
 
@@ -47,15 +48,55 @@ export const MyOrdersScreen: React.FC = () => {
   type StatusFilter = 'SEMUA' | 'AKTIF' | 'DITUGASKAN' | 'SELESAI' | 'VERIFIKASI' | 'BATAL';
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('AKTIF');
 
-  // Fetch tasks list when we need task-level filters (VERIFIKASI or DITUGASKAN)
+  // Fetch tasks list for computing verification and inventory progression gates
   const { data: tasksData, refetch: refetchTasks } = useQuery<any[]>({
-    queryKey: ['tasks','for-orders-filter', statusFilter],
+    queryKey: ['tasks','for-orders-filter'],
     queryFn: async () => (api.tasks.list(token || '') as unknown) as Promise<any[]>,
-    enabled: !!token && (statusFilter === 'VERIFIKASI' || statusFilter === 'DITUGASKAN'),
-    refetchInterval: (statusFilter === 'VERIFIKASI' || statusFilter === 'DITUGASKAN') ? 6000 : false,
+    enabled: !!token,
+    refetchInterval: 8000,
   });
   const verifOrderIds = React.useMemo(() => setAwaitingValidationOrderIds(tasksData as any), [tasksData]);
   const assignedOrderIds = React.useMemo(() => setAssignedOrderIds(tasksData as any), [tasksData]);
+  const progressMap = React.useMemo(() => {
+    const map = new Map<number, { checked: number; total: number }>();
+    const rows = Array.isArray(tasksData) ? tasksData : [];
+    rows.forEach((t: any) => {
+      const oid = Number(t.orderId || t.order_id || (t.order?.id ?? 0));
+      if (!oid) return;
+      const s = String(t.status || '').toUpperCase();
+      if (s !== 'IN_PROGRESS') return;
+      const isChecked = !!t.isChecked;
+      const curr = map.get(oid) || { checked: 0, total: 0 };
+      curr.total += 1;
+      if (isChecked) curr.checked += 1;
+      map.set(oid, curr);
+    });
+    return map;
+  }, [tasksData]);
+  // Inventory gate: show finalize only if INVENTORY tasks exist and none are ASSIGNED/IN_PROGRESS/AWAITING_VALIDATION for that order
+  const inventoryReadyIds = React.useMemo(() => {
+    const set = new Set<number>();
+    const rows = Array.isArray(tasksData) ? tasksData : [];
+    const byOrder = new Map<number, any[]>();
+    rows.forEach((t: any) => {
+      const oid = Number(t.orderId || t.order_id || (t.order?.id ?? 0));
+      if (!oid) return;
+      const jr = String(t.jobRole || t.job_role || '').toUpperCase();
+      if (jr !== 'INVENTORY') return;
+      const arr = byOrder.get(oid) || [];
+      arr.push(t);
+      byOrder.set(oid, arr);
+    });
+    for (const [oid, arr] of byOrder.entries()) {
+      if (arr.length === 0) continue;
+      const active = arr.some((t: any) => {
+        const s = String(t.status || '').toUpperCase();
+        return s === 'ASSIGNED' || s === 'IN_PROGRESS' || s === 'AWAITING_VALIDATION';
+      });
+      if (!active) set.add(oid);
+    }
+    return set;
+  }, [tasksData]);
 
 
   React.useEffect(() => {
@@ -106,6 +147,8 @@ export const MyOrdersScreen: React.FC = () => {
   const [open, setOpen] = React.useState(false);
   const [verifOpen, setVerifOpen] = React.useState(false);
   const [verifOrderId, setVerifOrderId] = React.useState<number | null>(null);
+  const [checklistOpen, setChecklistOpen] = React.useState(false);
+  const [checklistOrderId, setChecklistOrderId] = React.useState<number | null>(null);
   const [finalizingId, setFinalizingId] = React.useState<number | null>(null);
   const router = useRouter();
 
@@ -230,7 +273,7 @@ export const MyOrdersScreen: React.FC = () => {
                       const photos = Array.isArray(item.referensiGambarUrls) ? item.referensiGambarUrls.filter(Boolean).length : 0;
                       const batu = typeof item.stoneCount === 'number' ? item.stoneCount : null;
                       const berat = typeof item.totalBerat === 'number' ? item.totalBerat : null;
-                      const chips: { key: 'foto'|'batu'|'berat'; label: string }[] = [];
+                      const chips: { key: 'foto'|'batu'|'berat'|'progress'; label: string }[] = [];
                       // Prioritas: Batu > Foto > Berat (fallback)
                       if (typeof batu === 'number' && batu > 0) chips.push({ key:'batu', label: `Batu ${batu}` });
                       if (photos > 0) chips.push({ key:'foto', label: `Foto ${photos}` });
@@ -238,11 +281,18 @@ export const MyOrdersScreen: React.FC = () => {
                         const bw = Math.round(Number(berat) * 10) / 10; // 1 desimal
                         chips.push({ key:'berat', label: `${bw} g` });
                       }
-                      return chips.slice(0,2).map((c, idx) => (
+                      // Progress chip (Sales only) appended if available
+                      const roleUpper = String(user?.jobRole || user?.role || '').toUpperCase();
+                      if (progressMap.has(Number(item.id)) && (roleUpper === 'SALES' || roleUpper === 'ADMINISTRATOR')) {
+                        const pr = progressMap.get(Number(item.id))!;
+                        chips.push({ key: 'progress', label: `Prog ${pr.checked}/${pr.total}` });
+                      }
+                      return chips.slice(0,3).map((c, idx) => (
                         <View key={`${c.key}-${idx}`} style={styles.chip}>
                           {c.key === 'foto' && <MaterialCommunityIcons name="camera-outline" size={12} color={COLORS.gold} style={styles.chipIcon} />}
                           {c.key === 'batu' && <MaterialCommunityIcons name="diamond-stone" size={12} color={COLORS.gold} style={styles.chipIcon} />}
                           {c.key === 'berat' && <MaterialCommunityIcons name="scale-balance" size={12} color={COLORS.gold} style={styles.chipIcon} />}
+                          {c.key === 'progress' && <Ionicons name="bar-chart-outline" size={12} color={COLORS.gold} style={styles.chipIcon} />}
                           <Text style={styles.chipText} numberOfLines={1}>{c.label}</Text>
                         </View>
                       ));
@@ -288,6 +338,23 @@ export const MyOrdersScreen: React.FC = () => {
                   </Text>
                 </View>
               </View>
+              {/* Sales real-time checklist viewer */}
+              {(() => {
+                const role = String(user?.jobRole || user?.role || '').toUpperCase();
+                const canSee = role === 'SALES' || role === 'ADMINISTRATOR';
+                if (!canSee) return null;
+                return (
+                  <View style={{ flexDirection:'row', justifyContent:'flex-end', marginTop: 8 }}>
+                    <TouchableOpacity
+                      onPress={() => { setChecklistOrderId(Number(item.id)); setChecklistOpen(true); }}
+                      style={[styles.verifyBtn, { backgroundColor:'rgba(255,215,0,0.12)', borderWidth:1, borderColor:COLORS.border } ]}
+                    >
+                      <Ionicons name='list-circle' size={14} color={COLORS.gold} />
+                      <Text style={[styles.verifyBtnText, { color: COLORS.gold }]}>Lihat Checklist</Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })()}
               {/* Verification CTA when in VERIFIKASI filter and user is SALES/ADMIN */}
               {statusFilter === 'VERIFIKASI' && (() => {
                 const role = String(user?.jobRole || user?.role || '').toUpperCase();
@@ -306,14 +373,14 @@ export const MyOrdersScreen: React.FC = () => {
                   </View>
                 );
               })()}
-              {/* Finalize (Pesanan Selesai) CTA: muncul jika status DALAM_PROSES & semua task sudah diverifikasi (tidak ada di assigned/verif sets) */}
+              {/* Finalize (Pesanan Selesai) CTA: muncul hanya jika lewat INVENTORY dan tidak ada task INVENTORY aktif/menunggu */}
               {(() => {
                 const role = String(user?.jobRole || user?.role || '').toUpperCase();
                 const canFinalize = role === 'SALES' || role === 'ADMINISTRATOR';
                 const s = String(item.status || '').toUpperCase();
                 const isInProgress = s === 'DALAM_PROSES';
-                const hasActive = assignedOrderIds.has(Number(item.id)) || verifOrderIds.has(Number(item.id));
-                if (!canFinalize || !isInProgress || hasActive) return null;
+                const inventoryReady = inventoryReadyIds.has(Number(item.id));
+                if (!canFinalize || !isInProgress || !inventoryReady) return null;
                 return (
                   <View style={{ flexDirection:'row', justifyContent:'flex-end', marginTop: 10 }}>
                     <TouchableOpacity
@@ -377,6 +444,11 @@ export const MyOrdersScreen: React.FC = () => {
         orderId={verifOrderId}
         onClose={() => { setVerifOpen(false); setVerifOrderId(null); }}
         onChanged={() => refetch()}
+      />
+      <SalesChecklistModal
+        visible={checklistOpen}
+        orderId={checklistOrderId}
+        onClose={() => { setChecklistOpen(false); setChecklistOrderId(null); }}
       />
     </View>
   );
