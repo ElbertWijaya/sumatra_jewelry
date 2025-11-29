@@ -4,14 +4,13 @@ export type CreateInventoryDto = {
   name?: string;
   category?: string;
   material?: string;
-  karat?: string;
   goldType?: string;
   goldColor?: string;
   weightGross?: number;
   weightNet?: number;
   stoneCount?: number;
   stoneWeight?: number;
-  size?: string;
+  size?: string; // legacy name; maps to ring_size in DB
   dimensions?: string;
   barcode?: string;
   sku?: string;

@@ -27,6 +27,7 @@ export const InventoryDetailScreen: React.FC = () => {
     branchLocation:'',
     placement:'',
     statusEnum:'',
+    ringSize:'',
     stones: [] as { bentuk:string; jumlah:number; berat?:number }[],
   });
 
@@ -43,6 +44,7 @@ export const InventoryDetailScreen: React.FC = () => {
       branchLocation: raw.branchLocation || raw.branch_location || '',
       placement: raw.placement || raw.placement_location || '',
       statusEnum: raw.statusEnum || raw.status_enum || 'DRAFT',
+      ringSize: raw.ring_size || raw.size || '',
       stones: Array.isArray(raw.inventorystone)
         ? raw.inventorystone.map((s: any) => ({
             bentuk: s.bentuk,
@@ -89,6 +91,8 @@ export const InventoryDetailScreen: React.FC = () => {
       <InlineSelect label="" value={form.goldColor} options={WARNA_EMAS_OPTIONS} onChange={(v)=> setForm(f=>({...f, goldColor:v}))} styleHeader={s.select} disabled={!canEdit} />
       <Text style={s.label}>Status</Text>
       <InlineSelect label="" value={form.statusEnum} options={['DRAFT','ACTIVE','RESERVED','SOLD','RETURNED','DAMAGED']} onChange={(v)=> setForm(f=>({...f, statusEnum:v}))} styleHeader={s.select} disabled={!canEdit} />
+      <Text style={s.label}>Ring Size</Text>
+      <View style={s.valueOnly}><Text style={{ color: COLORS.yellow }}>{form.ringSize || '-'}</Text></View>
       <Text style={s.label}>Detail Batu</Text>
       {form.stones.map((sStone, idx) => (
         <View key={idx} style={{flexDirection:'row', alignItems:'center', marginTop:6}}>
@@ -119,5 +123,6 @@ const s = StyleSheet.create({
   input: { backgroundColor: COLORS.card, borderRadius: 12, borderWidth:1, borderColor: COLORS.border, color: COLORS.yellow, padding: 10, marginTop: 6 },
   select: { backgroundColor: COLORS.card, borderWidth: 1, borderColor: COLORS.border, borderRadius: 12, color: COLORS.yellow, fontWeight: '600', fontSize: 15, paddingVertical: 8, paddingHorizontal: 10, marginTop: 6 },
   saveBtn: { marginTop: 16, backgroundColor: COLORS.gold, paddingVertical: 12, borderRadius: 12, alignItems:'center' },
-  saveTxt: { color:'#1b1b1b', fontWeight:'900' }
+  saveTxt: { color:'#1b1b1b', fontWeight:'900' },
+  valueOnly: { backgroundColor: COLORS.card, borderRadius: 12, borderWidth:1, borderColor: COLORS.border, padding: 10, marginTop: 6 }
 });

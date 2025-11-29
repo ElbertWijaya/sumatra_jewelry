@@ -43,14 +43,13 @@ model inventoryitem {
   code                                         String?
   name                                         String?
   category                                     String?
-  karat                                        String?
   gold_type                                    String?
   gold_color                                   String?
   weight_gross                                 Decimal?                          @db.Decimal(10, 2)
   weight_net                                   Decimal?                          @db.Decimal(10, 2)
   stone_count                                  Int?
   stone_weight                                 Decimal?                          @db.Decimal(10, 2)
-  size                                         String?
+  ring_size                                    String?
   dimensions                                   String?
   barcode                                      String?                           @unique(map: "InventoryItem_barcode_key")
   sku                                          String?                           @unique(map: "InventoryItem_sku_key")
