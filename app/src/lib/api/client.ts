@@ -121,7 +121,7 @@ export const api = {
   inventory: {
     get: (token: string, id: number) => request(`/inventory/${id}`, { headers: { Authorization: `Bearer ${token}` } }),
     listByOrder: (token: string, orderId: number) => request(`/inventory?orderId=${orderId}`, { headers: { Authorization: `Bearer ${token}` } }),
-    search: (token: string, params?: { q?: string; category?: string; status?: string; branchLocation?: string; placement?: string; statusEnum?: string; dateFrom?: string; dateTo?: string; limit?: number; offset?: number }) => {
+    search: (token: string, params?: { q?: string; category?: string; status?: string; branchLocation?: string; placement?: string; statusEnum?: string; goldType?: string; goldColor?: string; dateFrom?: string; dateTo?: string; limit?: number; offset?: number }) => {
       const p = new URLSearchParams();
       if (params?.q) p.set('q', params.q);
       if (params?.category) p.set('category', params.category);
@@ -129,6 +129,8 @@ export const api = {
       if (params?.branchLocation) p.set('branchLocation', params.branchLocation);
       if (params?.placement) p.set('placement', params.placement);
       if (params?.statusEnum) p.set('statusEnum', params.statusEnum);
+      if (params?.goldType) p.set('goldType', params.goldType);
+      if (params?.goldColor) p.set('goldColor', params.goldColor);
       if (params?.dateFrom) p.set('dateFrom', params.dateFrom);
       if (params?.dateTo) p.set('dateTo', params.dateTo);
       if (params?.limit != null) p.set('limit', String(params.limit));

@@ -186,13 +186,15 @@ export class InventoryService {
     return (this.prisma as any).inventoryitem.findMany({ where: { orderId, is_deleted: false }, orderBy: { created_at: 'desc' }, include: { inventorystone: true } });
   }
 
-  async search(params: { q?: string; category?: string; status?: string; branchLocation?: string; placement?: string; statusEnum?: string; dateFrom?: string; dateTo?: string; limit?: number; offset?: number }) {
+  async search(params: { q?: string; category?: string; status?: string; branchLocation?: string; placement?: string; statusEnum?: string; goldType?: string; goldColor?: string; dateFrom?: string; dateTo?: string; limit?: number; offset?: number }) {
     const where: any = { is_deleted: false };
     if (params.category) where.category = params.category;
     if (params.status) where.status = params.status;
     if (params.branchLocation) where.branch_location = params.branchLocation;
     if (params.placement) where.placement_location = params.placement;
     if (params.statusEnum) where.status_enum = params.statusEnum;
+    if (params.goldType) where.gold_type = params.goldType;
+    if (params.goldColor) where.gold_color = params.goldColor;
     if (params.q) {
       const q = params.q;
       where.OR = [

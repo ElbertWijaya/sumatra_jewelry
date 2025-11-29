@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, Alert, Animated, Easing } from 'react-native';
+import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, Alert, Animated, Easing, Image } from 'react-native';
+import { API_URL } from '@lib/api/client';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@lib/context/AuthContext';
 import { api } from '@lib/api/client';
@@ -38,6 +39,10 @@ export const MyTasksScreen: React.FC = () => {
 		const requestDoneOrder = async (g: Group) => { if (!token) return; setProcessing(p => ({ ...p, [g.orderId]: true })); try { Alert.alert('Info', 'Endpoint requestDoneMine belum tersedia.'); } catch (e:any) { Alert.alert('Gagal request selesai', e.message || String(e)); } finally { setProcessing(p => ({ ...p, [g.orderId]: false })); } };
 
 	const renderGroup = ({ item }: { item: Group }) => {
+		const toDisplayUrl = (p?: string) => { if (!p) return undefined as any; if (/^https?:\/\//i.test(p)) return p; const base = API_URL.replace(/\/api\/?$/, '').replace(/\/$/, ''); return p.startsWith('/uploads') ? base + p : p; };
+		const thumbSrc = Array.isArray(item.order?.referensiGambarUrls) && (item.order.referensiGambarUrls[item.order.referensiGambarUrls.length-1] || item.order.referensiGambarUrls[0])
+			? toDisplayUrl(item.order.referensiGambarUrls[item.order.referensiGambarUrls.length-1] || item.order.referensiGambarUrls[0])
+			: undefined;
 		const busy = !!processing[item.orderId];
 		const { checked, total } = progressFor(item);
 		const readyToRequest = canRequestDone(item);
@@ -47,12 +52,23 @@ export const MyTasksScreen: React.FC = () => {
 		const showAcceptHint = tab === 'inbox' && hasAssigned;
 		return (
 			<View style={[styles.card, isExpanded && styles.cardExpanded]}>
-				<View style={{ flexDirection:'row', justifyContent:'space-between', alignItems:'center' }}>
-					<TouchableOpacity activeOpacity={0.85} onPress={() => setExpanded(prev => ({ ...prev, [item.orderId]: !isExpanded }))} onLongPress={() => { setSelectedOrder(item.order || { id: item.orderId }); setDetailOpen(true); }}>
-						<Text style={styles.title}>Order #{item.order?.code || item.orderId}</Text>
-						{item.order?.customerName ? <Text style={styles.subtle}>{item.order.customerName} • {item.order?.jenisBarang} • {item.order?.jenisEmas}</Text> : null}
-						<Text style={styles.expandHint}>{isExpanded ? 'Sembunyikan' : 'Tampilkan'} detail</Text>
-					</TouchableOpacity>
+				<View style={{ flexDirection:'row', alignItems:'flex-start', justifyContent:'space-between' }}>
+					<View style={{ flexDirection:'row', alignItems:'center', flex:1, minWidth:0 }}>
+						{thumbSrc ? (
+							<Image source={{ uri: thumbSrc }} style={styles.thumb} resizeMode="cover" />
+						) : (
+							<View style={[styles.thumb, { backgroundColor:'#23201c', alignItems:'center', justifyContent:'center', borderColor:'#4e3f2c', borderWidth:1 }]}>
+								<Text style={{ color:'#bfae6a', fontSize:11 }}>No Img</Text>
+							</View>
+						)}
+						<View style={{ marginLeft: 10, flex:1, minWidth:0 }}>
+							<TouchableOpacity activeOpacity={0.85} onPress={() => setExpanded(prev => ({ ...prev, [item.orderId]: !isExpanded }))} onLongPress={() => { setSelectedOrder(item.order || { id: item.orderId }); setDetailOpen(true); }}>
+								<Text style={styles.title}>Order #{item.order?.code || item.orderId}</Text>
+								{item.order?.customerName ? <Text style={styles.subtle}>{item.order.customerName} • {item.order?.jenisBarang} • {item.order?.jenisEmas}</Text> : null}
+								<Text style={styles.expandHint}>{isExpanded ? 'Sembunyikan' : 'Tampilkan'} detail</Text>
+							</TouchableOpacity>
+						</View>
+					</View>
 					<View style={{ alignItems:'flex-end' }}>
 						<Text style={styles.countPill}>{checked}/{total} checklist</Text>
 						<View style={styles.progressBar}><View style={[styles.progressFill, { width: `${total>0 ? (checked/total)*100 : 0}%` }]} /></View>

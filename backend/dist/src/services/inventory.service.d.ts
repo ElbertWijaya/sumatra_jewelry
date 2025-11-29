@@ -16,6 +16,8 @@ export declare class InventoryService {
         branchLocation?: string;
         placement?: string;
         statusEnum?: string;
+        goldType?: string;
+        goldColor?: string;
         dateFrom?: string;
         dateTo?: string;
         limit?: number;

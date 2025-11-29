@@ -208,6 +208,10 @@ let InventoryService = class InventoryService {
             where.placement_location = params.placement;
         if (params.statusEnum)
             where.status_enum = params.statusEnum;
+        if (params.goldType)
+            where.gold_type = params.goldType;
+        if (params.goldColor)
+            where.gold_color = params.goldColor;
         if (params.q) {
             const q = params.q;
             where.OR = [

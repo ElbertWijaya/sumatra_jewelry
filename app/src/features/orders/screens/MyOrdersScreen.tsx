@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, TextInput, ScrollView, Image, Modal, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { api, API_URL } from '@lib/api/client';
 import { setAwaitingValidationOrderIds, setAssignedOrderIds, isOrderActiveStatus } from '@lib/metrics/orders';
 import { useAuth } from '@lib/context/AuthContext';
@@ -106,6 +106,7 @@ export const MyOrdersScreen: React.FC = () => {
   const [open, setOpen] = React.useState(false);
   const [verifOpen, setVerifOpen] = React.useState(false);
   const [verifOrderId, setVerifOrderId] = React.useState<number | null>(null);
+  const [finalizingId, setFinalizingId] = React.useState<number | null>(null);
   const router = useRouter();
 
   const badgeStyleFor = (status?: string | null) => {
@@ -153,6 +154,18 @@ export const MyOrdersScreen: React.FC = () => {
       default: return 'Tidak ada order';
     }
   };
+
+  const finalizeMutation = useMutation({
+    mutationFn: (orderId: number) => api.orders.updateStatus(token || '', orderId, 'SIAP'),
+    onSuccess: () => {
+      setFinalizingId(null);
+      refetch();
+    },
+    onError: (e: any) => {
+      setFinalizingId(null);
+      Alert.alert('Gagal', String(e?.message || 'Gagal menyelesaikan pesanan'));
+    },
+  });
 
   const Thumbnail: React.FC<{ url?: string | null }> = ({ url }) => {
     const [loaded, setLoaded] = React.useState(false);
@@ -293,6 +306,37 @@ export const MyOrdersScreen: React.FC = () => {
                   </View>
                 );
               })()}
+              {/* Finalize (Pesanan Selesai) CTA: muncul jika status DALAM_PROSES & semua task sudah diverifikasi (tidak ada di assigned/verif sets) */}
+              {(() => {
+                const role = String(user?.jobRole || user?.role || '').toUpperCase();
+                const canFinalize = role === 'SALES' || role === 'ADMINISTRATOR';
+                const s = String(item.status || '').toUpperCase();
+                const isInProgress = s === 'DALAM_PROSES';
+                const hasActive = assignedOrderIds.has(Number(item.id)) || verifOrderIds.has(Number(item.id));
+                if (!canFinalize || !isInProgress || hasActive) return null;
+                return (
+                  <View style={{ flexDirection:'row', justifyContent:'flex-end', marginTop: 10 }}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setFinalizingId(item.id);
+                        finalizeMutation.mutate(item.id);
+                      }}
+                      disabled={finalizeMutation.isPending && finalizingId === item.id}
+                      style={styles.finishBtn}
+                      activeOpacity={0.85}
+                    >
+                      {finalizeMutation.isPending && finalizingId === item.id ? (
+                        <ActivityIndicator color={'#1b1b1b'} size={'small'} />
+                      ) : (
+                        <>
+                          <Ionicons name='checkmark-circle' size={16} color={'#1b1b1b'} style={{ marginRight:6 }} />
+                          <Text style={styles.finishBtnText}>Pesanan Selesai</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                );
+              })()}
             </View>
           </TouchableOpacity>
         )}
@@ -403,6 +447,8 @@ const styles = StyleSheet.create({
   stoneInfo: { color:'#bfae6a', fontSize:11, marginTop:2 },
   verifyBtn: { flexDirection:'row', alignItems:'center', gap:6, backgroundColor: COLORS.gold, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
   verifyBtnText: { color:'#1b1b1b', fontWeight:'800' },
+  finishBtn: { flexDirection:'row', alignItems:'center', gap:6, backgroundColor: COLORS.gold, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, borderWidth:1, borderColor: COLORS.border },
+  finishBtnText: { color:'#1b1b1b', fontWeight:'800' },
   thumbWrap: { width: 56, height: 56, borderRadius: 10, overflow: 'hidden', backgroundColor: '#222', borderWidth: 1, borderColor: COLORS.border },
   thumbImg: { width: 56, height: 56, resizeMode: 'cover' },
   thumbPlaceholder: { flex:1, alignItems:'center', justifyContent:'center', backgroundColor:'#23201c' },
