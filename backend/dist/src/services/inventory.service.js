@@ -43,14 +43,13 @@ let InventoryService = class InventoryService {
             code: dto.code ?? null,
             name: dto.name ?? null,
             category: dto.category ?? null,
-            karat: dto.karat ?? null,
             gold_type: dto.goldType ?? null,
             gold_color: dto.goldColor ?? null,
             weight_gross: dto.weightGross != null ? Number(dto.weightGross) : null,
             weight_net: dto.weightNet != null ? Number(dto.weightNet) : null,
             stone_count: dto.stoneCount != null ? Number(dto.stoneCount) : null,
             stone_weight: dto.stoneWeight != null ? Number(dto.stoneWeight) : null,
-            size: dto.size ?? null,
+            ring_size: dto.size ?? null,
             dimensions: dto.dimensions ?? null,
             barcode: dto.barcode ?? null,
             sku: dto.sku ?? null,
@@ -65,15 +64,13 @@ let InventoryService = class InventoryService {
             updated_by_id: actorUserId ?? null,
             updated_at: new Date(),
         };
-        if ((!data.stone_count || !data.stone_weight || !data.karat) && Array.isArray(dto.stones) && dto.stones.length) {
+        if ((!data.stone_count || !data.stone_weight) && Array.isArray(dto.stones) && dto.stones.length) {
             const totalJumlah = dto.stones.reduce((s, x) => s + (x.jumlah || 0), 0);
             const totalBerat = dto.stones.reduce((s, x) => s + (x.berat != null ? Number(x.berat) : 0), 0);
             if (!data.stone_count)
                 data.stone_count = totalJumlah;
             if (!data.stone_weight)
                 data.stone_weight = totalBerat;
-            if (!data.karat)
-                data.karat = String(totalBerat);
         }
         try {
             const created = await this.prisma.inventoryitem.create({
@@ -143,10 +140,9 @@ let InventoryService = class InventoryService {
             code: dto.code ?? undefined,
             name: dto.name ?? undefined,
             category: dto.category ?? undefined,
-            karat: dto.karat ?? undefined,
             gold_type: dto.goldType ?? undefined,
             gold_color: dto.goldColor ?? undefined,
-            size: dto.size ?? undefined,
+            ring_size: dto.size ?? undefined,
             dimensions: dto.dimensions ?? undefined,
             barcode: dto.barcode ?? undefined,
             sku: dto.sku ?? undefined,
@@ -161,8 +157,6 @@ let InventoryService = class InventoryService {
                 data.stone_count = dto.stones.reduce((s, x) => s + (x.jumlah || 0), 0);
             if (dto.stoneWeight == null)
                 data.stone_weight = dto.stones.reduce((s, x) => s + (x.berat != null ? Number(x.berat) : 0), 0);
-            if (dto.karat == null)
-                data.karat = String(dto.stones.reduce((s, x) => s + (x.berat != null ? Number(x.berat) : 0), 0));
         }
         try {
             const updated = await this.prisma.inventoryitem.update({

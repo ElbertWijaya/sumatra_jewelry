@@ -4,7 +4,6 @@ export type CreateInventoryDto = {
     name?: string;
     category?: string;
     material?: string;
-    karat?: string;
     goldType?: string;
     goldColor?: string;
     weightGross?: number;

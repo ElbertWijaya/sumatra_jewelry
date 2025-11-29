@@ -79,6 +79,11 @@ export const InventoryCreateScreen: React.FC = () => {
     return validStones.reduce((acc, s) => acc + (Number(s.berat || 0) || 0), 0);
   }, [stones]);
 
+  const formatCt = (n?: number) => {
+    if (n == null || Number.isNaN(n)) return '';
+    return String(parseFloat(Number(n).toFixed(4)));
+  };
+
   const canSubmit = useMemo(() => !saving && ordId && form.category && form.code && images.length > 0, [saving, ordId, form, images]);
 
   const submit = async () => {
@@ -99,7 +104,6 @@ export const InventoryCreateScreen: React.FC = () => {
         weightNet: form.weightNet ? Number(form.weightNet) : undefined,
         stoneCount: totalCount || undefined,
         stoneWeight: totalWeight || undefined,
-        karat: totalWeight ? String(totalWeight) : undefined,
         dimensions: validStones.length ? JSON.stringify(validStones) : undefined,
         name: form.name || undefined,
         barcode: form.barcode || undefined,
@@ -157,7 +161,7 @@ export const InventoryCreateScreen: React.FC = () => {
         <Text style={s.label}>Berat Bersih (gr)</Text>
         <TextInput value={form.weightNet} onChangeText={(v)=>setForm(f=>({...f, weightNet:v}))} placeholder="mis. 3.5" placeholderTextColor={COLORS.yellow} style={s.input} keyboardType="decimal-pad" />
         <Text style={s.label}>Karat (otomatis dari total ct batu)</Text>
-        <View style={s.valueBox}><Text style={{ color: COLORS.yellow }}>{totalStoneWeightCt ? `${totalStoneWeightCt} ct` : '-'}</Text></View>
+        <View style={s.valueBox}><Text style={{ color: COLORS.yellow }}>{totalStoneWeightCt ? `${formatCt(totalStoneWeightCt)} ct` : '-'}</Text></View>
       </View>
 
       {/* BATU / STONE */}

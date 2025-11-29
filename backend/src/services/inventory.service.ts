@@ -130,7 +130,6 @@ export class InventoryService {
       code: dto.code ?? undefined,
       name: dto.name ?? undefined,
       category: dto.category ?? undefined,
-      karat: dto.karat ?? undefined,
       gold_type: dto.goldType ?? undefined,
       gold_color: dto.goldColor ?? undefined,
       ring_size: dto.size ?? undefined,
