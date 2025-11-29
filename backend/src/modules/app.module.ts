@@ -11,10 +11,11 @@ import { UsersModule } from './users.module';
 import { InventoryModule } from './inventory.module';
 import { DashboardModule } from './dashboard.module';
 import { RealtimeModule } from './realtime.module';
+import { HealthController } from '../health.controller';
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, OrdersModule, FilesModule, TasksModule, UsersModule, InventoryModule, DashboardModule, RealtimeModule],
-  controllers: [],
+  controllers: [HealthController],
   providers: [],
 })
 export class AppModule {}
