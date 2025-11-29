@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, ScrollView, Alert, Image } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@lib/api/client';
+import { api, API_URL } from '@lib/api/client';
 import { useAuth } from '@lib/context/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
@@ -344,14 +344,34 @@ export const WorkerDashboardScreen: React.FC = () => {
           const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
           const anyAssigned = g.tasks.some(t => t.status === 'ASSIGNED');
           const promised = g.tasks.find(t => t.order?.promisedReadyDate)?.order?.promisedReadyDate || null;
+          const refImgs = ((g.tasks.find(t => Array.isArray((t as any)?.order?.referensiGambarUrls)) as any)?.order?.referensiGambarUrls) as string[] | undefined;
+          const toDisplayUrl = (p?: string) => { if (!p) return undefined as any; if (/^https?:\/\//i.test(p)) return p; const base = API_URL.replace(/\/api\/?$/, '').replace(/\/$/, ''); return p.startsWith('/uploads') ? base + p : p; };
+          const thumbSrc = Array.isArray(refImgs) && refImgs.length ? toDisplayUrl(refImgs[refImgs.length - 1] || refImgs[0]) : undefined;
           // For non-inventory workers we still show order checklist & Ajukan flow
           return (
             <View style={s.orderCard}>
               {/* Order header */}
-              <View style={s.orderHeader}>
-                <Text style={s.orderCode} numberOfLines={1}>{g.orderCode}</Text>
-                <View style={s.badge}><Text style={s.badgeText}>{prettyStatus(g.orderStatus)}</Text></View>
+              <View style={[s.orderHeader, { alignItems: 'center' }]}>
+                {thumbSrc ? (
+                  <View style={{ flexDirection:'row', alignItems:'center', flexShrink:0 }}>
+                    <View style={s.thumbWrap}>
+                      <View style={s.thumbBorder} />
+                      <View style={s.thumbBg} />
+                      <View style={s.thumbImgBox}>
+                        <TouchableOpacity activeOpacity={0.85}>
+                          <Image source={{ uri: thumbSrc }} style={s.thumbImg} resizeMode="cover" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                ) : null}
+                <View style={{ flex:1, minWidth:0, marginLeft: thumbSrc ? 10 : 0 }}>
+                  <Text style={s.orderCode} numberOfLines={1}>{g.orderCode}</Text>
+                  <View style={[s.badge, { alignSelf:'flex-start', marginTop: 4 }]}><Text style={s.badgeText}>{prettyStatus(g.orderStatus)}</Text></View>
+                </View>
               </View>
+              {/* Inline thumb when available */}
+              {null}
               {/* Order meta */}
               <View style={s.orderMetaRow}>
                 <View style={s.metaBox}>
@@ -473,6 +493,11 @@ const s = StyleSheet.create({
   activityMeta: { color: '#bfae6a', fontSize: 12, marginTop: 2 },
   orderCard: { backgroundColor: COLORS.card, borderRadius: 14, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border },
   orderHeader: { flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom: 8 },
+  thumbWrap: { width: 64, height: 64, position:'relative' },
+  thumbBorder: { ...StyleSheet.absoluteFillObject as any, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border },
+  thumbBg: { ...StyleSheet.absoluteFillObject as any, borderRadius: 12, backgroundColor:'#23201c' },
+  thumbImgBox: { overflow: 'hidden', borderRadius: 12 },
+  thumbImg: { width: 64, height: 64, backgroundColor:'#23201c' },
   orderCode: { color: COLORS.gold, fontSize: 14, fontWeight:'800', flex: 1, marginRight: 8 },
   badge: { paddingVertical: 4, paddingHorizontal: 8, borderRadius: 10, borderWidth:1, borderColor: COLORS.border, backgroundColor:'#2b2522' },
   badgeText: { color: COLORS.yellow, fontWeight:'700', fontSize: 11 },
