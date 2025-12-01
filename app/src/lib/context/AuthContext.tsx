@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { api } from '@lib/api/client';
+import { api, getApiBase } from '@lib/api/client';
 import { QueryClient, useQueryClient } from '@tanstack/react-query';
 import * as RT from '@lib/realtime';
 
@@ -22,6 +22,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const lastTokenRef = useRef<string | null>(null);
 
   const login = useCallback(async (email: string, password: string) => {
+    try {
+      // Preflight connectivity against health endpoint to avoid misleading 404 on /api
+      await api.ping();
+    } catch (e: any) {
+      throw new Error(`Tidak bisa terhubung ke API (${getApiBase()}). Coba akses /api/health dari HP. Jika gagal, periksa IP server, port 3000, dan firewall.`);
+    }
     const data = await api.login(email, password);
     setToken(data.accessToken);
     // Pastikan jobRole selalu ada di user context

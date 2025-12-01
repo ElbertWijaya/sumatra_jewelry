@@ -75,6 +75,7 @@ async function request(path: string, options: RequestInit = {}) {
 }
 
 export const api = {
+  ping: () => request('/health', { method: 'GET' }),
   login: (email: string, password: string) => request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   orders: {
     list: (token: string) => request('/orders', { headers: { Authorization: `Bearer ${token}` } }),
