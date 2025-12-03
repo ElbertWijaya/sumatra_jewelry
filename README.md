@@ -39,6 +39,10 @@ docs/             -> Dokumen (requirements, ERD, arsitektur, roadmap)
 5. Seed user admin (nanti buat script seed).
 6. Run dev: `npm run start:dev`
 
+### One-Click Backend Start (Windows)
+- Gunakan `backend\run.cmd` untuk menjalankan alur otomatis: install deps → audit fix (non-blocking) → prisma generate → build → start server.
+- Cukup double-click `run.cmd`. Jendela akan tetap terbuka untuk melihat log/error.
+
 ## API High-Level
 - POST /api/auth/register (sementara untuk seed awal)
 - POST /api/auth/login -> { accessToken }
