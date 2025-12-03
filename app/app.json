@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "app",
-    "slug": "app",
+    "name": "Sumatra Jewelry Mobile",
+    "slug": "sumatra-jewelry-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "app",
+    "scheme": "sumatra-jewelry-mobile",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -25,6 +25,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
+      "versionCode": 2,
+      "package": "com.sumatrajewelrymobile.app",
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
