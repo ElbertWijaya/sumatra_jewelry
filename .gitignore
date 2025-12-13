@@ -47,3 +47,7 @@ backend/dist/
 backend/uploads/*
 !backend/uploads/.gitkeep
 
+# Local release artifacts (do not commit large binaries)
+dist-apk/
+*.apk
+
