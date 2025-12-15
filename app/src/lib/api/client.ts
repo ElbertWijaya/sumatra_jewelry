@@ -104,6 +104,7 @@ export const api = {
     acceptMine: (token: string, orderId: number) => request(`/tasks/order/${orderId}/accept-mine`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }),
   },
   users: {
+    me: (token: string) => request('/users/me', { headers: { Authorization: `Bearer ${token}` } }),
     list: (token: string, opts?: { jobRole?: string }) => {
       const params: string[] = [];
       if (opts?.jobRole) params.push(`jobRole=${encodeURIComponent(opts.jobRole)}`);

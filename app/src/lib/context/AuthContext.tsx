@@ -29,17 +29,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error(`Tidak bisa terhubung ke API (${getApiBase()}). Coba akses /api/health dari HP. Jika gagal, periksa IP server, port 3000, dan firewall.`);
     }
     const data = await api.login(email, password);
+    if (__DEV__) {
+      try {
+        console.log('[AUTH LOGIN] user', {
+          id: data?.user?.id,
+          email: data?.user?.email,
+          fullName: data?.user?.fullName || data?.user?.full_name || data?.user?.name,
+          jobRole: data?.user?.jobRole || data?.user?.job_role,
+        });
+        console.log('[AUTH LOGIN] tokenLen', (data?.accessToken || '').length);
+      } catch {}
+    }
     setToken(data.accessToken);
     // Pastikan jobRole selalu ada di user context
-    setUser({
+    const nextUser = {
       ...data.user,
-      jobRole: data.user.jobRole || data.user.job_role || null
-    });
+      jobRole: data.user.jobRole || data.user.job_role || null,
+      fullName: data.user.fullName || data.user.full_name || data.user.name || null
+    };
+    setUser(nextUser);
     if (remember) {
       await SecureStore.setItemAsync('token', data.accessToken);
+      try { await SecureStore.setItemAsync('user', JSON.stringify(nextUser)); } catch {}
     } else {
       // Ensure previous persisted token is cleared for non-remember sessions
       await SecureStore.deleteItemAsync('token');
+      await SecureStore.deleteItemAsync('user');
     }
   }, []);
 
@@ -47,6 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(null);
     setUser(null);
     await SecureStore.deleteItemAsync('token');
+    await SecureStore.deleteItemAsync('user');
     RT.disconnect();
   }, []);
 
@@ -62,17 +78,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [token, qc]);
 
-  // Rehydrate persisted token at app start
+  // Rehydrate persisted token and user at app start
   useEffect(() => {
     (async () => {
       try {
-        const persisted = await SecureStore.getItemAsync('token');
-        if (persisted) {
-          setToken(persisted);
+        const persistedToken = await SecureStore.getItemAsync('token');
+        const persistedUserStr = await SecureStore.getItemAsync('user');
+        if (__DEV__) {
+          console.log('[AUTH REHYDRATE] hasToken', !!persistedToken, 'hasUser', !!persistedUserStr);
+        }
+        if (persistedToken) setToken(persistedToken);
+        if (persistedUserStr) {
+          try {
+            const persistedUser = JSON.parse(persistedUserStr);
+            setUser(persistedUser);
+          } catch {}
         }
       } catch {}
     })();
   }, []);
+
+  // Sync user from backend when token becomes available (ensures latest role/profile)
+  useEffect(() => {
+    if (!token) return;
+    (async () => {
+      try {
+        const me = await api.users.me(token);
+        if (__DEV__) {
+          try {
+            console.log('[USERS ME]', {
+              id: me?.id,
+              email: me?.email,
+              fullName: me?.fullName || me?.full_name || me?.name,
+              jobRole: me?.jobRole || me?.job_role,
+            });
+          } catch {}
+        }
+        const normalized = {
+          ...me,
+          jobRole: me?.jobRole || me?.job_role || null,
+          fullName: me?.fullName || me?.full_name || me?.name || null
+        };
+        setUser(normalized);
+        // Persist only if token was persisted (respect Remember Me)
+        try {
+          const persistedToken = await SecureStore.getItemAsync('token');
+          if (persistedToken) {
+            await SecureStore.setItemAsync('user', JSON.stringify(normalized));
+          }
+        } catch {}
+      } catch (e) {
+        // ignore sync error to avoid blocking app start
+      }
+    })();
+  }, [token]);
 
   // Expose current realtime status (optional future UI usage)
   const value = { token, user, login, logout, setUser } as any;
