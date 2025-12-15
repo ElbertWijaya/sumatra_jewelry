@@ -7,7 +7,7 @@ import * as RT from '@lib/realtime';
 interface AuthState {
   token: string | null;
   user: any | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, remember?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: any) => void;
 }
@@ -21,7 +21,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const qc = useQueryClient();
   const lastTokenRef = useRef<string | null>(null);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string, remember: boolean = false) => {
     try {
       // Preflight connectivity against health endpoint to avoid misleading 404 on /api
       await api.ping();
@@ -35,7 +35,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...data.user,
       jobRole: data.user.jobRole || data.user.job_role || null
     });
-    await SecureStore.setItemAsync('token', data.accessToken);
+    if (remember) {
+      await SecureStore.setItemAsync('token', data.accessToken);
+    } else {
+      // Ensure previous persisted token is cleared for non-remember sessions
+      await SecureStore.deleteItemAsync('token');
+    }
   }, []);
 
   const logout = useCallback(async () => {
@@ -56,6 +61,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setRtStatus('disconnected');
     }
   }, [token, qc]);
+
+  // Rehydrate persisted token at app start
+  useEffect(() => {
+    (async () => {
+      try {
+        const persisted = await SecureStore.getItemAsync('token');
+        if (persisted) {
+          setToken(persisted);
+        }
+      } catch {}
+    })();
+  }, []);
 
   // Expose current realtime status (optional future UI usage)
   const value = { token, user, login, logout, setUser } as any;

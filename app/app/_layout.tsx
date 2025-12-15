@@ -1,3 +1,14 @@
+import React from 'react';
+import { Stack } from 'expo-router';
+import { AuthProvider } from '@lib/context/AuthContext';
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </AuthProvider>
+  );
+}
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
