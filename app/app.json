@@ -46,6 +46,16 @@
     "plugins": [
       "expo-router",
       [
+        "expo-updates",
+        {
+          "checkAutomatically": "ON_LOAD",
+          "fallbackToCacheTimeout": 0,
+          "runtimeVersion": {
+            "policy": "appVersion"
+          }
+        }
+      ],
+      [
         "expo-notifications",
         {
           "icon": "./assets/images/icon.png",

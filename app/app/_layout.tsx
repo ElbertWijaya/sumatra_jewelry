@@ -55,6 +55,7 @@ import { useEffect as ReactUseEffect } from 'react';
 import { initNotifications } from '@lib/notify';
 import { AssignmentWatcher } from '@lib/notify/AssignmentWatcher';
 import { PermissionsBootstrap } from '@lib/permissions/bootstrap';
+import { AutoUpdater } from '@lib/updates/AutoUpdater';
 
 const Gate: React.FC<{children: React.ReactNode}> = ({ children }) => {
   const { token, login } = useAuth();
@@ -110,6 +111,8 @@ function RootLayoutNav() {
             <AssignmentWatcher />
             {/* Request essential permissions at first launch */}
             <PermissionsBootstrap />
+            {/* Auto-apply OTA updates in production */}
+            <AutoUpdater />
           </Gate>
         </ThemeProvider>
       </AuthProvider>

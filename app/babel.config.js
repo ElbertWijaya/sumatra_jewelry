@@ -5,6 +5,8 @@ module.exports = function (api) {
     plugins: [
       // Expo Router via preset; use worklets plugin (replaces reanimated plugin)
       'react-native-worklets/plugin',
+      // Reanimated plugin must be listed last
+      'react-native-reanimated/plugin',
     ],
   };
 };
