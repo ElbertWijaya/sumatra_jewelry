@@ -6,6 +6,7 @@ export declare class AuthService {
     constructor(prisma: PrismaService, jwt: JwtService);
     validateUser(email: string, password: string): Promise<{
         id: string;
+        created_at: Date;
         email: string;
         fullName: string;
         job_role: string;
@@ -13,7 +14,6 @@ export declare class AuthService {
         branch_id: number;
         phone: string | null;
         address: string | null;
-        created_at: Date;
     }>;
     login(email: string, password: string): Promise<{
         accessToken: string;

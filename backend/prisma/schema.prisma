@@ -26,6 +26,7 @@ model account {
   ordertask_ordertask_assigned_to_idToaccount        ordertask[]     @relation("ordertask_assigned_to_idToaccount")
   ordertask_ordertask_checked_by_idToaccount         ordertask[]     @relation("ordertask_checked_by_idToaccount")
   ordertask_ordertask_validated_by_idToaccount       ordertask[]     @relation("ordertask_validated_by_idToaccount")
+  pushtokens                                         pushtoken[]
 
   @@index([branch_id], map: "account_branch_id_fkey")
 }

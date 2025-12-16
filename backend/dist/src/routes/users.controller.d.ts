@@ -29,18 +29,18 @@ export declare class UsersController {
         branchName: string;
         branchAddress: string;
         joinedAt: string;
-        branch: {
-            address: string | null;
-            name: string;
-        };
         id: string;
+        created_at: Date;
+        branch: {
+            name: string;
+            address: string | null;
+        };
         email: string;
         fullName: string;
         job_role: string;
         branch_id: number;
         phone: string | null;
         address: string | null;
-        created_at: Date;
     }>;
     changePassword(req: any, body: {
         oldPassword: string;
