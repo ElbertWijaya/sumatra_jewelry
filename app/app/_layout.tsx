@@ -54,6 +54,7 @@ import { useRouter } from 'expo-router';
 import { useEffect as ReactUseEffect } from 'react';
 import { initNotifications } from '@lib/notify';
 import { AssignmentWatcher } from '@lib/notify/AssignmentWatcher';
+import { PermissionsBootstrap } from '@lib/permissions/bootstrap';
 
 const Gate: React.FC<{children: React.ReactNode}> = ({ children }) => {
   const { token, login } = useAuth();
@@ -107,6 +108,8 @@ function RootLayoutNav() {
             </Stack>
             {/* Global assignment watcher to trigger notifications regardless of screen */}
             <AssignmentWatcher />
+            {/* Request essential permissions at first launch */}
+            <PermissionsBootstrap />
           </Gate>
         </ThemeProvider>
       </AuthProvider>
