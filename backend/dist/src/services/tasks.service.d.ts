@@ -1,9 +1,11 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { TaskStatus } from '../types/task.dtos';
+import { PushService } from './push.service';
 export declare class TasksService {
     private prisma;
+    private push;
     private readonly logger;
-    constructor(prisma: PrismaService);
+    constructor(prisma: PrismaService, push: PushService);
     private isOrderActive;
     private mapTask;
     backfillActive(): Promise<{

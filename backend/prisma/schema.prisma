@@ -297,6 +297,19 @@ model inventoryitemhistory {
   @@index([changed_at], map: "InventoryItemHistory_changed_at_idx")
 }
 
+model pushtoken {
+  id         Int      @id @default(autoincrement())
+  userId     String
+  token      String   @unique
+  provider   String   // 'expo' | 'fcm'
+  platform   String?  // 'android' | 'ios' | 'web'
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  account    account? @relation(fields: [userId], references: [id])
+
+  @@index([userId], map: "PushToken_userId_idx")
+}
+
 enum inventoryitemhistory_action {
   CREATED
   UPDATED

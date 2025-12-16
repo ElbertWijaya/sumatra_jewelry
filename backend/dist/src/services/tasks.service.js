@@ -14,9 +14,11 @@ exports.TasksService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const task_dtos_1 = require("../types/task.dtos");
+const push_service_1 = require("./push.service");
 let TasksService = TasksService_1 = class TasksService {
-    constructor(prisma) {
+    constructor(prisma, push) {
         this.prisma = prisma;
+        this.push = push;
         this.logger = new common_1.Logger(TasksService_1.name);
     }
     isOrderActive(status) {
@@ -245,7 +247,18 @@ let TasksService = TasksService_1 = class TasksService {
         }
         ops.push(this.prisma.ordertask.update({ where: { id }, data: { assigned_to_id: assignedToId, status: task_dtos_1.TaskStatus.ASSIGNED, updated_at: new Date() } }));
         const txResult = await this.prisma.$transaction(ops);
-        return this.mapTask(txResult[txResult.length - 1]);
+        const updated = this.mapTask(txResult[txResult.length - 1]);
+        try {
+            await this.push.notifyUser(assignedToId, {
+                title: 'Tugas baru ditugaskan',
+                body: `Order #${updated?.order?.id ?? updated?.orderId ?? id} telah ditugaskan kepada Anda`,
+                data: { type: 'task.assigned', taskId: updated?.id ?? id, orderId: updated?.order?.id ?? updated?.orderId ?? null },
+            });
+        }
+        catch (e) {
+            this.logger.warn('Push notify assign failed: ' + e?.message);
+        }
+        return updated;
     }
     async assignBulk(params) {
         const order = await this.prisma.order.findUnique({ where: { id: params.orderId } });
@@ -300,6 +313,16 @@ let TasksService = TasksService_1 = class TasksService {
             catch { }
         }
         await this.prisma.$transaction(updates);
+        try {
+            await this.push.notifyUser(params.userId, {
+                title: 'Tugas baru ditugaskan',
+                body: `Order #${params.orderId} ditugaskan (${params.subtasks.length} sub-tugas)`,
+                data: { type: 'task.assigned.bulk', orderId: params.orderId, count: params.subtasks.length },
+            });
+        }
+        catch (e) {
+            this.logger.warn('Push notify assign-bulk failed: ' + e?.message);
+        }
         return { created: creates.length };
     }
     async requestDone(id, requesterUserId, notes) {
@@ -551,6 +574,6 @@ let TasksService = TasksService_1 = class TasksService {
 exports.TasksService = TasksService;
 exports.TasksService = TasksService = TasksService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService, push_service_1.PushService])
 ], TasksService);
 //# sourceMappingURL=tasks.service.js.map

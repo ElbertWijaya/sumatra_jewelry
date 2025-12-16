@@ -10,6 +10,7 @@ import { api } from '@lib/api/client';
 import { countDashboardMetrics, setAssignedOrderIds, setAwaitingValidationOrderIds, isOrderActiveStatus } from '@lib/metrics/orders';
 import { WorkerDashboardScreen } from '@features/tasks/screens/WorkerDashboardScreen';
 import { useQuery } from '@tanstack/react-query';
+import { notifyAssignment } from '@lib/notify';
 import { useFocusEffect } from '@react-navigation/native';
 
 const MOCK_NOTIF = [
@@ -52,6 +53,33 @@ export default function HomeScreen() {
     refetchInterval: 6000,
     staleTime: 0,
   });
+
+  // Detect new assignments to current user and notify with system popup
+  const seenAssignedRef = React.useRef<Map<number, string | null>>(new Map());
+  const notifierReadyRef = React.useRef(false);
+  useEffect(() => {
+    if (!user?.id) return;
+    const tasks = Array.isArray(tasksQuery.data) ? tasksQuery.data : [];
+    const map = seenAssignedRef.current;
+    // Skip notifications on very first population to avoid noise on app launch
+    const isFirst = !notifierReadyRef.current;
+    for (const t of tasks) {
+      const id = Number(t.id);
+      const currentAssignee: string | null = (t.assignedTo?.id as string) || null;
+      const prevAssignee = map.get(id) ?? null;
+      const isNowMine = currentAssignee === user.id;
+      const wasMine = prevAssignee === user.id;
+      // Notify when it becomes mine (newly assigned to me)
+      if (!isFirst && isNowMine && !wasMine) {
+        const orderId = t.order?.id || t.orderId;
+        const title = 'Tugas baru untuk Anda';
+        const body = `Anda ditugaskan pada Order #${orderId ?? t.id}`;
+        notifyAssignment({ taskId: id, orderId, title, body });
+      }
+      map.set(id, currentAssignee);
+    }
+    notifierReadyRef.current = true;
+  }, [tasksQuery.data, user?.id]);
   useFocusEffect(React.useCallback(() => {
     if (token) { ordersQuery.refetch(); tasksQuery.refetch(); }
   }, [token]));

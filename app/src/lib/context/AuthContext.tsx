@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { api, getApiBase } from '@lib/api/client';
 import { QueryClient, useQueryClient } from '@tanstack/react-query';
 import * as RT from '@lib/realtime';
+import { registerPushTokenWithBackend } from '@lib/notify';
 
 interface AuthState {
   token: string | null;
@@ -71,6 +72,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (token && token !== lastTokenRef.current) {
       lastTokenRef.current = token;
       RT.connect(token, qc as QueryClient, { onStatusChange: setRtStatus, reconnect: true });
+      // Register push token in background; ignore errors
+      (async () => { try { await registerPushTokenWithBackend(token); } catch {} })();
     } else if (!token) {
       lastTokenRef.current = null;
       RT.disconnect();
@@ -103,30 +106,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!token) return;
     (async () => {
       try {
-        const me = await api.users.me(token);
-        if (__DEV__) {
-          try {
-            console.log('[USERS ME]', {
-              id: me?.id,
-              email: me?.email,
-              fullName: me?.fullName || me?.full_name || me?.name,
-              jobRole: me?.jobRole || me?.job_role,
-            });
-          } catch {}
-        }
-        const normalized = {
-          ...me,
-          jobRole: me?.jobRole || me?.job_role || null,
-          fullName: me?.fullName || me?.full_name || me?.name || null
+        const extractUser = (raw: any) => {
+          if (!raw || typeof raw !== 'object') return null;
+          const candidate = raw.user && typeof raw.user === 'object' ? raw.user
+            : raw.data && typeof raw.data === 'object' ? raw.data
+            : raw.result && typeof raw.result === 'object' ? raw.result
+            : raw.profile && typeof raw.profile === 'object' ? raw.profile
+            : raw;
+          if (!candidate || typeof candidate !== 'object') return null;
+          const normalized = {
+            id: candidate.id || candidate._id || candidate.uuid || candidate.userId || null,
+            email: candidate.email || candidate.username || candidate.user_name || null,
+            jobRole: candidate.jobRole || candidate.job_role || candidate.role || candidate.userRole || null,
+            fullName: candidate.fullName || candidate.full_name || candidate.name || candidate.displayName || candidate.display_name || null,
+            ...candidate,
+          };
+          const valid = !!(normalized.id || normalized.email || normalized.fullName);
+          return valid ? normalized : null;
         };
-        setUser(normalized);
-        // Persist only if token was persisted (respect Remember Me)
-        try {
-          const persistedToken = await SecureStore.getItemAsync('token');
-          if (persistedToken) {
-            await SecureStore.setItemAsync('user', JSON.stringify(normalized));
-          }
-        } catch {}
+
+        let rawMe: any = null;
+        try { rawMe = await api.users.me(token); } catch (e) { rawMe = null; }
+        let normalized = extractUser(rawMe);
+
+        // Fallback ke /auth/me jika /users/me tidak memberikan struktur yang diharapkan
+        if (!normalized) {
+          try { rawMe = await api.auth.me(token); } catch (e) { rawMe = null; }
+          normalized = extractUser(rawMe);
+        }
+
+        if (__DEV__) {
+          console.log('[USERS ME][raw]', rawMe);
+          console.log('[USERS ME][normalized]', normalized);
+        }
+
+        if (normalized) {
+          setUser(normalized);
+          try {
+            const persistedToken = await SecureStore.getItemAsync('token');
+            if (persistedToken) {
+              await SecureStore.setItemAsync('user', JSON.stringify(normalized));
+            }
+          } catch {}
+        } else {
+          // Jika data tidak valid, jangan timpa user yang sudah ada dari login/rehydrate
+          if (__DEV__) console.warn('[USERS ME] Data tidak valid, skip overwrite user');
+        }
       } catch (e) {
         // ignore sync error to avoid blocking app start
       }

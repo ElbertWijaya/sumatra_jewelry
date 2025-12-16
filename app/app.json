@@ -45,6 +45,14 @@
     "plugins": [
       "expo-router",
       [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#FFD700",
+          "sounds": []
+        }
+      ],
+      [
         "react-native-vision-camera",
         {
           "cameraPermissionText": "Kami memerlukan akses kamera untuk mengambil foto desain pesanan.",

@@ -1,11 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TaskStatus } from '../types/task.dtos';
+import { PushService } from './push.service';
 
 @Injectable()
 export class TasksService {
   private readonly logger = new Logger(TasksService.name);
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private push: PushService) {}
 
   private isOrderActive(status: string | null | undefined) {
     return status === 'MENUNGGU' || status === 'DALAM_PROSES';
@@ -224,7 +225,18 @@ export class TasksService {
   const txResult = await this.prisma.$transaction(ops);
   // realtime disabled
   // Return the task update result (last op)
-    return this.mapTask(txResult[txResult.length - 1]);
+    const updated = this.mapTask(txResult[txResult.length - 1]);
+    // Fire-and-forget push to assignee
+    try {
+      await this.push.notifyUser(assignedToId, {
+        title: 'Tugas baru ditugaskan',
+        body: `Order #${updated?.order?.id ?? updated?.orderId ?? id} telah ditugaskan kepada Anda`,
+        data: { type: 'task.assigned', taskId: updated?.id ?? id, orderId: updated?.order?.id ?? updated?.orderId ?? null },
+      });
+    } catch (e) {
+      this.logger.warn('Push notify assign failed: ' + (e as any)?.message);
+    }
+    return updated;
   }
 
   async assignBulk(params: { orderId: number; role: 'DESIGNER'|'CASTER'|'CARVER'|'DIAMOND_SETTER'|'FINISHER'|'INVENTORY'; userId: string; subtasks: { stage?: string; notes?: string }[]; actorUserId?: string }) {
@@ -282,6 +294,16 @@ export class TasksService {
       } catch {}
     }
     await this.prisma.$transaction(updates);
+    // push notify target user once
+    try {
+      await this.push.notifyUser(params.userId, {
+        title: 'Tugas baru ditugaskan',
+        body: `Order #${params.orderId} ditugaskan (${params.subtasks.length} sub-tugas)`,
+        data: { type: 'task.assigned.bulk', orderId: params.orderId, count: params.subtasks.length },
+      });
+    } catch (e) {
+      this.logger.warn('Push notify assign-bulk failed: ' + (e as any)?.message);
+    }
   // realtime disabled
     return { created: creates.length };
   }

@@ -51,6 +51,9 @@ export default function RootLayout() {
 
 const qc = new QueryClient();
 import { useRouter } from 'expo-router';
+import { useEffect as ReactUseEffect } from 'react';
+import { initNotifications } from '@lib/notify';
+import { AssignmentWatcher } from '@lib/notify/AssignmentWatcher';
 
 const Gate: React.FC<{children: React.ReactNode}> = ({ children }) => {
   const { token, login } = useAuth();
@@ -91,6 +94,8 @@ const Gate: React.FC<{children: React.ReactNode}> = ({ children }) => {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  // Init notifications once at root
+  ReactUseEffect(() => { initNotifications(); }, []);
   return (
     <QueryClientProvider client={qc}>
       <AuthProvider>
@@ -100,6 +105,8 @@ function RootLayoutNav() {
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
             </Stack>
+            {/* Global assignment watcher to trigger notifications regardless of screen */}
+            <AssignmentWatcher />
           </Gate>
         </ThemeProvider>
       </AuthProvider>

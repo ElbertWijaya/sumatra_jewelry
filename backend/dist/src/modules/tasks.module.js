@@ -11,12 +11,13 @@ const common_1 = require("@nestjs/common");
 const prisma_module_1 = require("../prisma/prisma.module");
 const tasks_service_1 = require("../services/tasks.service");
 const tasks_controller_1 = require("../routes/tasks.controller");
+const push_module_1 = require("./push.module");
 let TasksModule = class TasksModule {
 };
 exports.TasksModule = TasksModule;
 exports.TasksModule = TasksModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule],
+        imports: [prisma_module_1.PrismaModule, push_module_1.PushModule],
         providers: [tasks_service_1.TasksService],
         controllers: [tasks_controller_1.TasksController],
     })

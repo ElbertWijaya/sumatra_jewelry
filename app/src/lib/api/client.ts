@@ -114,8 +114,15 @@ export const api = {
     updateMe: (token: string, data: { avatar?: string; phone?: string; address?: string; branchName?: string; branchAddress?: string }) => request('/users/me', { method: 'PUT', body: JSON.stringify(data), headers: { Authorization: `Bearer ${token}` } }),
     changePassword: (token: string, data: { oldPassword: string; newPassword: string }) => request('/users/me/password', { method: 'PUT', body: JSON.stringify(data), headers: { Authorization: `Bearer ${token}` } }),
   },
+  auth: {
+    me: (token: string) => request('/auth/me', { headers: { Authorization: `Bearer ${token}` } }),
+  },
   files: {
     upload: (token: string, form: FormData) => fetch(`${getApiBase()}/files/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form }).then(r=> r.ok ? r.json() : r.text().then(t=>{ throw new Error(t); }))
+  },
+  push: {
+    register: (token: string, payload: { token: string; provider?: 'expo'|'fcm'; platform?: string }) => request('/push/register', { method: 'POST', body: JSON.stringify(payload), headers: { Authorization: `Bearer ${token}` } }),
+    unregister: (payload: { token: string }) => request('/push/unregister', { method: 'DELETE', body: JSON.stringify(payload) }),
   },
   dashboard: {
     stats: (token: string) => request('/dashboard/stats', { headers: { Authorization: `Bearer ${token}` } }),
