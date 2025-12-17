@@ -1,6 +1,13 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
+// Apply Google Services only if google-services.json exists to avoid
+// failing dev builds when Firebase config is not yet provided.
+if (file('google-services.json').exists()) {
+    apply plugin: "com.google.gms.google-services"
+} else {
+    println "[Gradle] google-services.json not found, skipping Google Services plugin"
+}
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
