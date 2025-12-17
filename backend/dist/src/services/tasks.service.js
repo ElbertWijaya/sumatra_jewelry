@@ -249,10 +249,13 @@ let TasksService = TasksService_1 = class TasksService {
         const txResult = await this.prisma.$transaction(ops);
         const updated = this.mapTask(txResult[txResult.length - 1]);
         try {
+            const orderId = updated?.order?.id ?? updated?.orderId ?? id;
+            const orderCode = updated?.order?.code ?? null;
+            const label = orderCode ? `Order ${orderCode}` : `Order #${orderId}`;
             await this.push.notifyUser(assignedToId, {
                 title: 'Tugas baru ditugaskan',
-                body: `Order #${updated?.order?.id ?? updated?.orderId ?? id} telah ditugaskan kepada Anda`,
-                data: { type: 'task.assigned', taskId: updated?.id ?? id, orderId: updated?.order?.id ?? updated?.orderId ?? null },
+                body: `${label} telah ditugaskan kepada Anda`,
+                data: { type: 'task.assigned', taskId: updated?.id ?? id, orderId, orderCode },
             });
         }
         catch (e) {
@@ -314,10 +317,11 @@ let TasksService = TasksService_1 = class TasksService {
         }
         await this.prisma.$transaction(updates);
         try {
+            const label = order.code ? `Order ${order.code}` : `Order #${params.orderId}`;
             await this.push.notifyUser(params.userId, {
                 title: 'Tugas baru ditugaskan',
-                body: `Order #${params.orderId} ditugaskan (${params.subtasks.length} sub-tugas)`,
-                data: { type: 'task.assigned.bulk', orderId: params.orderId, count: params.subtasks.length },
+                body: `${label} ditugaskan (${params.subtasks.length} sub-tugas)`,
+                data: { type: 'task.assigned.bulk', orderId: params.orderId, orderCode: order.code ?? null, count: params.subtasks.length },
             });
         }
         catch (e) {

@@ -4,6 +4,8 @@ import { useAuth } from '@lib/context/AuthContext';
 import { api } from '@lib/api/client';
 import { notifyAssignment } from './index';
 
+const ENABLE_LOCAL_NOTIFS = String(process.env.EXPO_PUBLIC_ENABLE_LOCAL_ASSIGNMENT_NOTIFS || '').toLowerCase() === 'true';
+
 export const AssignmentWatcher: React.FC = () => {
   const { token, user } = useAuth();
   const tasksQuery = useQuery<any[]>({
@@ -28,9 +30,11 @@ export const AssignmentWatcher: React.FC = () => {
       const prevAssignee = map.get(id) ?? null;
       const isNowMine = currentAssignee === user.id;
       const wasMine = prevAssignee === user.id;
-      if (!isFirst && isNowMine && !wasMine) {
+      if (!isFirst && isNowMine && !wasMine && ENABLE_LOCAL_NOTIFS) {
         const orderId = t.order?.id || t.orderId;
-        notifyAssignment({ taskId: id, orderId, title: 'Tugas baru untuk Anda', body: `Anda ditugaskan pada Order #${orderId ?? id}` });
+        const code = t.order?.code as string | undefined;
+        const label = code ? `Order ${code}` : `Order #${orderId ?? id}`;
+        notifyAssignment({ taskId: id, orderId, title: 'Tugas baru untuk Anda', body: `Anda ditugaskan pada ${label}` });
       }
       map.set(id, currentAssignee);
     }

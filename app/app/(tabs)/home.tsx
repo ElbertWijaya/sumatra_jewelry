@@ -11,6 +11,7 @@ import { countDashboardMetrics, setAssignedOrderIds, setAwaitingValidationOrderI
 import { WorkerDashboardScreen } from '@features/tasks/screens/WorkerDashboardScreen';
 import { useQuery } from '@tanstack/react-query';
 import { notifyAssignment } from '@lib/notify';
+const ENABLE_LOCAL_NOTIFS = String(process.env.EXPO_PUBLIC_ENABLE_LOCAL_ASSIGNMENT_NOTIFS || '').toLowerCase() === 'true';
 import { useFocusEffect } from '@react-navigation/native';
 
 const MOCK_NOTIF = [
@@ -70,10 +71,12 @@ export default function HomeScreen() {
       const isNowMine = currentAssignee === user.id;
       const wasMine = prevAssignee === user.id;
       // Notify when it becomes mine (newly assigned to me)
-      if (!isFirst && isNowMine && !wasMine) {
+      if (!isFirst && isNowMine && !wasMine && ENABLE_LOCAL_NOTIFS) {
         const orderId = t.order?.id || t.orderId;
+        const code = t.order?.code as string | undefined;
         const title = 'Tugas baru untuk Anda';
-        const body = `Anda ditugaskan pada Order #${orderId ?? t.id}`;
+        const label = code ? `Order ${code}` : `Order #${orderId ?? t.id}`;
+        const body = `Anda ditugaskan pada ${label}`;
         notifyAssignment({ taskId: id, orderId, title, body });
       }
       map.set(id, currentAssignee);
