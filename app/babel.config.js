@@ -3,10 +3,8 @@ module.exports = function (api) {
   return {
     presets: ['babel-preset-expo'],
     plugins: [
-      // Expo Router via preset; use worklets plugin (replaces reanimated plugin)
+      // Use Worklets plugin (replaces Reanimated plugin on RN 0.81)
       'react-native-worklets/plugin',
-      // Reanimated plugin must be listed last
-      'react-native-reanimated/plugin',
     ],
   };
 };
