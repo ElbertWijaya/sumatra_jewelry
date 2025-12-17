@@ -2,7 +2,7 @@
   "expo": {
     "name": "Sumatra Jewelry Mobile",
     "slug": "sumatra-jewelry-mobile",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "sumatra-jewelry-mobile",
@@ -27,7 +27,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "versionCode": 3,
+      "versionCode": 4,
       "package": "com.sumatrajewelrymobile.app",
       "permissions": [
         "android.permission.CAMERA",
