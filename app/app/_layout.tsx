@@ -53,6 +53,7 @@ const qc = new QueryClient();
 import { useRouter } from 'expo-router';
 import { useEffect as ReactUseEffect } from 'react';
 import { initNotifications } from '@lib/notify';
+import { initAutoApiBase } from '@lib/api/client';
 import { AssignmentWatcher } from '@lib/notify/AssignmentWatcher';
 import { PermissionsBootstrap } from '@lib/permissions/bootstrap';
 import { AutoUpdater } from '@lib/updates/AutoUpdater';
@@ -96,8 +97,8 @@ const Gate: React.FC<{children: React.ReactNode}> = ({ children }) => {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
-  // Init notifications once at root
-  ReactUseEffect(() => { initNotifications(); }, []);
+  // Init notifications and auto-detect API base once at root
+  ReactUseEffect(() => { initNotifications(); initAutoApiBase(); }, []);
   return (
     <QueryClientProvider client={qc}>
       <AuthProvider>

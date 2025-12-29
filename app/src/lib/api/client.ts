@@ -1,8 +1,10 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
+import * as SecureStore from 'expo-secure-store';
 
-const LAN_BASE = 'http://192.168.110.63:3000/api';
+// Default LAN base is intentionally not fixed; we will auto-detect.
+const LAN_BASE_FALLBACK = 'http://192.168.0.100:3000/api'; // only used as last resort
 const ANDROID_EMULATOR_BASE = 'http://10.0.2.2:3000/api';
 
 function getDevHostIp(): string | null {
@@ -31,12 +33,12 @@ function computeAutoBase() {
   const devIp = getDevHostIp();
   if (__DEV__ && devIp) return normalizeBase(`http://${devIp}:3000/api`);
   if (Platform.OS === 'android') {
-    return Device.isDevice ? LAN_BASE : ANDROID_EMULATOR_BASE;
+    return Device.isDevice ? LAN_BASE_FALLBACK : ANDROID_EMULATOR_BASE;
   }
   if (Platform.OS === 'ios') {
-    return Device.isDevice ? LAN_BASE : 'http://localhost:3000/api';
+    return Device.isDevice ? LAN_BASE_FALLBACK : 'http://localhost:3000/api';
   }
-  return LAN_BASE;
+  return LAN_BASE_FALLBACK;
 }
 
 export const API_URL = computeAutoBase();
@@ -62,11 +64,27 @@ async function request(path: string, options: RequestInit = {}) {
     }
     return res.json();
   } catch (e: any) {
-    if (e.name === 'AbortError') {
-      throw new Error(`Tidak bisa terhubung ke server (${base}). Pastikan device & server 1 jaringan, server listen 0.0.0.0, firewall open.`);
-    }
-    if (e.message && (e.message.includes('Network request failed') || e.message.includes('Failed to fetch'))) {
-      throw new Error(`Gagal konek ke API (${base}). Periksa koneksi LAN & IP server.`);
+    // If network error, try auto-detect a new base and retry once.
+    const isNetErr = e?.name === 'AbortError' || (e?.message && (e.message.includes('Network request failed') || e.message.includes('Failed to fetch')));
+    if (isNetErr) {
+      const newBase = await discoverReachableBase();
+      if (newBase && newBase !== base) {
+        setApiBase(newBase);
+        try {
+          await SecureStore.setItemAsync('api_base', newBase);
+        } catch {}
+        // Retry once with new base
+        const retryUrl = `${newBase}${path}`;
+        const mergedHeaders: any = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+        const res2 = await fetch(retryUrl, { ...options, headers: mergedHeaders });
+        if (!res2.ok) {
+          const text2 = await res2.text();
+          throw new Error(text2 || res2.statusText);
+        }
+        return res2.json();
+      }
+      // If auto-detect failed, surface a clearer message
+      throw new Error(`Tidak bisa terhubung ke API (${base}). Pastikan HP & server berada di jaringan yang sama. Coba buka pengaturan dan ubah IP server.`);
     }
     throw e;
   } finally {
@@ -154,3 +172,46 @@ export const api = {
     history: (token: string, id: number) => request(`/inventory/${id}/history`, { headers: { Authorization: `Bearer ${token}` } }),
   }
 };
+
+// --- Auto-detect and persist API base across Wi-Fi changes ---
+async function readPersistedBase(): Promise<string | null> {
+  try { return await SecureStore.getItemAsync('api_base'); } catch { return null; }
+}
+
+async function pingBase(base: string): Promise<boolean> {
+  const url = normalizeBase(base) + '/health';
+  try {
+    const res = await fetch(url, { method: 'GET' });
+    return res.ok;
+  } catch { return false; }
+}
+
+export async function discoverReachableBase(): Promise<string | null> {
+  const candidates: string[] = [];
+  const envOverride = process.env.EXPO_PUBLIC_API_URL;
+  if (envOverride) candidates.push(envOverride);
+  const devIp = getDevHostIp();
+  if (devIp) candidates.push(`http://${devIp}:3000/api`);
+  const persisted = await readPersistedBase();
+  if (persisted) candidates.push(persisted);
+  if (Platform.OS === 'android' && !Device.isDevice) candidates.push(ANDROID_EMULATOR_BASE);
+  // Last resort: previous fallback
+  candidates.push(LAN_BASE_FALLBACK);
+
+  const seen = new Set<string>();
+  for (const c of candidates) {
+    const base = normalizeBase(c);
+    if (seen.has(base)) continue; seen.add(base);
+    const ok = await pingBase(base);
+    if (ok) return base;
+  }
+  return null;
+}
+
+export async function initAutoApiBase() {
+  const base = await discoverReachableBase();
+  if (base) {
+    setApiBase(base);
+    try { await SecureStore.setItemAsync('api_base', base); } catch {}
+  }
+}

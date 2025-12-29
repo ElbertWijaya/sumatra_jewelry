@@ -11,31 +11,36 @@ import { JENIS_BARANG_OPTIONS, JENIS_EMAS_OPTIONS, WARNA_EMAS_OPTIONS, BENTUK_BA
 
 const COLORS = { gold:'#FFD700', yellow:'#ffe082', dark:'#181512', card:'#23201c', border:'#4e3f2c' };
 
+type ItemForm = {
+  code: string;
+  category: string;
+  weightNet: string;
+  name: string;
+  goldType: string;
+  goldColor: string;
+  barcode: string;
+  branchLocation: ''|'ASIA'|'SUN_PLAZA';
+  placement: ''|'ETALASE'|'PENYIMPANAN';
+  images: string[];
+  stones: StoneFormItem[];
+  expandedStoneIndex: number | null;
+};
+
+const newItem = (): ItemForm => ({
+  code:'', category:'', weightNet:'', name:'', goldType:'', goldColor:'', barcode:'',
+  branchLocation:'', placement:'', images:[], stones:[], expandedStoneIndex:null
+});
+
 export const InventoryCreateScreen: React.FC = () => {
   const { token } = useAuth();
   const router = useRouter();
   const { orderId } = useLocalSearchParams();
   const ordId = Number(orderId);
-  const [form, setForm] = useState({
-    code:'',
-    category:'', // will store Jenis Barang
-    weightNet:'',
-    name:'',
-    goldType:'',
-    goldColor:'',
-    barcode:'',
-  });
-  const [branchLocation, setBranchLocation] = useState<'ASIA'|'SUN_PLAZA'|''>('');
-  const [placement, setPlacement] = useState<'ETALASE'|'PENYIMPANAN'|''>('');
-  const [images, setImages] = useState<string[]>([]);
+  const [items, setItems] = useState<ItemForm[]>([newItem()]);
   const [saving, setSaving] = useState(false);
-  const [stones, setStones] = useState<StoneFormItem[]>([]);
-  const [expandedStoneIndex, setExpandedStoneIndex] = useState<number | null>(null);
-  // Status awal tidak diperlukan di form input inventory; gunakan default backend.
-
   const [uploading, setUploading] = useState(false);
 
-  const pickFromGallery = async () => {
+  const pickFromGallery = async (itemIdx: number) => {
     if (uploading) return;
     if (!token) { Alert.alert('Tidak ada token','Silakan login ulang.'); return; }
     try {
@@ -49,12 +54,12 @@ export const InventoryCreateScreen: React.FC = () => {
       const f = new FormData();
       f.append('file', { uri: asset.uri, name: asset.fileName || 'photo.jpg', type: asset.mimeType || 'image/jpeg' } as any);
       const res: any = await api.files.upload(token || '', f);
-      if (res?.url) setImages(prev => [...prev, res.url]);
+      if (res?.url) setItems(prev => prev.map((it, i) => i === itemIdx ? { ...it, images: [...it.images, res.url] } : it));
     } catch(e:any) { Alert.alert('Upload gagal', e.message || String(e)); }
     finally { setUploading(false); }
   };
 
-  const takePhoto = async () => {
+  const takePhoto = async (itemIdx: number) => {
     if (uploading) return;
     if (!token) { Alert.alert('Tidak ada token','Silakan login ulang.'); return; }
     try {
@@ -68,49 +73,61 @@ export const InventoryCreateScreen: React.FC = () => {
       const f = new FormData();
       f.append('file', { uri: asset.uri, name: asset.fileName || 'camera.jpg', type: asset.mimeType || 'image/jpeg' } as any);
       const res: any = await api.files.upload(token || '', f);
-      if (res?.url) setImages(prev => [...prev, res.url]);
+      if (res?.url) setItems(prev => prev.map((it, i) => i === itemIdx ? { ...it, images: [...it.images, res.url] } : it));
     } catch(e:any) { Alert.alert('Gagal ambil foto', e.message || String(e)); }
     finally { setUploading(false); }
   };
 
   // Total batu (ct) untuk karat; digunakan sebagai nilai otomatis
   const totalStoneWeightCt = useMemo(() => {
+    // total untuk item aktif pertama sebagai referensi; ditampilkan per item juga.
+    const stones = items[0]?.stones || [];
     const validStones = stones.filter(s => s.bentuk && (s.jumlah || s.berat));
     return validStones.reduce((acc, s) => acc + (Number(s.berat || 0) || 0), 0);
-  }, [stones]);
+  }, [items]);
 
   const formatCt = (n?: number) => {
     if (n == null || Number.isNaN(n)) return '';
     return String(parseFloat(Number(n).toFixed(4)));
   };
 
-  const canSubmit = useMemo(() => !saving && ordId && form.category && form.code && images.length > 0, [saving, ordId, form, images]);
+  const canSubmit = useMemo(() => {
+    if (saving || !ordId) return false;
+    const validItems = items.filter(it => it.category && it.code && it.images.length > 0);
+    return validItems.length > 0;
+  }, [saving, ordId, items]);
 
   const submit = async () => {
     if (!canSubmit) return;
     setSaving(true);
     try {
-      const validStones = stones.filter(s => s.bentuk && (s.jumlah || s.berat));
-      const totalCount = validStones.reduce((acc, s) => acc + (Number(s.jumlah || 0) || 0), 0);
-      const totalWeight = validStones.reduce((acc, s) => acc + (Number(s.berat || 0) || 0), 0);
-      await api.inventory.create(token || '', {
-        orderId: ordId,
-        code: form.code,
-        category: form.category,
-        goldType: form.goldType || undefined,
-        goldColor: form.goldColor || undefined,
-        branchLocation: branchLocation || undefined,
-        placement: placement || undefined,
-        weightNet: form.weightNet ? Number(form.weightNet) : undefined,
-        stoneCount: totalCount || undefined,
-        stoneWeight: totalWeight || undefined,
-        dimensions: validStones.length ? JSON.stringify(validStones) : undefined,
-        name: form.name || undefined,
-        barcode: form.barcode || undefined,
-        stones: validStones.map(s => ({ bentuk: s.bentuk, jumlah: Number(s.jumlah || 0), berat: s.berat ? Number(s.berat) : undefined })),
-        images,
-      });
-      Alert.alert('Sukses', 'Item inventory dibuat. Menunggu verifikasi Sales.');
+      let createdCount = 0;
+      for (let i = 0; i < items.length; i++) {
+        const it = items[i];
+        if (!(it.category && it.code && it.images.length > 0)) continue; // skip incomplete
+        const validStones = (it.stones || []).filter(s => s.bentuk && (s.jumlah || s.berat));
+        const totalCount = validStones.reduce((acc, s) => acc + (Number(s.jumlah || 0) || 0), 0);
+        const totalWeight = validStones.reduce((acc, s) => acc + (Number(s.berat || 0) || 0), 0);
+        await api.inventory.create(token || '', {
+          orderId: ordId,
+          code: it.code,
+          category: it.category,
+          goldType: it.goldType || undefined,
+          goldColor: it.goldColor || undefined,
+          branchLocation: it.branchLocation || undefined,
+          placement: it.placement || undefined,
+          weightNet: it.weightNet ? Number(it.weightNet) : undefined,
+          stoneCount: totalCount || undefined,
+          stoneWeight: totalWeight || undefined,
+          dimensions: validStones.length ? JSON.stringify(validStones) : undefined,
+          name: it.name || undefined,
+          barcode: it.barcode || undefined,
+          stones: validStones.map(s => ({ bentuk: s.bentuk, jumlah: Number(s.jumlah || 0), berat: s.berat ? Number(s.berat) : undefined })),
+          images: it.images,
+        });
+        createdCount++;
+      }
+      Alert.alert('Sukses', `Item inventory dibuat: ${createdCount}. Menunggu verifikasi Sales.`);
       router.replace({ pathname: '/inventory' } as any);
     } catch(e:any) {
       Alert.alert('Gagal', e.message || String(e));
@@ -126,129 +143,140 @@ export const InventoryCreateScreen: React.FC = () => {
 
   return (
     <ScrollView style={{ flex:1, backgroundColor: COLORS.dark }} contentContainerStyle={{ padding: 16 }}>
-      {/* INFORMASI ITEM */}
-      <View style={s.cardSection}>
-        <View style={s.sectionHeaderRow}>
-          <Ionicons name="cube" size={20} color={COLORS.gold} style={{ marginRight: 8 }} />
-          <Text style={s.sectionTitle}>INFORMASI ITEM</Text>
-        </View>
-        <View style={s.divider} />
-        <Text style={s.label}>Jenis Barang</Text>
-        <InlineSelect label="" value={form.category} options={JENIS_BARANG_OPTIONS} onChange={(v)=> setForm(f=> ({ ...f, category: v }))} styleHeader={s.select} />
-        <Text style={s.label}>Kode</Text>
-        <TextInput value={form.code} onChangeText={(v)=>setForm(f=>({...f, code:v}))} placeholder="Contoh: WO110-1" placeholderTextColor={COLORS.yellow} style={s.input} />
-        <Text style={s.label}>Nama/Deskripsi Singkat</Text>
-        <TextInput value={form.name} onChangeText={(v)=>setForm(f=>({...f, name:v}))} placeholder="Cincin wanita motif X" placeholderTextColor={COLORS.yellow} style={s.input} />
-        <Text style={s.label}>Jenis Emas</Text>
-        <InlineSelect label="" value={form.goldType} options={JENIS_EMAS_OPTIONS} onChange={(v)=> setForm(f=> ({ ...f, goldType: v }))} styleHeader={s.select} />
-        <Text style={s.label}>Warna Emas</Text>
-        <InlineSelect label="" value={form.goldColor} options={WARNA_EMAS_OPTIONS} onChange={(v)=> setForm(f=> ({ ...f, goldColor: v }))} styleHeader={s.select} />
-        <Text style={s.label}>Barcode</Text>
-        <TextInput value={form.barcode} onChangeText={(v)=>setForm(f=>({...f, barcode:v}))} placeholder="Scan/ketik barcode" placeholderTextColor={COLORS.yellow} style={s.input} />
-      </View>
-
-      {/* BERAT & LOKASI */}
-      <View style={s.cardSection}>
-        <View style={s.sectionHeaderRow}>
-          <Ionicons name="location" size={20} color={COLORS.gold} style={{ marginRight: 8 }} />
-          <Text style={s.sectionTitle}>BERAT & LOKASI</Text>
-        </View>
-        <View style={s.divider} />
-        <Text style={s.label}>Cabang / Area</Text>
-        <InlineSelect label="" value={branchLocation} options={['ASIA','SUN_PLAZA']} onChange={(v)=> setBranchLocation(v as any)} styleHeader={s.select} />
-        <Text style={s.label}>Penempatan Fisik</Text>
-        <InlineSelect label="" value={placement} options={['ETALASE','PENYIMPANAN']} onChange={(v)=> setPlacement(v as any)} styleHeader={s.select} />
-        <Text style={s.label}>Berat Bersih (gr)</Text>
-        <TextInput value={form.weightNet} onChangeText={(v)=>setForm(f=>({...f, weightNet:v}))} placeholder="mis. 3.5" placeholderTextColor={COLORS.yellow} style={s.input} keyboardType="decimal-pad" />
-        <Text style={s.label}>Karat (otomatis dari total ct batu)</Text>
-        <View style={s.valueBox}><Text style={{ color: COLORS.yellow }}>{totalStoneWeightCt ? `${formatCt(totalStoneWeightCt)} ct` : '-'}</Text></View>
-      </View>
-
-      {/* BATU / STONE */}
-      <View style={s.cardSection}>
-        <View style={s.sectionHeaderRow}>
-          <Ionicons name="diamond" size={20} color={COLORS.gold} style={{ marginRight: 8 }} />
-          <Text style={s.sectionTitle}>BATU / STONE</Text>
-        </View>
-        <View style={s.divider} />
-        <View style={{flexDirection:'row', alignItems:'center', backgroundColor:'#2a2320', borderRadius:8, paddingVertical:6, marginBottom:4}}>
-          <Text style={{flex:2, color:COLORS.gold, fontWeight:'bold', textAlign:'left', paddingLeft:8}}>Bentuk</Text>
-          <Text style={{flex:1, color:COLORS.gold, fontWeight:'bold', textAlign:'left', paddingLeft:8}}>Jumlah</Text>
-          <Text style={{flex:1, color:COLORS.gold, fontWeight:'bold', textAlign:'left', paddingLeft:8}}>Berat</Text>
-          <Text style={{width:32}}></Text>
-        </View>
-        {stones.map((sStone,idx)=>(
-          <React.Fragment key={idx}>
-            <View style={{flexDirection:'row', alignItems:'center', marginBottom:4, borderRadius:8, paddingVertical:4}}>
-              <TouchableOpacity style={{flex:2, marginHorizontal:4, paddingVertical:6, borderRadius:6, borderWidth:1, borderColor:'#FFD700', backgroundColor:'#23201c', flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingLeft:8, paddingRight:8}} onPress={()=> setExpandedStoneIndex(expandedStoneIndex === idx ? null : idx)}>
-                <Text style={{color:'#ffe082', fontWeight:'600', textAlign:'left'}}>{sStone.bentuk || 'Bentuk Batu'}</Text>
-                <Text style={{color:'#ffe082'}}>{expandedStoneIndex === idx ? '▲' : '▼'}</Text>
-              </TouchableOpacity>
-              <TextInput placeholder='Jumlah' style={{flex:1, marginHorizontal:4, color:'#ffe082', backgroundColor:'#23201c', borderRadius:6, borderWidth:1, borderColor:'#FFD700', textAlign:'left', fontWeight:'600', height:36, paddingLeft:8}} placeholderTextColor="#ffe082" value={sStone.jumlah} onChangeText={v=>setStones(prev=> prev.map((x,i)=> i===idx ? { ...x, jumlah:v } : x))} keyboardType='numeric' />
-              <View style={{flex:1, marginHorizontal:4, flexDirection:'row', alignItems:'center', backgroundColor:'#23201c', borderRadius:6, borderWidth:1, borderColor:'#FFD700', height:36, paddingLeft:8}}>
-                <TextInput placeholder='Berat' style={{flex:1, color:'#ffe082', fontWeight:'600', padding:0}} placeholderTextColor="#ffe082" value={sStone.berat} onChangeText={v=>setStones(prev=> prev.map((x,i)=> i===idx ? { ...x, berat:v } : x))} keyboardType='decimal-pad' />
-                <Text style={{ color:'#ffe082', fontWeight:'800', paddingHorizontal:8 }}>ct</Text>
+      {items.map((item, idx) => (
+        <View key={idx} style={{ marginBottom: 16 }}>
+          <View style={[s.cardSection, { borderColor: COLORS.gold }] }>
+            <View style={[s.sectionHeaderRow, { justifyContent:'space-between' }]}>
+              <View style={{ flexDirection:'row', alignItems:'center' }}>
+                <Ionicons name="cube" size={20} color={COLORS.gold} style={{ marginRight: 8 }} />
+                <Text style={s.sectionTitle}>ITEM #{idx+1}</Text>
               </View>
-              <TouchableOpacity onPress={()=> setStones(prev=> prev.filter((_,i)=> i!==idx))} style={{width:32, alignItems:'center', justifyContent:'center'}}>
-                <Ionicons name="close-circle" size={22} color="#b22" />
-              </TouchableOpacity>
+              <View style={{ flexDirection:'row', alignItems:'center' }}>
+                {items.length > 1 && (
+                  <TouchableOpacity onPress={()=> setItems(prev => prev.filter((_,i)=> i!==idx))}>
+                    <Ionicons name="trash" size={20} color="#b22" />
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
-            {expandedStoneIndex === idx && (
-              <View style={{marginBottom:8, marginLeft:4, marginRight:4, backgroundColor:'#23201c', borderRadius:8, borderWidth:1, borderColor:'#FFD700', padding:6}}>
-                <View style={{flexDirection:'row', flexWrap:'wrap'}}>
-                  {BENTUK_BATU_OPTIONS.map(opt => {
-                    const active = sStone.bentuk === opt;
-                    return (
-                      <TouchableOpacity key={opt} onPress={()=>{ setStones(prev=> prev.map((x,i)=> i===idx ? { ...x, bentuk: opt } : x)); setExpandedStoneIndex(null); }} style={{paddingVertical:6, paddingHorizontal:12, borderRadius:6, margin:4, backgroundColor:active ? COLORS.gold : '#181512'}}>
-                        <Text style={{color:active ? '#181512' : '#ffe082', fontWeight:'600'}}>{opt}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+            <View style={s.divider} />
+            <Text style={s.label}>Jenis Barang</Text>
+            <InlineSelect label="" value={item.category} options={JENIS_BARANG_OPTIONS} onChange={(v)=> setItems(prev => prev.map((it,i)=> i===idx ? { ...it, category: v } : it))} styleHeader={s.select} />
+            <Text style={s.label}>Kode</Text>
+            <TextInput value={item.code} onChangeText={(v)=> setItems(prev => prev.map((it,i)=> i===idx ? { ...it, code: v } : it))} placeholder="Contoh: WO110-1" placeholderTextColor={COLORS.yellow} style={s.input} />
+            <Text style={s.label}>Nama/Deskripsi Singkat</Text>
+            <TextInput value={item.name} onChangeText={(v)=> setItems(prev => prev.map((it,i)=> i===idx ? { ...it, name: v } : it))} placeholder="Cincin wanita motif X" placeholderTextColor={COLORS.yellow} style={s.input} />
+            <Text style={s.label}>Jenis Emas</Text>
+            <InlineSelect label="" value={item.goldType} options={JENIS_EMAS_OPTIONS} onChange={(v)=> setItems(prev => prev.map((it,i)=> i===idx ? { ...it, goldType: v } : it))} styleHeader={s.select} />
+            <Text style={s.label}>Warna Emas</Text>
+            <InlineSelect label="" value={item.goldColor} options={WARNA_EMAS_OPTIONS} onChange={(v)=> setItems(prev => prev.map((it,i)=> i===idx ? { ...it, goldColor: v } : it))} styleHeader={s.select} />
+            <Text style={s.label}>Barcode</Text>
+            <TextInput value={item.barcode} onChangeText={(v)=> setItems(prev => prev.map((it,i)=> i===idx ? { ...it, barcode: v } : it))} placeholder="Scan/ketik barcode" placeholderTextColor={COLORS.yellow} style={s.input} />
+          </View>
+
+          <View style={s.cardSection}>
+            <View style={s.sectionHeaderRow}>
+              <Ionicons name="location" size={20} color={COLORS.gold} style={{ marginRight: 8 }} />
+              <Text style={s.sectionTitle}>BERAT & LOKASI</Text>
+            </View>
+            <View style={s.divider} />
+            <Text style={s.label}>Cabang / Area</Text>
+            <InlineSelect label="" value={item.branchLocation} options={['ASIA','SUN_PLAZA']} onChange={(v)=> setItems(prev => prev.map((it,i)=> i===idx ? { ...it, branchLocation: v as any } : it))} styleHeader={s.select} />
+            <Text style={s.label}>Penempatan Fisik</Text>
+            <InlineSelect label="" value={item.placement} options={['ETALASE','PENYIMPANAN']} onChange={(v)=> setItems(prev => prev.map((it,i)=> i===idx ? { ...it, placement: v as any } : it))} styleHeader={s.select} />
+            <Text style={s.label}>Berat Bersih (gr)</Text>
+            <TextInput value={item.weightNet} onChangeText={(v)=> setItems(prev => prev.map((it,i)=> i===idx ? { ...it, weightNet: v } : it))} placeholder="mis. 3.5" placeholderTextColor={COLORS.yellow} style={s.input} keyboardType="decimal-pad" />
+          </View>
+
+          <View style={s.cardSection}>
+            <View style={s.sectionHeaderRow}>
+              <Ionicons name="diamond" size={20} color={COLORS.gold} style={{ marginRight: 8 }} />
+              <Text style={s.sectionTitle}>BATU / STONE</Text>
+            </View>
+            <View style={s.divider} />
+            <View style={{flexDirection:'row', alignItems:'center', backgroundColor:'#2a2320', borderRadius:8, paddingVertical:6, marginBottom:4}}>
+              <Text style={{flex:2, color:COLORS.gold, fontWeight:'bold', textAlign:'left', paddingLeft:8}}>Bentuk</Text>
+              <Text style={{flex:1, color:COLORS.gold, fontWeight:'bold', textAlign:'left', paddingLeft:8}}>Jumlah</Text>
+              <Text style={{flex:1, color:COLORS.gold, fontWeight:'bold', textAlign:'left', paddingLeft:8}}>Berat</Text>
+              <Text style={{width:32}}></Text>
+            </View>
+            {item.stones.map((sStone, sIdx)=>(
+              <React.Fragment key={sIdx}>
+                <View style={{flexDirection:'row', alignItems:'center', marginBottom:4, borderRadius:8, paddingVertical:4}}>
+                  <TouchableOpacity style={{flex:2, marginHorizontal:4, paddingVertical:6, borderRadius:6, borderWidth:1, borderColor:'#FFD700', backgroundColor:'#23201c', flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingLeft:8, paddingRight:8}} onPress={()=> setItems(prev => prev.map((it,i)=> i===idx ? { ...it, expandedStoneIndex: it.expandedStoneIndex === sIdx ? null : sIdx } : it))}>
+                    <Text style={{color:'#ffe082', fontWeight:'600', textAlign:'left'}}>{sStone.bentuk || 'Bentuk Batu'}</Text>
+                    <Text style={{color:'#ffe082'}}>{item.expandedStoneIndex === sIdx ? '▲' : '▼'}</Text>
+                  </TouchableOpacity>
+                  <TextInput placeholder='Jumlah' style={{flex:1, marginHorizontal:4, color:'#ffe082', backgroundColor:'#23201c', borderRadius:6, borderWidth:1, borderColor:'#FFD700', textAlign:'left', fontWeight:'600', height:36, paddingLeft:8}} placeholderTextColor="#ffe082" value={sStone.jumlah} onChangeText={v=> setItems(prev => prev.map((it,i)=> i===idx ? { ...it, stones: it.stones.map((x,j)=> j===sIdx ? { ...x, jumlah: v } : x) } : it))} keyboardType='numeric' />
+                  <View style={{flex:1, marginHorizontal:4, flexDirection:'row', alignItems:'center', backgroundColor:'#23201c', borderRadius:6, borderWidth:1, borderColor:'#FFD700', height:36, paddingLeft:8}}>
+                    <TextInput placeholder='Berat' style={{flex:1, color:'#ffe082', fontWeight:'600', padding:0}} placeholderTextColor="#ffe082" value={sStone.berat} onChangeText={v=> setItems(prev => prev.map((it,i)=> i===idx ? { ...it, stones: it.stones.map((x,j)=> j===sIdx ? { ...x, berat: v } : x) } : it))} keyboardType='decimal-pad' />
+                    <Text style={{ color:'#ffe082', fontWeight:'800', paddingHorizontal:8 }}>ct</Text>
+                  </View>
+                  <TouchableOpacity onPress={()=> setItems(prev => prev.map((it,i)=> i===idx ? { ...it, stones: it.stones.filter((_,j)=> j!==sIdx) } : it))} style={{width:32, alignItems:'center', justifyContent:'center'}}>
+                    <Ionicons name="close-circle" size={22} color="#b22" />
+                  </TouchableOpacity>
                 </View>
-              </View>
-            )}
-          </React.Fragment>
-        ))}
-        <PremiumButton title="TAMBAH BATU" onPress={()=> setStones(prev=> [...prev, emptyStone()])} style={{ alignSelf:'flex-end', marginTop:8, minWidth:160 }} textStyle={{ fontSize:16 }} />
-      </View>
+                {item.expandedStoneIndex === sIdx && (
+                  <View style={{marginBottom:8, marginLeft:4, marginRight:4, backgroundColor:'#23201c', borderRadius:8, borderWidth:1, borderColor:'#FFD700', padding:6}}>
+                    <View style={{flexDirection:'row', flexWrap:'wrap'}}>
+                      {BENTUK_BATU_OPTIONS.map(opt => {
+                        const active = sStone.bentuk === opt;
+                        return (
+                          <TouchableOpacity key={opt} onPress={()=> setItems(prev => prev.map((it,i)=> i===idx ? { ...it, stones: it.stones.map((x,j)=> j===sIdx ? { ...x, bentuk: opt } : x), expandedStoneIndex: null } : it))} style={{paddingVertical:6, paddingHorizontal:12, borderRadius:6, margin:4, backgroundColor:active ? COLORS.gold : '#181512'}}>
+                            <Text style={{color:active ? '#181512' : '#ffe082', fontWeight:'600'}}>{opt}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+                )}
+              </React.Fragment>
+            ))}
+            <PremiumButton title="TAMBAH BATU" onPress={()=> setItems(prev => prev.map((it,i)=> i===idx ? { ...it, stones: [...it.stones, emptyStone()] } : it))} style={{ alignSelf:'flex-end', marginTop:8, minWidth:160 }} textStyle={{ fontSize:16 }} />
+          </View>
 
-      {/* FOTO */}
-      <View style={[s.cardSection, { paddingVertical:14 }] }>
-        <View style={s.sectionHeaderRow}>
-          <Ionicons name="images" size={20} color={COLORS.gold} style={{ marginRight: 8 }} />
-          <Text style={s.sectionTitle}>FOTO</Text>
-        </View>
-        <View style={s.divider} />
-        <View style={s.imagesRow}>
-          {images.map((u,idx)=> (
-            <Image key={`${u}-${idx}`} source={{ uri: toDisplayUrl(u) }} style={s.thumb} />
-          ))}
-        </View>
-        <View style={s.imageBtnRow}>
-          <View style={{alignItems:'center', marginRight:8}}>
-            <TouchableOpacity style={s.imageIconBtn} onPress={pickFromGallery} disabled={uploading}>
-              <Ionicons name="image" size={22} color={COLORS.gold} />
-            </TouchableOpacity>
-            <Text style={s.imageIconLabel}>Dari Galeri</Text>
-          </View>
-          <View style={{alignItems:'center', marginRight:8}}>
-            <TouchableOpacity style={s.imageIconBtn} onPress={takePhoto} disabled={uploading}>
-              <Ionicons name="camera" size={22} color={COLORS.gold} />
-            </TouchableOpacity>
-            <Text style={s.imageIconLabel}>Foto Baru</Text>
-          </View>
-          {images.length > 0 && (
-            <View style={{alignItems:'center'}}>
-              <TouchableOpacity style={s.imageIconBtn} onPress={()=> setImages([])} disabled={uploading}>
-                <Ionicons name="trash" size={22} color="#b22" />
-              </TouchableOpacity>
-              <Text style={[s.imageIconLabel,{color:'#b22'}]}>Reset</Text>
+          <View style={[s.cardSection, { paddingVertical:14 }] }>
+            <View style={s.sectionHeaderRow}>
+              <Ionicons name="images" size={20} color={COLORS.gold} style={{ marginRight: 8 }} />
+              <Text style={s.sectionTitle}>FOTO</Text>
             </View>
-          )}
+            <View style={s.divider} />
+            <View style={s.imagesRow}>
+              {item.images.map((u,uIdx)=> (
+                <Image key={`${u}-${uIdx}`} source={{ uri: toDisplayUrl(u) }} style={s.thumb} />
+              ))}
+            </View>
+            <View style={s.imageBtnRow}>
+              <View style={{alignItems:'center', marginRight:8}}>
+                <TouchableOpacity style={s.imageIconBtn} onPress={()=> pickFromGallery(idx)} disabled={uploading}>
+                  <Ionicons name="image" size={22} color={COLORS.gold} />
+                </TouchableOpacity>
+                <Text style={s.imageIconLabel}>Dari Galeri</Text>
+              </View>
+              <View style={{alignItems:'center', marginRight:8}}>
+                <TouchableOpacity style={s.imageIconBtn} onPress={()=> takePhoto(idx)} disabled={uploading}>
+                  <Ionicons name="camera" size={22} color={COLORS.gold} />
+                </TouchableOpacity>
+                <Text style={s.imageIconLabel}>Foto Baru</Text>
+              </View>
+              {item.images.length > 0 && (
+                <View style={{alignItems:'center'}}>
+                  <TouchableOpacity style={s.imageIconBtn} onPress={()=> setItems(prev => prev.map((it,i)=> i===idx ? { ...it, images: [] } : it))} disabled={uploading}>
+                    <Ionicons name="trash" size={22} color="#b22" />
+                  </TouchableOpacity>
+                  <Text style={[s.imageIconLabel,{color:'#b22'}]}>Reset</Text>
+                </View>
+              )}
+            </View>
+          </View>
         </View>
+      ))}
+
+      <View style={{ flexDirection:'row', justifyContent:'space-between' }}>
+        <PremiumButton title="TAMBAH ITEM" onPress={()=> setItems(prev => [...prev, newItem()])} style={{ minWidth:160 }} textStyle={{ fontSize:16 }} />
+        <PremiumButton title={saving ? 'MENYIMPAN...' : 'SIMPAN SEMUA ITEM'} onPress={submit} disabled={!canSubmit} loading={saving} style={{ minWidth:200 }} textStyle={{ fontSize:16 }} />
       </View>
 
-      <PremiumButton title={saving ? 'MENYIMPAN...' : 'MASUKKAN KE INVENTORY'} onPress={submit} disabled={!canSubmit} loading={saving} style={{ marginTop: 6 }} textStyle={{ fontSize:18 }} />
       <View style={{ height: 40 }} />
     </ScrollView>
   );
