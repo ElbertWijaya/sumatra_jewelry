@@ -43,8 +43,31 @@ function computeAutoBase() {
 
 export const API_URL = computeAutoBase();
 let dynamicBase: string | null = null;
-export function setApiBase(url: string) { if (!url) return; dynamicBase = normalizeBase(url); console.log('[API] Dynamic Base set ->', dynamicBase); }
+type BaseChangeListener = (oldBase: string, newBase: string) => void;
+const baseListeners: BaseChangeListener[] = [];
+
+export function addApiBaseChangeListener(listener: BaseChangeListener): () => void {
+  baseListeners.push(listener);
+  return () => {
+    const idx = baseListeners.indexOf(listener);
+    if (idx >= 0) baseListeners.splice(idx, 1);
+  };
+}
+
 export function getApiBase() { return dynamicBase || API_URL; }
+
+export function setApiBase(url: string) {
+  if (!url) return;
+  const next = normalizeBase(url);
+  const prev = getApiBase();
+  if (next === prev) return;
+  dynamicBase = next;
+  console.log('[API] Dynamic Base set ->', dynamicBase);
+  // notify listeners
+  for (const l of baseListeners.slice()) {
+    try { l(prev, next); } catch {}
+  }
+}
 
 let loggedBase = false;
 if (!loggedBase) { console.log('[API] Base URL (initial):', API_URL); loggedBase = true; }

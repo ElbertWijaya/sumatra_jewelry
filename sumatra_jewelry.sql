@@ -191,15 +191,18 @@ CREATE TABLE IF NOT EXISTS `order` (
   KEY `Order_updated_by_id_fkey` (`updated_by_id`),
   CONSTRAINT `Order_created_by_id_fkey` FOREIGN KEY (`created_by_id`) REFERENCES `account` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `Order_updated_by_id_fkey` FOREIGN KEY (`updated_by_id`) REFERENCES `account` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table sumatra_jewelry.order: ~5 rows (approximately)
+-- Dumping data for table sumatra_jewelry.order: ~7 rows (approximately)
 DELETE FROM `order`;
 INSERT INTO `order` (`id`, `code`, `status`, `completed_date`, `created_at`, `created_by_id`, `customer_address`, `customer_name`, `customer_phone`, `design_image_url`, `down_payment`, `estimated_price`, `final_price`, `gold_color`, `gold_price_per_gram`, `gold_type`, `item_type`, `notes`, `pickup_date`, `reference_image_urls`, `updated_at`, `updated_by_id`, `promised_ready_date`, `stone_count`, `total_stone_weight`, `ring_size`) VALUES
 	(9, 'TM-202512-0009', 'DALAM_PROSES', NULL, '2025-11-15 07:48:56.770', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'Asia', 'Toko', '-', NULL, NULL, NULL, NULL, 'White Gold', NULL, '9K', 'Pendant', NULL, NULL, '["/uploads/1764747930083-178545594.jpg","/uploads/1764747966138-162378169.jpg","/uploads/1764747987324-537046618.jpg","/uploads/1764748009055-844722804.jpg","/uploads/1764748025716-633355612.jpg"]', '2025-12-03 07:48:56.762', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', '2025-12-10 00:00:00.000', 0, NULL, NULL),
 	(10, 'TM-202512-0010', 'DALAM_PROSES', NULL, '2025-11-03 10:46:05.092', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', NULL, 'Sisi Ai', NULL, NULL, NULL, NULL, NULL, 'White Gold', NULL, '18K', 'Women Ring', 'Tempahan 1 cincin cewek batu Ruby', NULL, '["/uploads/RedRuby_Sapphire.jpg"]', '2025-12-05 03:46:05.088', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', NULL, 0, NULL, '9'),
 	(11, 'TM-202512-0011', 'DALAM_PROSES', NULL, '2025-12-03 09:50:48.460', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', NULL, 'Aliong', NULL, NULL, NULL, NULL, NULL, 'Yellow Gold', NULL, '16K', 'Pendant', 'Mainan Huruf balok, berlian N', NULL, '["/uploads/WhatsApp Image 2025-12-03 at 12.20.24.jpeg", "/uploads/WhatsApp Image 2025-12-03 at 12.46.51.jpeg"]', '2025-12-05 03:49:48.458', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', NULL, 0, NULL, NULL),
-	(12, 'TM-202512-0012', 'DALAM_PROSES', NULL, '2025-12-05 03:57:48.977', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', NULL, 'Customer 1', NULL, NULL, NULL, NULL, NULL, 'Yellow Gold', NULL, '16K', 'Men Ring', 'Cincin batu yellow sapphire sesuai contoh', NULL, NULL, '2025-12-05 03:57:48.975', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', NULL, 8, 0.03, '18');
+	(12, 'TM-202512-0012', 'DALAM_PROSES', NULL, '2025-12-05 03:57:48.977', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', NULL, 'Customer 1', NULL, NULL, NULL, NULL, NULL, 'Yellow Gold', NULL, '16K', 'Men Ring', 'Cincin batu yellow sapphire sesuai contoh', NULL, NULL, '2025-12-05 03:57:48.975', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', NULL, 8, 0.03, '18'),
+	(14, 'TM-202512-0014', 'DALAM_PROSES', NULL, '2025-12-20 03:47:48.899', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', NULL, 'Asia', NULL, NULL, NULL, NULL, NULL, 'White Gold', NULL, '18K', 'Earring', 'Dibuat seperti contoh', NULL, '["/uploads/1766202443160-535543415.jpeg"]', '2025-12-20 03:47:48.898', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', NULL, 1, 0.25, NULL),
+	(15, 'TM-202512-0015', 'MENUNGGU', NULL, '2025-12-20 03:56:26.954', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', NULL, 'Acin Cc', NULL, NULL, NULL, NULL, NULL, 'White Gold', NULL, '18K', 'Earring', 'Buat mata satunya saja ukuran 0.10ct per bijinya. Panjangnya sesuaikan', NULL, '["/uploads/1766202902389-139529401.jpeg"]', '2025-12-20 03:56:26.952', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', NULL, 0, NULL, NULL),
+	(16, 'TM-202512-0016', 'DALAM_PROSES', NULL, '2025-12-29 02:59:04.691', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', NULL, 'Vivi ', '08126015156', NULL, NULL, NULL, NULL, 'White Gold', NULL, '18K', 'Women Ring', 'Buat sperti contoh', NULL, '["/uploads/1766977013263-972716015.jpeg","/uploads/1766977027434-703135628.jpeg","/uploads/1766977045213-311097146.jpeg"]', '2025-12-29 02:59:04.689', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', '2026-01-08 00:00:00.000', 0, NULL, '16');
 
 -- Dumping structure for table sumatra_jewelry.orderhistory
 DROP TABLE IF EXISTS `orderhistory`;
@@ -229,9 +232,9 @@ CREATE TABLE IF NOT EXISTS `orderhistory` (
   KEY `OrderHistory_userId_idx` (`userId`),
   CONSTRAINT `OrderHistory_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `order` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `OrderHistory_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `account` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=70 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table sumatra_jewelry.orderhistory: ~16 rows (approximately)
+-- Dumping data for table sumatra_jewelry.orderhistory: ~23 rows (approximately)
 DELETE FROM `orderhistory`;
 INSERT INTO `orderhistory` (`id`, `orderId`, `changedAt`, `userId`, `changeSummary`, `diff`, `action`, `actorName`, `actorRole`, `context`, `field`, `groupId`, `next`, `orderCode`, `prev`, `snapshot`, `statusFrom`, `statusTo`) VALUES
 	(40, 9, '2025-12-03 07:48:56.802', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'CREATE ORDER', NULL, 'CREATED', 'Sales', 'SALES', NULL, NULL, NULL, NULL, 'TM-202512-0009', NULL, NULL, NULL, NULL),
@@ -249,7 +252,14 @@ INSERT INTO `orderhistory` (`id`, `orderId`, `changedAt`, `userId`, `changeSumma
 	(52, 11, '2025-12-06 07:56:03.634', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', 'TASKS_REQUESTED_VALIDATION user=c741c349-a7ad-47c2-86f8-e7ab63f06716', '{"userId":"c741c349-a7ad-47c2-86f8-e7ab63f06716","event":"REQUEST_VALIDATION_BULK","count":3,"notes":null}', 'TASK_EVENT', 'Elbert Wijaya', 'DESIGNER', NULL, NULL, NULL, NULL, 'TM-202512-0011', NULL, NULL, NULL, NULL),
 	(53, 12, '2025-12-13 08:15:10.902', '2af408fa-ab2a-4db2-a2b6-931837c49f61', 'TASKS_REQUESTED_VALIDATION user=2af408fa-ab2a-4db2-a2b6-931837c49f61', '{"userId":"2af408fa-ab2a-4db2-a2b6-931837c49f61","event":"REQUEST_VALIDATION_BULK","count":3,"notes":null}', 'TASK_EVENT', 'Saipe', 'CASTER', NULL, NULL, NULL, NULL, 'TM-202512-0012', NULL, NULL, NULL, NULL),
 	(54, 12, '2025-12-13 08:15:49.453', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'TASKS_VALIDATED user=2af408fa-ab2a-4db2-a2b6-931837c49f61', '{"userId":"2af408fa-ab2a-4db2-a2b6-931837c49f61","event":"TASKS_VALIDATED","count":3,"notes":null}', 'TASK_EVENT', 'Sales', 'SALES', NULL, NULL, NULL, NULL, 'TM-202512-0012', NULL, NULL, NULL, NULL),
-	(55, 11, '2025-12-13 08:15:53.209', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'TASKS_VALIDATED user=c741c349-a7ad-47c2-86f8-e7ab63f06716', '{"userId":"c741c349-a7ad-47c2-86f8-e7ab63f06716","event":"TASKS_VALIDATED","count":3,"notes":null}', 'TASK_EVENT', 'Sales', 'SALES', NULL, NULL, NULL, NULL, 'TM-202512-0011', NULL, NULL, NULL, NULL);
+	(55, 11, '2025-12-13 08:15:53.209', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'TASKS_VALIDATED user=c741c349-a7ad-47c2-86f8-e7ab63f06716', '{"userId":"c741c349-a7ad-47c2-86f8-e7ab63f06716","event":"TASKS_VALIDATED","count":3,"notes":null}', 'TASK_EVENT', 'Sales', 'SALES', NULL, NULL, NULL, NULL, 'TM-202512-0011', NULL, NULL, NULL, NULL),
+	(59, 9, '2025-12-20 03:41:08.557', '2af408fa-ab2a-4db2-a2b6-931837c49f61', 'TASKS_REQUESTED_VALIDATION user=2af408fa-ab2a-4db2-a2b6-931837c49f61', '{"userId":"2af408fa-ab2a-4db2-a2b6-931837c49f61","event":"REQUEST_VALIDATION_BULK","count":3,"notes":null}', 'TASK_EVENT', 'Saipe', 'CASTER', NULL, NULL, NULL, NULL, 'TM-202512-0009', NULL, NULL, NULL, NULL),
+	(60, 9, '2025-12-20 03:41:27.770', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'TASKS_VALIDATED user=2af408fa-ab2a-4db2-a2b6-931837c49f61', '{"userId":"2af408fa-ab2a-4db2-a2b6-931837c49f61","event":"TASKS_VALIDATED","count":3,"notes":null}', 'TASK_EVENT', 'Sales', 'SALES', NULL, NULL, NULL, NULL, 'TM-202512-0009', NULL, NULL, NULL, NULL),
+	(61, 14, '2025-12-20 03:47:48.911', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'CREATE ORDER', NULL, 'CREATED', 'Sales', 'SALES', NULL, NULL, NULL, NULL, 'TM-202512-0014', NULL, NULL, NULL, NULL),
+	(62, 14, '2025-12-20 03:48:14.786', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'STATUS: MENUNGGU -> DALAM_PROSES', '{"from":"MENUNGGU","to":"DALAM_PROSES"}', 'STATUS_CHANGED', 'Sales', 'SALES', NULL, NULL, NULL, NULL, 'TM-202512-0014', NULL, NULL, 'MENUNGGU', 'DALAM_PROSES'),
+	(63, 15, '2025-12-20 03:56:26.966', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'CREATE ORDER', NULL, 'CREATED', 'Sales', 'SALES', NULL, NULL, NULL, NULL, 'TM-202512-0015', NULL, NULL, NULL, NULL),
+	(64, 16, '2025-12-29 02:59:04.701', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'CREATE ORDER', NULL, 'CREATED', 'Sales', 'SALES', NULL, NULL, NULL, NULL, 'TM-202512-0016', NULL, NULL, NULL, NULL),
+	(65, 16, '2025-12-29 02:59:16.578', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'STATUS: MENUNGGU -> DALAM_PROSES', '{"from":"MENUNGGU","to":"DALAM_PROSES"}', 'STATUS_CHANGED', 'Sales', 'SALES', NULL, NULL, NULL, NULL, 'TM-202512-0016', NULL, NULL, 'MENUNGGU', 'DALAM_PROSES');
 
 -- Dumping structure for table sumatra_jewelry.orderstone
 DROP TABLE IF EXISTS `orderstone`;
@@ -264,12 +274,13 @@ CREATE TABLE IF NOT EXISTS `orderstone` (
   KEY `OrderStone_orderId_idx` (`orderId`),
   KEY `OrderStone_bentuk_idx` (`bentuk`),
   CONSTRAINT `OrderStone_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `order` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table sumatra_jewelry.orderstone: ~1 rows (approximately)
+-- Dumping data for table sumatra_jewelry.orderstone: ~2 rows (approximately)
 DELETE FROM `orderstone`;
 INSERT INTO `orderstone` (`id`, `orderId`, `bentuk`, `jumlah`, `berat`, `createdAt`) VALUES
-	(15, 12, 'Round', 8, 0.03, '2025-12-05 03:57:48.984');
+	(15, 12, 'Round', 8, 0.03, '2025-12-05 03:57:48.984'),
+	(16, 14, 'Round', 1, 0.25, '2025-12-20 03:47:48.903');
 
 -- Dumping structure for table sumatra_jewelry.ordertask
 DROP TABLE IF EXISTS `ordertask`;
@@ -298,9 +309,9 @@ CREATE TABLE IF NOT EXISTS `ordertask` (
   CONSTRAINT `OrderTask_checked_by_id_fkey` FOREIGN KEY (`checked_by_id`) REFERENCES `account` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `OrderTask_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `order` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `OrderTask_validated_by_id_fkey` FOREIGN KEY (`validated_by_id`) REFERENCES `account` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=59 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=76 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table sumatra_jewelry.ordertask: ~22 rows (approximately)
+-- Dumping data for table sumatra_jewelry.ordertask: ~32 rows (approximately)
 DELETE FROM `ordertask`;
 INSERT INTO `ordertask` (`id`, `orderId`, `stage`, `status`, `assigned_to_id`, `created_at`, `notes`, `requested_done_at`, `updated_at`, `validated_at`, `validated_by_id`, `job_role`, `checked_at`, `checked_by_id`, `is_checked`) VALUES
 	(37, 9, 'Awal', 'OPEN', NULL, '2025-12-03 07:48:56.799', NULL, NULL, '2025-12-03 07:48:56.791', NULL, NULL, NULL, NULL, NULL, 0),
@@ -317,14 +328,43 @@ INSERT INTO `ordertask` (`id`, `orderId`, `stage`, `status`, `assigned_to_id`, `
 	(48, 11, 'Gambar 3D', 'DONE', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', '2025-12-05 04:02:39.807', NULL, '2025-12-06 07:56:03.614', '2025-12-13 08:15:53.195', '2025-12-13 08:15:53.195', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'DESIGNER', '2025-12-06 07:55:30.711', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', 1),
 	(49, 11, 'Print Resin', 'DONE', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', '2025-12-05 04:02:39.807', NULL, '2025-12-06 07:56:03.615', '2025-12-13 08:15:53.195', '2025-12-13 08:15:53.195', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'DESIGNER', '2025-12-06 07:55:32.264', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', 1),
 	(50, 11, 'Pengecekan', 'DONE', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', '2025-12-05 04:02:39.807', NULL, '2025-12-06 07:56:03.615', '2025-12-13 08:15:53.195', '2025-12-13 08:15:53.195', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'DESIGNER', '2025-12-06 07:55:40.113', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', 1),
-	(51, 10, 'Print Resin', 'IN_PROGRESS', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', '2025-12-05 04:05:01.527', NULL, NULL, '2025-12-05 05:34:18.550', NULL, NULL, 'DESIGNER', '2025-12-06 07:54:59.293', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', 1),
+	(51, 10, 'Print Resin', 'IN_PROGRESS', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', '2025-12-05 04:05:01.527', NULL, NULL, '2025-12-05 05:34:18.550', NULL, NULL, 'DESIGNER', NULL, NULL, 0),
 	(52, 10, 'Pengecekan', 'IN_PROGRESS', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', '2025-12-05 04:05:01.527', NULL, NULL, '2025-12-05 05:34:18.550', NULL, NULL, 'DESIGNER', '2025-12-06 07:55:01.795', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', 1),
 	(53, 10, 'Gambar 3D', 'IN_PROGRESS', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', '2025-12-05 04:05:01.527', NULL, NULL, '2025-12-05 05:34:18.550', NULL, NULL, 'DESIGNER', '2025-12-06 07:55:00.609', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', 1),
 	(54, 11, 'Input Data', 'ASSIGNED', 'f1f7db96-af10-4749-a8a7-fe6552872104', '2025-12-13 08:16:22.124', NULL, NULL, '2025-12-13 08:16:22.122', NULL, NULL, 'INVENTORY', NULL, NULL, 0),
-	(55, 9, 'Pasang Tiang', 'ASSIGNED', '2af408fa-ab2a-4db2-a2b6-931837c49f61', '2025-12-13 08:16:39.558', NULL, NULL, '2025-12-13 08:16:39.556', NULL, NULL, 'CASTER', NULL, NULL, 0),
-	(56, 9, 'Cor', 'ASSIGNED', '2af408fa-ab2a-4db2-a2b6-931837c49f61', '2025-12-13 08:16:39.558', NULL, NULL, '2025-12-13 08:16:39.556', NULL, NULL, 'CASTER', NULL, NULL, 0),
-	(57, 9, 'Kasih Ke Admin', 'ASSIGNED', '2af408fa-ab2a-4db2-a2b6-931837c49f61', '2025-12-13 08:16:39.558', NULL, NULL, '2025-12-13 08:16:39.556', NULL, NULL, 'CASTER', NULL, NULL, 0),
-	(58, 12, 'Input Data', 'ASSIGNED', 'f1f7db96-af10-4749-a8a7-fe6552872104', '2025-12-13 08:17:04.468', NULL, NULL, '2025-12-13 08:17:04.467', NULL, NULL, 'INVENTORY', NULL, NULL, 0);
+	(55, 9, 'Pasang Tiang', 'DONE', '2af408fa-ab2a-4db2-a2b6-931837c49f61', '2025-12-13 08:16:39.558', NULL, '2025-12-20 03:41:08.536', '2025-12-20 03:41:27.757', '2025-12-20 03:41:27.757', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'CASTER', '2025-12-20 03:41:04.458', '2af408fa-ab2a-4db2-a2b6-931837c49f61', 1),
+	(56, 9, 'Cor', 'DONE', '2af408fa-ab2a-4db2-a2b6-931837c49f61', '2025-12-13 08:16:39.558', NULL, '2025-12-20 03:41:08.536', '2025-12-20 03:41:27.757', '2025-12-20 03:41:27.757', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'CASTER', '2025-12-20 03:41:05.616', '2af408fa-ab2a-4db2-a2b6-931837c49f61', 1),
+	(57, 9, 'Kasih Ke Admin', 'DONE', '2af408fa-ab2a-4db2-a2b6-931837c49f61', '2025-12-13 08:16:39.558', NULL, '2025-12-20 03:41:08.536', '2025-12-20 03:41:27.758', '2025-12-20 03:41:27.758', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'CASTER', '2025-12-20 03:41:07.486', '2af408fa-ab2a-4db2-a2b6-931837c49f61', 1),
+	(58, 12, 'Input Data', 'ASSIGNED', 'f1f7db96-af10-4749-a8a7-fe6552872104', '2025-12-13 08:17:04.468', NULL, NULL, '2025-12-13 08:17:04.467', NULL, NULL, 'INVENTORY', NULL, NULL, 0),
+	(63, 9, 'Input Data', 'ASSIGNED', 'f1f7db96-af10-4749-a8a7-fe6552872104', '2025-12-20 03:41:43.963', NULL, NULL, '2025-12-20 03:41:43.961', NULL, NULL, 'INVENTORY', NULL, NULL, 0),
+	(64, 14, 'Awal', 'OPEN', NULL, '2025-12-20 03:47:48.908', NULL, NULL, '2025-12-20 03:47:48.907', NULL, NULL, NULL, NULL, NULL, 0),
+	(65, 14, 'Gambar 3D', 'IN_PROGRESS', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', '2025-12-20 03:48:14.786', NULL, NULL, '2025-12-29 06:46:15.544', NULL, NULL, 'DESIGNER', NULL, NULL, 0),
+	(66, 14, 'Print Resin', 'IN_PROGRESS', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', '2025-12-20 03:48:14.786', NULL, NULL, '2025-12-29 06:46:15.544', NULL, NULL, 'DESIGNER', NULL, NULL, 0),
+	(67, 14, 'Pengecekan', 'IN_PROGRESS', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', '2025-12-20 03:48:14.786', NULL, NULL, '2025-12-29 06:46:15.544', NULL, NULL, 'DESIGNER', NULL, NULL, 0),
+	(68, 15, 'Awal', 'OPEN', NULL, '2025-12-20 03:56:26.961', NULL, NULL, '2025-12-20 03:56:26.959', NULL, NULL, NULL, NULL, NULL, 0),
+	(69, 16, 'Awal', 'OPEN', NULL, '2025-12-29 02:59:04.698', NULL, NULL, '2025-12-29 02:59:04.697', NULL, NULL, NULL, NULL, NULL, 0),
+	(70, 16, 'Gambar 3D', 'IN_PROGRESS', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', '2025-12-29 02:59:16.578', NULL, NULL, '2025-12-29 06:46:14.095', NULL, NULL, 'DESIGNER', NULL, NULL, 0),
+	(71, 16, 'Print Resin', 'IN_PROGRESS', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', '2025-12-29 02:59:16.578', NULL, NULL, '2025-12-29 06:46:14.095', NULL, NULL, 'DESIGNER', NULL, NULL, 0),
+	(72, 16, 'Pengecekan', 'IN_PROGRESS', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', '2025-12-29 02:59:16.578', NULL, NULL, '2025-12-29 06:46:14.095', NULL, NULL, 'DESIGNER', NULL, NULL, 0);
+
+-- Dumping structure for table sumatra_jewelry.pushtoken
+DROP TABLE IF EXISTS `pushtoken`;
+CREATE TABLE IF NOT EXISTS `pushtoken` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `userId` varchar(191) NOT NULL,
+  `token` varchar(191) NOT NULL,
+  `provider` varchar(191) NOT NULL,
+  `platform` varchar(191) DEFAULT NULL,
+  `created_at` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+  `updated_at` datetime(3) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `pushtoken_token_key` (`token`),
+  KEY `PushToken_userId_idx` (`userId`),
+  CONSTRAINT `pushtoken_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `account` (`id`) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table sumatra_jewelry.pushtoken: ~0 rows (approximately)
+DELETE FROM `pushtoken`;
 
 -- Dumping structure for table sumatra_jewelry._prisma_migrations
 DROP TABLE IF EXISTS `_prisma_migrations`;
@@ -359,6 +399,7 @@ INSERT INTO `_prisma_migrations` (`id`, `checksum`, `finished_at`, `migration_na
 	('71cc585c-29c2-425d-8f83-73f5929074de', '14574a67d770271e2005678af92ff5e199f7b83b6353814b7f20b8d4a42119c8', '2025-11-20 06:19:21.669', '20250903162432_drop_single_reference_image_url', NULL, NULL, '2025-11-20 06:19:21.630', 1),
 	('7321a147-283c-446e-b2f9-34c009b51a18', 'de889cfa2c937541ecf91aad32acbf9040e32968fbdcdcde905b98782ad75180', '2025-11-20 06:19:22.403', '20250908145850_add_task_job_role', NULL, NULL, '2025-11-20 06:19:22.365', 1),
 	('8257d2c3-8308-48fe-bd5a-81e8e48d1192', 'e92f69999320a232ea759095f6be593203b2ce7420f2d4680a86e8e28de3ac49', '2025-11-20 06:19:21.867', '20250908080000_drop_final_weight_and_dp_nullable', NULL, NULL, '2025-11-20 06:19:21.768', 1),
+	('84d727f4-f399-4ed6-ad8e-41fc5094f139', '98b4612f349d606881e5b24c1fd3789e56e648a60f2867798b779817d7ea2728', '2025-12-16 06:50:12.467', '20251216065012_', NULL, NULL, '2025-12-16 06:50:12.359', 1),
 	('85eeab50-19a6-4e31-a656-ce612dfe9f09', '6bd9e40875ffebc833b70d7608bd4f01325297341563ebfca810ab05697bb638', '2025-11-20 06:19:23.258', '20250930064155_add_ring_size', NULL, NULL, '2025-11-20 06:19:23.212', 1),
 	('865ef6c1-09b9-46be-a9fd-865324eb370e', '1f6fc0b6dba2d18eb87904e4541e81c5df9c495b24eeb9ec54fcdf512d33bd78', '2025-11-20 06:19:22.604', '20250908163313_', NULL, NULL, '2025-11-20 06:19:22.559', 1),
 	('87f7f0ee-e3fe-4187-bfe0-85f845b202df', '2f52c1bdc89cfe2a2ff211aa46c880bfc91ef5ed6778fa6c9df2e505a1eca7ec', '2025-11-27 05:08:21.632', '20251127050821_drop_karat_and_rename_size', NULL, NULL, '2025-11-27 05:08:21.579', 1),

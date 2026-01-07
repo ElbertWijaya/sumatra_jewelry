@@ -4,7 +4,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@lib/context/AuthContext';
-import { api } from '@lib/api/client';
+import { api, getApiBase, setApiBase, discoverReachableBase, initAutoApiBase } from '@lib/api/client';
+import * as SecureStore from 'expo-secure-store';
 const APP_VERSION = 'v1.2.3';
 
 const COLORS = {
@@ -18,14 +19,18 @@ const COLORS = {
 };
 
 export default function ProfileScreen() {
-  const { token, user, setUser } = useAuth();
+  const { token, user, setUser, logout } = useAuth() as any;
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showServerModal, setShowServerModal] = useState(false);
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editAddress, setEditAddress] = useState('');
+  const [serverInput, setServerInput] = useState('');
+  const [serverInfo, setServerInfo] = useState<string | null>(null);
+  const [serverBusy, setServerBusy] = useState(false);
 
   const handleEditAvatar = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -195,7 +200,11 @@ export default function ProfileScreen() {
             <Ionicons name="key" size={24} color={COLORS.dark} />
             <Text style={s.gridBtnText}>Ubah Password</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[s.gridBtn, s.logoutGridBtn]}>
+          <TouchableOpacity style={s.gridBtn} onPress={() => { setServerInput(getApiBase()); setServerInfo(null); setShowServerModal(true); }}>
+            <Ionicons name="server" size={24} color={COLORS.dark} />
+            <Text style={s.gridBtnText}>Server</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[s.gridBtn, s.logoutGridBtn]} onPress={logout}>
             <Ionicons name="log-out" size={24} color={COLORS.gold} />
             <Text style={[s.gridBtnText, {color: COLORS.gold}]}>Logout</Text>
           </TouchableOpacity>
@@ -282,6 +291,94 @@ export default function ProfileScreen() {
             <View style={{flexDirection:'row', justifyContent:'flex-end', gap:10, marginTop:10}}>
               <TouchableOpacity onPress={() => setShowEditModal(false)} style={s.modalBtnCancel}><Text style={s.modalBtnCancelText}>Batal</Text></TouchableOpacity>
               <TouchableOpacity onPress={handleSaveProfile} style={s.modalBtnSave}><Text style={s.modalBtnSaveText}>Simpan</Text></TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Modal pengaturan server */}
+      {showServerModal && (
+        <View style={s.modalOverlay}>
+          <View style={s.modalCard}>
+            <Text style={s.modalTitle}>Pengaturan Server</Text>
+            <View style={s.modalInputRow}>
+              <Text style={s.modalLabel}>Alamat/IP</Text>
+              <TextInput
+                style={s.modalInput}
+                placeholder="cth: 192.168.1.10:3000 atau http://host:3000"
+                placeholderTextColor={COLORS.brown}
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={serverInput}
+                onChangeText={setServerInput}
+              />
+            </View>
+            {!!serverInfo && <Text style={{color:COLORS.yellow, marginTop:6}}>{serverInfo}</Text>}
+            <View style={{flexDirection:'row', justifyContent:'space-between', marginTop:12, gap:8, flexWrap:'wrap'}}>
+              <TouchableOpacity
+                disabled={serverBusy}
+                onPress={async () => {
+                  setServerBusy(true);
+                  try {
+                    const next = serverInput.trim();
+                    if (!next) { setServerInfo('Masukkan alamat server.'); return; }
+                    setApiBase(next);
+                    try { await SecureStore.setItemAsync('api_base', getApiBase()); } catch {}
+                    // ping to confirm
+                    await api.ping();
+                    setServerInfo('Tersambung ke server baru.');
+                  } catch (e: any) {
+                    setServerInfo(e?.message || 'Gagal terhubung.');
+                  } finally {
+                    setServerBusy(false);
+                  }
+                }}
+                style={[s.modalBtnSave, { opacity: serverBusy ? 0.7 : 1 }]}
+              >
+                <Text style={s.modalBtnSaveText}>{serverBusy ? 'Menyimpan...' : 'Simpan & Tes'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                disabled={serverBusy}
+                onPress={async () => {
+                  setServerBusy(true);
+                  try {
+                    const found = await discoverReachableBase();
+                    if (found) {
+                      setApiBase(found);
+                      try { await SecureStore.setItemAsync('api_base', found); } catch {}
+                      setServerInput(found);
+                      setServerInfo('Auto-detect berhasil.');
+                    } else {
+                      setServerInfo('Auto-detect gagal. Pastikan jaringan sama dengan server.');
+                    }
+                  } finally {
+                    setServerBusy(false);
+                  }
+                }}
+                style={[s.modalBtnCancel, { opacity: serverBusy ? 0.7 : 1 }]}
+              >
+                <Text style={s.modalBtnCancelText}>Auto-detect</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                disabled={serverBusy}
+                onPress={async () => {
+                  setServerBusy(true);
+                  try {
+                    await SecureStore.deleteItemAsync('api_base');
+                    await initAutoApiBase();
+                    const cur = getApiBase();
+                    setServerInput(cur);
+                    setServerInfo('Override dihapus. Menggunakan deteksi otomatis.');
+                  } finally {
+                    setServerBusy(false);
+                  }
+                }}
+                style={[s.modalBtnCancel, { opacity: serverBusy ? 0.7 : 1 }]}
+              >
+                <Text style={s.modalBtnCancelText}>Hapus Override</Text>
+              </TouchableOpacity>
+              <View style={{flex:1}} />
+              <TouchableOpacity onPress={() => setShowServerModal(false)} style={s.modalBtnCancel}><Text style={s.modalBtnCancelText}>Tutup</Text></TouchableOpacity>
             </View>
           </View>
         </View>

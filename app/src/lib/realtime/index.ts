@@ -1,4 +1,4 @@
-import { getApiBase } from '../api/client';
+import { getApiBase, addApiBaseChangeListener } from '../api/client';
 import { QueryClient } from '@tanstack/react-query';
 
 export type RealtimeEvent =
@@ -21,6 +21,7 @@ let currentToken: string | null = null;
 let reconnectAttempts = 0;
 let optsRef: RealtimeOptions | null = null;
 let reconnectTimer: any = null;
+let unsubscribeBaseChange: (() => void) | null = null;
 
 function buildWsUrl(): string {
   const base = getApiBase();
@@ -109,6 +110,8 @@ function handleMessage(raw: MessageEvent<any>) {
 export function connect(token: string, queryClient: QueryClient, options?: Partial<RealtimeOptions>) {
   currentToken = token;
   optsRef = { token, queryClient, reconnect: true, ...(options || {}) } as RealtimeOptions;
+  // Ensure any pending reconnect timer is cleared before creating a new connection
+  if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
   if (socket) {
     try { socket.close(); } catch {}
     socket = null;
@@ -160,4 +163,20 @@ export function send(obj: any) {
   if (socket && socket.readyState === WebSocket.OPEN) {
     socket.send(JSON.stringify(obj));
   }
+}
+
+// Auto-reconnect WebSocket when API base changes
+if (!unsubscribeBaseChange) {
+  unsubscribeBaseChange = addApiBaseChangeListener((_oldBase, _newBase) => {
+    // Reset timers and force reconnect to the new base if we have context
+    if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+    if (socket) {
+      try { socket.close(); } catch {}
+      socket = null;
+    }
+    reconnectAttempts = 0;
+    if (currentToken && optsRef) {
+      connect(currentToken, optsRef.queryClient, { reconnect: optsRef.reconnect, onStatusChange: optsRef.onStatusChange });
+    }
+  });
 }
