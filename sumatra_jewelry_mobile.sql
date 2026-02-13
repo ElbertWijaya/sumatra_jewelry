@@ -15,12 +15,12 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 
--- Dumping database structure for sumatra_jewelry
-DROP DATABASE IF EXISTS `sumatra_jewelry`;
-CREATE DATABASE IF NOT EXISTS `sumatra_jewelry` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_uca1400_ai_ci */;
-USE `sumatra_jewelry`;
+-- Dumping database structure for sumatra_jewelry_mobile
+DROP DATABASE IF EXISTS `sumatra_jewelry_mobile`;
+CREATE DATABASE IF NOT EXISTS `sumatra_jewelry_mobile_mobile` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_uca1400_ai_ci */;
+USE `sumatra_jewelry_mobile_mobile`;
 
--- Dumping structure for table sumatra_jewelry.account
+-- Dumping structure for table sumatra_jewelry_mobile.account
 DROP TABLE IF EXISTS `account`;
 CREATE TABLE IF NOT EXISTS `account` (
   `id` varchar(191) NOT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS `account` (
   CONSTRAINT `account_branch_id_fkey` FOREIGN KEY (`branch_id`) REFERENCES `branch` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table sumatra_jewelry.account: ~8 rows (approximately)
+-- Dumping data for table sumatra_jewelry_mobile.account: ~8 rows (approximately)
 DELETE FROM `account`;
 INSERT INTO `account` (`id`, `email`, `fullName`, `job_role`, `password`, `branch_id`, `phone`, `address`, `created_at`) VALUES
 	('02f67fce-ff6f-4657-9169-665156ef8833', 'carver@tokomas.local', 'Alim', 'CARVER', '$argon2id$v=19$m=65536,t=3,p=4$er/XS/VWs9I4BaJYjtpXQg$nwfOmfa5+BygxDvg+DrHMCt9g0iigUfPJIInp0IHIds', 1, NULL, NULL, '2025-11-20 07:25:59.063'),
@@ -50,7 +50,7 @@ INSERT INTO `account` (`id`, `email`, `fullName`, `job_role`, `password`, `branc
 	('c741c349-a7ad-47c2-86f8-e7ab63f06716', 'designer@tokomas.local', 'Elbert Wijaya', 'DESIGNER', '$argon2id$v=19$m=65536,t=3,p=4$er/XS/VWs9I4BaJYjtpXQg$nwfOmfa5+BygxDvg+DrHMCt9g0iigUfPJIInp0IHIds', 1, NULL, NULL, '2025-11-20 07:25:59.053'),
 	('f1f7db96-af10-4749-a8a7-fe6552872104', 'inventory@tokomas.local', 'Inventory', 'INVENTORY', '$argon2id$v=19$m=65536,t=3,p=4$er/XS/VWs9I4BaJYjtpXQg$nwfOmfa5+BygxDvg+DrHMCt9g0iigUfPJIInp0IHIds', 1, NULL, NULL, '2025-11-20 07:25:59.078');
 
--- Dumping structure for table sumatra_jewelry.branch
+-- Dumping structure for table sumatra_jewelry_mobile.branch
 DROP TABLE IF EXISTS `branch`;
 CREATE TABLE IF NOT EXISTS `branch` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -59,13 +59,13 @@ CREATE TABLE IF NOT EXISTS `branch` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table sumatra_jewelry.branch: ~2 rows (approximately)
+-- Dumping data for table sumatra_jewelry_mobile.branch: ~2 rows (approximately)
 DELETE FROM `branch`;
 INSERT INTO `branch` (`id`, `name`, `address`) VALUES
 	(1, 'ASIA', 'ASIA Branch'),
 	(2, 'SUN_PLAZA', 'SUN PLAZA Branch');
 
--- Dumping structure for table sumatra_jewelry.inventoryitem
+-- Dumping structure for table sumatra_jewelry_mobile.inventoryitem
 DROP TABLE IF EXISTS `inventoryitem`;
 CREATE TABLE IF NOT EXISTS `inventoryitem` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -111,12 +111,12 @@ CREATE TABLE IF NOT EXISTS `inventoryitem` (
   CONSTRAINT `InventoryItem_updated_by_id_fkey` FOREIGN KEY (`updated_by_id`) REFERENCES `account` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table sumatra_jewelry.inventoryitem: ~1 rows (approximately)
+-- Dumping data for table sumatra_jewelry_mobile.inventoryitem: ~1 rows (approximately)
 DELETE FROM `inventoryitem`;
 INSERT INTO `inventoryitem` (`id`, `orderId`, `code`, `name`, `category`, `gold_type`, `gold_color`, `weight_gross`, `weight_net`, `stone_count`, `stone_weight`, `dimensions`, `barcode`, `sku`, `branch_location`, `placement_location`, `cost`, `price`, `status`, `images`, `created_at`, `updated_at`, `created_by_id`, `updated_by_id`, `status_enum`, `deleted_at`, `is_deleted`, `ring_size`) VALUES
 	(3, NULL, 'WP163', 'Pendant Pear Jamrud', 'Pendant', '18K', 'White Gold', NULL, 4.35, 31, 1.11, '[{"bentuk":"Round","jumlah":"30","berat":"0.25"},{"bentuk":"Round","jumlah":"1","berat":"0.864"}]', NULL, NULL, 'ASIA', 'PENYIMPANAN', NULL, NULL, NULL, '["/uploads/1764394925100-640655740.jpeg"]', '2025-11-29 05:42:08.213', '2025-11-29 06:29:02.028', 'f1f7db96-af10-4749-a8a7-fe6552872104', 'f1f7db96-af10-4749-a8a7-fe6552872104', 'ACTIVE', NULL, 0, NULL);
 
--- Dumping structure for table sumatra_jewelry.inventoryitemhistory
+-- Dumping structure for table sumatra_jewelry_mobile.inventoryitemhistory
 DROP TABLE IF EXISTS `inventoryitemhistory`;
 CREATE TABLE IF NOT EXISTS `inventoryitemhistory` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -132,10 +132,10 @@ CREATE TABLE IF NOT EXISTS `inventoryitemhistory` (
   CONSTRAINT `InventoryItemHistory_inventoryItemId_fkey` FOREIGN KEY (`inventoryItemId`) REFERENCES `inventoryitem` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table sumatra_jewelry.inventoryitemhistory: ~0 rows (approximately)
+-- Dumping data for table sumatra_jewelry_mobile.inventoryitemhistory: ~0 rows (approximately)
 DELETE FROM `inventoryitemhistory`;
 
--- Dumping structure for table sumatra_jewelry.inventorystone
+-- Dumping structure for table sumatra_jewelry_mobile.inventorystone
 DROP TABLE IF EXISTS `inventorystone`;
 CREATE TABLE IF NOT EXISTS `inventorystone` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -150,13 +150,13 @@ CREATE TABLE IF NOT EXISTS `inventorystone` (
   CONSTRAINT `InventoryStone_inventoryItemId_fkey` FOREIGN KEY (`inventoryItemId`) REFERENCES `inventoryitem` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table sumatra_jewelry.inventorystone: ~2 rows (approximately)
+-- Dumping data for table sumatra_jewelry_mobile.inventorystone: ~2 rows (approximately)
 DELETE FROM `inventorystone`;
 INSERT INTO `inventorystone` (`id`, `inventoryItemId`, `bentuk`, `jumlah`, `berat`, `created_at`) VALUES
 	(9, 3, 'Round', 30, 0.25, '2025-11-29 06:29:02.030'),
 	(10, 3, 'Round', 1, 0.86, '2025-11-29 06:29:02.030');
 
--- Dumping structure for table sumatra_jewelry.order
+-- Dumping structure for table sumatra_jewelry_mobile.order
 DROP TABLE IF EXISTS `order`;
 CREATE TABLE IF NOT EXISTS `order` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -193,7 +193,7 @@ CREATE TABLE IF NOT EXISTS `order` (
   CONSTRAINT `Order_updated_by_id_fkey` FOREIGN KEY (`updated_by_id`) REFERENCES `account` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table sumatra_jewelry.order: ~7 rows (approximately)
+-- Dumping data for table sumatra_jewelry_mobile.order: ~7 rows (approximately)
 DELETE FROM `order`;
 INSERT INTO `order` (`id`, `code`, `status`, `completed_date`, `created_at`, `created_by_id`, `customer_address`, `customer_name`, `customer_phone`, `design_image_url`, `down_payment`, `estimated_price`, `final_price`, `gold_color`, `gold_price_per_gram`, `gold_type`, `item_type`, `notes`, `pickup_date`, `reference_image_urls`, `updated_at`, `updated_by_id`, `promised_ready_date`, `stone_count`, `total_stone_weight`, `ring_size`) VALUES
 	(9, 'TM-202512-0009', 'DALAM_PROSES', NULL, '2025-11-15 07:48:56.770', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'Asia', 'Toko', '-', NULL, NULL, NULL, NULL, 'White Gold', NULL, '9K', 'Pendant', NULL, NULL, '["/uploads/1764747930083-178545594.jpg","/uploads/1764747966138-162378169.jpg","/uploads/1764747987324-537046618.jpg","/uploads/1764748009055-844722804.jpg","/uploads/1764748025716-633355612.jpg"]', '2025-12-03 07:48:56.762', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', '2025-12-10 00:00:00.000', 0, NULL, NULL),
@@ -204,7 +204,7 @@ INSERT INTO `order` (`id`, `code`, `status`, `completed_date`, `created_at`, `cr
 	(15, 'TM-202512-0015', 'MENUNGGU', NULL, '2025-12-20 03:56:26.954', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', NULL, 'Acin Cc', NULL, NULL, NULL, NULL, NULL, 'White Gold', NULL, '18K', 'Earring', 'Buat mata satunya saja ukuran 0.10ct per bijinya. Panjangnya sesuaikan', NULL, '["/uploads/1766202902389-139529401.jpeg"]', '2025-12-20 03:56:26.952', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', NULL, 0, NULL, NULL),
 	(16, 'TM-202512-0016', 'DALAM_PROSES', NULL, '2025-12-29 02:59:04.691', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', NULL, 'Vivi ', '08126015156', NULL, NULL, NULL, NULL, 'White Gold', NULL, '18K', 'Women Ring', 'Buat sperti contoh', NULL, '["/uploads/1766977013263-972716015.jpeg","/uploads/1766977027434-703135628.jpeg","/uploads/1766977045213-311097146.jpeg"]', '2025-12-29 02:59:04.689', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', '2026-01-08 00:00:00.000', 0, NULL, '16');
 
--- Dumping structure for table sumatra_jewelry.orderhistory
+-- Dumping structure for table sumatra_jewelry_mobile.orderhistory
 DROP TABLE IF EXISTS `orderhistory`;
 CREATE TABLE IF NOT EXISTS `orderhistory` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -234,7 +234,7 @@ CREATE TABLE IF NOT EXISTS `orderhistory` (
   CONSTRAINT `OrderHistory_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `account` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=70 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table sumatra_jewelry.orderhistory: ~23 rows (approximately)
+-- Dumping data for table sumatra_jewelry_mobile.orderhistory: ~23 rows (approximately)
 DELETE FROM `orderhistory`;
 INSERT INTO `orderhistory` (`id`, `orderId`, `changedAt`, `userId`, `changeSummary`, `diff`, `action`, `actorName`, `actorRole`, `context`, `field`, `groupId`, `next`, `orderCode`, `prev`, `snapshot`, `statusFrom`, `statusTo`) VALUES
 	(40, 9, '2025-12-03 07:48:56.802', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'CREATE ORDER', NULL, 'CREATED', 'Sales', 'SALES', NULL, NULL, NULL, NULL, 'TM-202512-0009', NULL, NULL, NULL, NULL),
@@ -261,7 +261,7 @@ INSERT INTO `orderhistory` (`id`, `orderId`, `changedAt`, `userId`, `changeSumma
 	(64, 16, '2025-12-29 02:59:04.701', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'CREATE ORDER', NULL, 'CREATED', 'Sales', 'SALES', NULL, NULL, NULL, NULL, 'TM-202512-0016', NULL, NULL, NULL, NULL),
 	(65, 16, '2025-12-29 02:59:16.578', '71ddd90c-e324-4c63-a3c2-2daaa965aa46', 'STATUS: MENUNGGU -> DALAM_PROSES', '{"from":"MENUNGGU","to":"DALAM_PROSES"}', 'STATUS_CHANGED', 'Sales', 'SALES', NULL, NULL, NULL, NULL, 'TM-202512-0016', NULL, NULL, 'MENUNGGU', 'DALAM_PROSES');
 
--- Dumping structure for table sumatra_jewelry.orderstone
+-- Dumping structure for table sumatra_jewelry_mobile.orderstone
 DROP TABLE IF EXISTS `orderstone`;
 CREATE TABLE IF NOT EXISTS `orderstone` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -276,13 +276,13 @@ CREATE TABLE IF NOT EXISTS `orderstone` (
   CONSTRAINT `OrderStone_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `order` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table sumatra_jewelry.orderstone: ~2 rows (approximately)
+-- Dumping data for table sumatra_jewelry_mobile.orderstone: ~2 rows (approximately)
 DELETE FROM `orderstone`;
 INSERT INTO `orderstone` (`id`, `orderId`, `bentuk`, `jumlah`, `berat`, `createdAt`) VALUES
 	(15, 12, 'Round', 8, 0.03, '2025-12-05 03:57:48.984'),
 	(16, 14, 'Round', 1, 0.25, '2025-12-20 03:47:48.903');
 
--- Dumping structure for table sumatra_jewelry.ordertask
+-- Dumping structure for table sumatra_jewelry_mobile.ordertask
 DROP TABLE IF EXISTS `ordertask`;
 CREATE TABLE IF NOT EXISTS `ordertask` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -311,7 +311,7 @@ CREATE TABLE IF NOT EXISTS `ordertask` (
   CONSTRAINT `OrderTask_validated_by_id_fkey` FOREIGN KEY (`validated_by_id`) REFERENCES `account` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=76 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table sumatra_jewelry.ordertask: ~32 rows (approximately)
+-- Dumping data for table sumatra_jewelry_mobile.ordertask: ~32 rows (approximately)
 DELETE FROM `ordertask`;
 INSERT INTO `ordertask` (`id`, `orderId`, `stage`, `status`, `assigned_to_id`, `created_at`, `notes`, `requested_done_at`, `updated_at`, `validated_at`, `validated_by_id`, `job_role`, `checked_at`, `checked_by_id`, `is_checked`) VALUES
 	(37, 9, 'Awal', 'OPEN', NULL, '2025-12-03 07:48:56.799', NULL, NULL, '2025-12-03 07:48:56.791', NULL, NULL, NULL, NULL, NULL, 0),
@@ -347,7 +347,7 @@ INSERT INTO `ordertask` (`id`, `orderId`, `stage`, `status`, `assigned_to_id`, `
 	(71, 16, 'Print Resin', 'IN_PROGRESS', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', '2025-12-29 02:59:16.578', NULL, NULL, '2025-12-29 06:46:14.095', NULL, NULL, 'DESIGNER', NULL, NULL, 0),
 	(72, 16, 'Pengecekan', 'IN_PROGRESS', 'c741c349-a7ad-47c2-86f8-e7ab63f06716', '2025-12-29 02:59:16.578', NULL, NULL, '2025-12-29 06:46:14.095', NULL, NULL, 'DESIGNER', NULL, NULL, 0);
 
--- Dumping structure for table sumatra_jewelry.pushtoken
+-- Dumping structure for table sumatra_jewelry_mobile.pushtoken
 DROP TABLE IF EXISTS `pushtoken`;
 CREATE TABLE IF NOT EXISTS `pushtoken` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -363,10 +363,10 @@ CREATE TABLE IF NOT EXISTS `pushtoken` (
   CONSTRAINT `pushtoken_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `account` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table sumatra_jewelry.pushtoken: ~0 rows (approximately)
+-- Dumping data for table sumatra_jewelry_mobile.pushtoken: ~0 rows (approximately)
 DELETE FROM `pushtoken`;
 
--- Dumping structure for table sumatra_jewelry._prisma_migrations
+-- Dumping structure for table sumatra_jewelry_mobile._prisma_migrations
 DROP TABLE IF EXISTS `_prisma_migrations`;
 CREATE TABLE IF NOT EXISTS `_prisma_migrations` (
   `id` varchar(36) NOT NULL,
@@ -380,7 +380,7 @@ CREATE TABLE IF NOT EXISTS `_prisma_migrations` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table sumatra_jewelry._prisma_migrations: ~36 rows (approximately)
+-- Dumping data for table sumatra_jewelry_mobile._prisma_migrations: ~36 rows (approximately)
 DELETE FROM `_prisma_migrations`;
 INSERT INTO `_prisma_migrations` (`id`, `checksum`, `finished_at`, `migration_name`, `logs`, `rolled_back_at`, `started_at`, `applied_steps_count`) VALUES
 	('01c3cf0a-bf4c-4c37-8a1e-05cc17107645', '2c264520a996df132ea47f63619e6d269d1288d4119c8c74377e9f9f9b790211', '2025-11-20 06:19:22.363', '20250908112503_', NULL, NULL, '2025-11-20 06:19:22.093', 1),
