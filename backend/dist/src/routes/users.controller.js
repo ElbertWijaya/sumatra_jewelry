@@ -85,7 +85,7 @@ let UsersController = class UsersController {
         const userId = req.user.userId;
         const user = await this.prisma.account.findUnique({ where: { id: userId } });
         if (!user)
-            throw new Error('User not found');
+            throw new common_1.UnauthorizedException('User not found');
         const hash = user.password || '';
         let match = false;
         try {
@@ -99,11 +99,14 @@ let UsersController = class UsersController {
             }
         }
         catch {
-            throw new Error('Invalid old password');
+            throw new common_1.UnauthorizedException('Invalid old password');
         }
         if (!match)
-            throw new Error('Invalid old password');
+            throw new common_1.UnauthorizedException('Invalid old password');
         const argon2 = require('argon2');
+        if (!body.newPassword || body.newPassword.length < 6) {
+            throw new common_1.BadRequestException('Password baru minimal 6 karakter');
+        }
         const newHash = await argon2.hash(body.newPassword);
         await this.prisma.account.update({
             where: { id: userId },

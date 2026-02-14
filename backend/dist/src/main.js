@@ -26,7 +26,9 @@ async function bootstrap() {
                 if ((raw.startsWith('{') && raw.endsWith('}')) || (raw.startsWith('[') && raw.endsWith(']'))) {
                     try {
                         req.body = JSON.parse(raw);
-                        console.log('[TEXT->JSON] Converted text/plain body. Keys:', Object.keys(req.body));
+                        if (process.env.NODE_ENV !== 'production') {
+                            console.log('[TEXT->JSON] Converted text/plain body. Keys:', Object.keys(req.body));
+                        }
                     }
                     catch (e) {
                         console.warn('[TEXT->JSON] parse failed:', e?.message);
@@ -39,57 +41,59 @@ async function bootstrap() {
     catch (e) {
         console.warn('express.json load failed (will rely on Nest default):', e?.message);
     }
-    app.use((req, _res, next) => {
-        if (req.method === 'POST' && req.url.startsWith('/api/orders')) {
-            console.log('[PRE-VALIDATION] URL:', req.url, 'Body type:', typeof req.body, 'Keys:', req.body && Object.keys(req.body || {}));
-            try {
-                if (req.body && typeof req.body === 'object') {
-                    const { customerName, jenisBarang, jenisEmas, warnaEmas } = req.body;
-                    console.log('[PRE-VALIDATION] preview:', { customerName, jenisBarang, jenisEmas, warnaEmas });
-                    console.log('[PRE-VALIDATION] types:', {
-                        customerName: typeof customerName,
-                        jenisBarang: typeof jenisBarang,
-                        jenisEmas: typeof jenisEmas,
-                        warnaEmas: typeof warnaEmas,
-                    });
-                    try {
-                        const snapshot = JSON.stringify(req.body).slice(0, 500);
-                        console.log('[PRE-VALIDATION] raw json (truncated 500):', snapshot);
-                    }
-                    catch { }
-                }
-            }
-            catch { }
-        }
-        next();
-    });
-    app.use((req, _res, next) => {
-        if (req.method === 'POST' && req.url.startsWith('/api/tasks/assign-bulk')) {
-            try {
-                const b = req.body;
-                console.log('[ASSIGN-BULK] body keys:', b && Object.keys(b || {}));
-                console.log('[ASSIGN-BULK] typeofs:', {
-                    orderId: typeof b?.orderId,
-                    role: typeof b?.role,
-                    userId: typeof b?.userId,
-                    subtasks: Array.isArray(b?.subtasks) ? 'array' : typeof b?.subtasks,
-                });
+    if (process.env.NODE_ENV !== 'production') {
+        app.use((req, _res, next) => {
+            if (req.method === 'POST' && req.url.startsWith('/api/orders')) {
+                console.log('[PRE-VALIDATION] URL:', req.url, 'Body type:', typeof req.body, 'Keys:', req.body && Object.keys(req.body || {}));
                 try {
-                    console.log('[ASSIGN-BULK] body json (trunc 300):', JSON.stringify(b).slice(0, 300));
+                    if (req.body && typeof req.body === 'object') {
+                        const { customerName, jenisBarang, jenisEmas, warnaEmas } = req.body;
+                        console.log('[PRE-VALIDATION] preview:', { customerName, jenisBarang, jenisEmas, warnaEmas });
+                        console.log('[PRE-VALIDATION] types:', {
+                            customerName: typeof customerName,
+                            jenisBarang: typeof jenisBarang,
+                            jenisEmas: typeof jenisEmas,
+                            warnaEmas: typeof warnaEmas,
+                        });
+                        try {
+                            const snapshot = JSON.stringify(req.body).slice(0, 500);
+                            console.log('[PRE-VALIDATION] raw json (truncated 500):', snapshot);
+                        }
+                        catch { }
+                    }
                 }
                 catch { }
             }
-            catch { }
-        }
-        next();
-    });
+            next();
+        });
+        app.use((req, _res, next) => {
+            if (req.method === 'POST' && req.url.startsWith('/api/tasks/assign-bulk')) {
+                try {
+                    const b = req.body;
+                    console.log('[ASSIGN-BULK] body keys:', b && Object.keys(b || {}));
+                    console.log('[ASSIGN-BULK] typeofs:', {
+                        orderId: typeof b?.orderId,
+                        role: typeof b?.role,
+                        userId: typeof b?.userId,
+                        subtasks: Array.isArray(b?.subtasks) ? 'array' : typeof b?.subtasks,
+                    });
+                    try {
+                        console.log('[ASSIGN-BULK] body json (trunc 300):', JSON.stringify(b).slice(0, 300));
+                    }
+                    catch { }
+                }
+                catch { }
+            }
+            next();
+        });
+    }
     const uploadsDir = (0, path_1.join)(process.cwd(), 'uploads');
     if (!(0, fs_1.existsSync)(uploadsDir))
         (0, fs_1.mkdirSync)(uploadsDir);
     const express = require('express');
     app.use('/uploads', express.static(uploadsDir));
     app.useGlobalPipes(new common_1.ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true, transformOptions: { enableImplicitConversion: true } }));
-    app.enableCors({ origin: '*', credentials: true });
+    app.enableCors({ origin: '*' });
     try {
         const rt = app.get(realtime_service_1.RealtimeService);
         rt.init(app);

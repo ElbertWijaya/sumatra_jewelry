@@ -60,7 +60,9 @@ let AuthService = class AuthService {
             throw new common_1.UnauthorizedException('User not found');
         const payload = { sub: fullUser.id, jobRole: fullUser.job_role ?? null, email: fullUser.email };
         const accessToken = await this.jwt.signAsync(payload);
-        console.log('[LOGIN] user:', fullUser.email, 'job_role:', fullUser.job_role, 'token:', accessToken);
+        if (process.env.NODE_ENV !== 'production') {
+            console.log('[LOGIN] user:', fullUser.email, 'job_role:', fullUser.job_role);
+        }
         return {
             accessToken,
             user: {
