@@ -3,12 +3,12 @@ import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 
 // Otomatis tentukan BASE sesuai permintaan:
+// - Jika jalan via Expo dev server (Expo Go / run:android): pakai IP host dev (laptop)
 // - Emulator Android: 10.0.2.2:3000/api
-// - Device fisik Android / iOS: 192.168.100.45:3000/api
-// - iOS simulator & web fallback: gunakan localhost atau env jika ada
+// - Fallback lain: gunakan env atau default sederhana
 // Lingkungan masih bisa di-override via EXPO_PUBLIC_API_URL bila disediakan.
 
-const LAN_BASE = 'http://192.168.110.63:3000/api';
+const LAN_BASE = 'http://10.0.2.2:3000/api';
 const ANDROID_EMULATOR_BASE = 'http://10.0.2.2:3000/api';
 
 function getDevHostIp(): string | null {
@@ -28,7 +28,7 @@ function computeAutoBase() {
   if (envOverride) return normalizeBase(envOverride);
   // Prefer the Expo dev host IP when running via Expo Go / dev
   const devIp = getDevHostIp();
-  if (__DEV__ && devIp) return normalizeBase(`http://${devIp}:3000/api`);
+  if (devIp) return normalizeBase(`http://${devIp}:3000/api`);
   if (Platform.OS === 'android') {
     return Device.isDevice ? LAN_BASE : ANDROID_EMULATOR_BASE;
   }

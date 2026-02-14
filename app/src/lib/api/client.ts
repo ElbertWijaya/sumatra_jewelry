@@ -4,7 +4,8 @@ import * as Device from 'expo-device';
 import * as SecureStore from 'expo-secure-store';
 
 // Default LAN base is intentionally not fixed; we will auto-detect.
-const LAN_BASE_FALLBACK = 'http://192.168.0.100:3000/api'; // only used as last resort
+// Fallback hanya dipakai jika semua auto-detect gagal.
+const LAN_BASE_FALLBACK = 'http://10.0.2.2:3000/api';
 const ANDROID_EMULATOR_BASE = 'http://10.0.2.2:3000/api';
 
 function getDevHostIp(): string | null {
@@ -31,7 +32,8 @@ function computeAutoBase() {
   const envOverride = process.env.EXPO_PUBLIC_API_URL;
   if (envOverride) return normalizeBase(envOverride);
   const devIp = getDevHostIp();
-  if (__DEV__ && devIp) return normalizeBase(`http://${devIp}:3000/api`);
+  // Jika Expo dev server berjalan, selalu gunakan IP host dev tersebut
+  if (devIp) return normalizeBase(`http://${devIp}:3000/api`);
   if (Platform.OS === 'android') {
     return Device.isDevice ? LAN_BASE_FALLBACK : ANDROID_EMULATOR_BASE;
   }
