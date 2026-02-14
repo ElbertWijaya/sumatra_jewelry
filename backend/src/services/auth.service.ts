@@ -41,8 +41,11 @@ export class AuthService {
   if (!fullUser) throw new UnauthorizedException('User not found');
   const payload = { sub: fullUser.id, jobRole: fullUser.job_role ?? null, email: fullUser.email };
     const accessToken = await this.jwt.signAsync(payload);
-    // DEBUG: print token to terminal (hapus setelah selesai)
-  console.log('[LOGIN] user:', fullUser.email, 'job_role:', fullUser.job_role, 'token:', accessToken);
+  // Optional debug logging without leaking JWT token value
+  if (process.env.NODE_ENV !== 'production') {
+    // eslint-disable-next-line no-console
+    console.log('[LOGIN] user:', fullUser.email, 'job_role:', fullUser.job_role);
+  }
     return {
       accessToken,
       user: {

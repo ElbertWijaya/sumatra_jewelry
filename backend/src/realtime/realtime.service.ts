@@ -15,7 +15,12 @@ export class RealtimeService {
   private secret: string;
 
   constructor(private config: ConfigService) {
-    this.secret = this.config.get<string>('JWT_SECRET') || 'devsecret';
+  const secret = this.config.get<string>('JWT_SECRET');
+  if (!secret) {
+    // Do not allow realtime channel to run with a hard-coded or empty secret
+    throw new Error('JWT_SECRET is not configured for RealtimeService');
+  }
+  this.secret = secret;
   }
 
   init(app: INestApplication) {

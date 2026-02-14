@@ -15,10 +15,10 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 
--- Dumping database structure for sumatra_jewelry_mobile
+-- Dumping database structure for sumatra_jewelry_mobile (mobile app)
 DROP DATABASE IF EXISTS `sumatra_jewelry_mobile`;
-CREATE DATABASE IF NOT EXISTS `sumatra_jewelry_mobile_mobile` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_uca1400_ai_ci */;
-USE `sumatra_jewelry_mobile_mobile`;
+CREATE DATABASE IF NOT EXISTS `sumatra_jewelry_mobile` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */;
+USE `sumatra_jewelry_mobile`;
 
 -- Dumping structure for table sumatra_jewelry_mobile.account
 DROP TABLE IF EXISTS `account`;

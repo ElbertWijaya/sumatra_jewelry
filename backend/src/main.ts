@@ -34,7 +34,10 @@ async function bootstrap() {
         if ((raw.startsWith('{') && raw.endsWith('}')) || (raw.startsWith('[') && raw.endsWith(']'))) {
           try {
             req.body = JSON.parse(raw);
-            console.log('[TEXT->JSON] Converted text/plain body. Keys:', Object.keys(req.body));
+            if (process.env.NODE_ENV !== 'production') {
+              // eslint-disable-next-line no-console
+              console.log('[TEXT->JSON] Converted text/plain body. Keys:', Object.keys(req.body));
+            }
           } catch (e) {
             console.warn('[TEXT->JSON] parse failed:', (e as any)?.message);
           }
@@ -45,52 +48,49 @@ async function bootstrap() {
   } catch (e) {
     console.warn('express.json load failed (will rely on Nest default):', (e as any)?.message);
   }
-  // Debug middleware: log raw body for order create before validation
-  app.use((req: any, _res: any, next: any) => {
-    if (req.method === 'POST' && req.url.startsWith('/api/orders')) {
-      // eslint-disable-next-line no-console
-      console.log('[PRE-VALIDATION] URL:', req.url, 'Body type:', typeof req.body, 'Keys:', req.body && Object.keys(req.body || {}));
-      // For safety, only shallow preview
-      try {
-        if (req.body && typeof req.body === 'object') {
-          const { customerName, jenisBarang, jenisEmas, warnaEmas } = req.body as any;
-          // eslint-disable-next-line no-console
-          console.log('[PRE-VALIDATION] preview:', { customerName, jenisBarang, jenisEmas, warnaEmas });
-          // Extra: log typeof each critical field
-          console.log('[PRE-VALIDATION] types:', {
-            customerName: typeof customerName,
-            jenisBarang: typeof jenisBarang,
-            jenisEmas: typeof jenisEmas,
-            warnaEmas: typeof warnaEmas,
+  // Debug middlewares for request payloads (disabled in production to avoid logging PII)
+  if (process.env.NODE_ENV !== 'production') {
+    app.use((req: any, _res: any, next: any) => {
+      if (req.method === 'POST' && req.url.startsWith('/api/orders')) {
+        // eslint-disable-next-line no-console
+        console.log('[PRE-VALIDATION] URL:', req.url, 'Body type:', typeof req.body, 'Keys:', req.body && Object.keys(req.body || {}));
+        try {
+          if (req.body && typeof req.body === 'object') {
+            const { customerName, jenisBarang, jenisEmas, warnaEmas } = req.body as any;
+            // eslint-disable-next-line no-console
+            console.log('[PRE-VALIDATION] preview:', { customerName, jenisBarang, jenisEmas, warnaEmas });
+            console.log('[PRE-VALIDATION] types:', {
+              customerName: typeof customerName,
+              jenisBarang: typeof jenisBarang,
+              jenisEmas: typeof jenisEmas,
+              warnaEmas: typeof warnaEmas,
+            });
+            try {
+              const snapshot = JSON.stringify(req.body).slice(0, 500);
+              console.log('[PRE-VALIDATION] raw json (truncated 500):', snapshot);
+            } catch {}
+          }
+        } catch {}
+      }
+      next();
+    });
+    app.use((req: any, _res: any, next: any) => {
+      if (req.method === 'POST' && req.url.startsWith('/api/tasks/assign-bulk')) {
+        try {
+          const b = req.body;
+          console.log('[ASSIGN-BULK] body keys:', b && Object.keys(b || {}));
+          console.log('[ASSIGN-BULK] typeofs:', {
+            orderId: typeof b?.orderId,
+            role: typeof b?.role,
+            userId: typeof b?.userId,
+            subtasks: Array.isArray(b?.subtasks) ? 'array' : typeof b?.subtasks,
           });
-          // Extra full JSON snapshot (size-limited)
-          try {
-            const snapshot = JSON.stringify(req.body).slice(0, 500);
-            console.log('[PRE-VALIDATION] raw json (truncated 500):', snapshot);
-          } catch {}
-        }
-      } catch {}
-    }
-    next();
-  });
-  // Debug middleware: log assign-bulk payload before validation
-  app.use((req: any, _res: any, next: any) => {
-    if (req.method === 'POST' && req.url.startsWith('/api/tasks/assign-bulk')) {
-      try {
-        const b = req.body;
-        console.log('[ASSIGN-BULK] body keys:', b && Object.keys(b || {}));
-        console.log('[ASSIGN-BULK] typeofs:', {
-          orderId: typeof b?.orderId,
-          role: typeof b?.role,
-          userId: typeof b?.userId,
-          subtasks: Array.isArray(b?.subtasks) ? 'array' : typeof b?.subtasks,
-        });
-        // show a brief snapshot
-        try { console.log('[ASSIGN-BULK] body json (trunc 300):', JSON.stringify(b).slice(0,300)); } catch {}
-      } catch {}
-    }
-    next();
-  });
+          try { console.log('[ASSIGN-BULK] body json (trunc 300):', JSON.stringify(b).slice(0,300)); } catch {}
+        } catch {}
+      }
+      next();
+    });
+  }
   // Ensure uploads dir exists & serve static
   const uploadsDir = join(process.cwd(), 'uploads');
   if (!existsSync(uploadsDir)) mkdirSync(uploadsDir);
@@ -99,7 +99,8 @@ async function bootstrap() {
   const express = require('express');
   app.use('/uploads', express.static(uploadsDir));
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true, transformOptions: { enableImplicitConversion: true } }));
-  app.enableCors({ origin: '*', credentials: true });
+	// CORS: allow all origins for token-based auth, without credentials/cookies
+	app.enableCors({ origin: '*' });
   // Init WebSocket realtime server on /ws
   try {
     const rt = app.get(RealtimeService);

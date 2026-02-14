@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Body, Query, UseGuards, Req } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Put, Body, Query, UseGuards, Req, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtAuthGuard } from '../security/jwt-auth.guard';
 import { RolesGuard } from '../security/roles.guard';
@@ -79,7 +79,7 @@ export class UsersController {
   async changePassword(@Req() req: any, @Body() body: { oldPassword: string; newPassword: string }) {
     const userId = req.user.userId;
     const user = await this.prisma.account.findUnique({ where: { id: userId } });
-    if (!user) throw new Error('User not found');
+    if (!user) throw new UnauthorizedException('User not found');
 
     // Validate old password
     const hash = user.password || '';
@@ -92,14 +92,17 @@ export class UsersController {
         const argon2 = require('argon2');
         match = await argon2.verify(hash, body.oldPassword);
       }
-    } catch {
-      throw new Error('Invalid old password');
+  } catch {
+    throw new UnauthorizedException('Invalid old password');
     }
-    if (!match) throw new Error('Invalid old password');
+  if (!match) throw new UnauthorizedException('Invalid old password');
 
     // Hash new password
     const argon2 = require('argon2');
-    const newHash = await argon2.hash(body.newPassword);
+  if (!body.newPassword || body.newPassword.length < 6) {
+    throw new BadRequestException('Password baru minimal 6 karakter');
+  }
+  const newHash = await argon2.hash(body.newPassword);
 
     // Update password
     await this.prisma.account.update({
