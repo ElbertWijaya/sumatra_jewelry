@@ -40,7 +40,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, loading=false
 					<Pressable style={({ pressed }) => [styles.loginBtn, loading && { opacity:0.7 }, pressed && !loading && { opacity:0.85 }]} onPress={handleLogin} disabled={loading}>
 						{loading ? (<ActivityIndicator color={t.colors.text} />) : (<Text style={styles.loginBtnText}>Masuk</Text>)}
 					</Pressable>
-					<TouchableOpacity onPress={() => { setServerInput(getApiBase()); setServerInfo(null); setShowServerModal(true); }} style={[styles.serverBtn, { marginTop: t.spacing(1) }]}>
+					<TouchableOpacity
+						onPress={() => {
+							// Buka modal langsung; nilai awal sudah diisi dari getApiBase() di state
+							setShowServerModal(true);
+						}}
+						style={styles.serverBtn}
+					>
 						<Text style={styles.serverBtnText}>Server</Text>
 					</TouchableOpacity>
 				</View>
@@ -150,4 +156,16 @@ const styles = StyleSheet.create({
 	error: { color:t.colors.danger, marginBottom: t.spacing(1), ...t.typography.body },
 	loginBtn: { backgroundColor:t.colors.primary, borderRadius:t.radius.md, paddingVertical: t.spacing(1), alignItems:'center', marginTop:t.spacing(1), shadowColor:t.colors.primary, shadowOpacity:0.18, shadowOffset:{ width:0, height:2 }, shadowRadius:4, elevation:2 },
 	loginBtnText: { color:t.colors.text, ...t.typography.title },
+	serverBtn: { marginTop: t.spacing(1), paddingVertical: t.spacing(0.75), paddingHorizontal: t.spacing(1.5), alignSelf:'flex-end', borderRadius: t.radius.md, borderWidth:1, borderColor:t.colors.primary, backgroundColor:t.colors.surfaceElevated },
+	serverBtnText: { ...t.typography.subtitle, color:t.colors.primary },
+	modalOverlay: { position:'absolute', top:0, left:0, right:0, bottom:0, backgroundColor:'#00000088', justifyContent:'center', alignItems:'center' },
+	modalCard: { width:'85%', maxWidth:380, backgroundColor:t.colors.surface, borderRadius:t.radius.lg, padding: t.spacing(2), borderWidth:1, borderColor:t.colors.primary },
+	modalTitle: { ...t.typography.title, color:t.colors.primary, textAlign:'center', marginBottom: t.spacing(1) },
+	modalInputRow: { flexDirection:'row', alignItems:'center', marginBottom: t.spacing(1), flexWrap:'wrap' },
+	modalLabel: { ...t.typography.subtitle, color:t.colors.primary, minWidth:70, marginRight: t.spacing(1) },
+	modalInput: { flex:1, minWidth:200, backgroundColor:t.colors.surfaceElevated, borderRadius:t.radius.md, borderWidth:1, borderColor:t.colors.border, paddingHorizontal: t.spacing(1.25), paddingVertical: t.spacing(0.75), color:t.colors.text },
+	modalBtnCancel: { paddingVertical: t.spacing(0.75), paddingHorizontal: t.spacing(1.5), borderRadius:t.radius.md, backgroundColor:t.colors.surfaceElevated, borderWidth:1, borderColor:t.colors.border },
+	modalBtnCancelText: { ...t.typography.subtitle, color:t.colors.text },
+	modalBtnSave: { paddingVertical: t.spacing(0.75), paddingHorizontal: t.spacing(1.5), borderRadius:t.radius.md, backgroundColor:t.colors.primary },
+	modalBtnSaveText: { ...t.typography.subtitle, color:t.colors.text },
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@lib/context/AuthContext';
@@ -21,11 +21,28 @@ export const InventoryRequestsScreen: React.FC = () => {
   return (
     <View style={{ flex:1, backgroundColor: COLORS.dark }}>
       <FlatList
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ padding: 16, paddingTop: 8, paddingBottom: 24 }}
         data={items}
         keyExtractor={(it) => String(it.orderId)}
         refreshControl={<RefreshControl refreshing={isRefetching || isLoading} onRefresh={refetch} />}
-        ListEmptyComponent={!isLoading ? <Text style={s.empty}>Tidak ada request inventory.</Text> : null}
+        ListHeaderComponent={
+          <View style={s.headerBlock}>
+            <Text style={s.headerTitle}>Request Inventory Aktif</Text>
+            <Text style={s.headerSubtitle}>Daftar order yang menunggu dibuatkan stok inventory. Otomatis refresh setiap beberapa detik.</Text>
+          </View>
+        }
+        ListEmptyComponent={
+          <View style={s.emptyWrap}>
+            {isLoading ? (
+              <>
+                <ActivityIndicator color={COLORS.gold} size="small" />
+                <Text style={s.empty}>Memuat request inventory...</Text>
+              </>
+            ) : (
+              <Text style={s.empty}>Tidak ada request inventory.</Text>
+            )}
+          </View>
+        }
         renderItem={({ item }) => {
           const order = item.order || {};
           const customer = order.customerName || order.customer_name || '-';
@@ -84,6 +101,9 @@ export const InventoryRequestsScreen: React.FC = () => {
 };
 
 const s = StyleSheet.create({
+  headerBlock: { marginBottom: 12 },
+  headerTitle: { color: COLORS.gold, fontSize: 18, fontWeight: '800', marginBottom: 4 },
+  headerSubtitle: { color: COLORS.yellow, fontSize: 12 },
   card: { backgroundColor: COLORS.card, borderRadius: 16, padding: 12, borderWidth: 1, borderColor: COLORS.border, marginBottom: 12 },
   cardHeader: { flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom: 6 },
   headerLeft: { flexDirection:'row', alignItems:'center', gap:8, flex:1, minWidth:0 },
@@ -104,5 +124,6 @@ const s = StyleSheet.create({
   btnGhostText: { color: COLORS.yellow, fontWeight:'800' },
   btnPrimary: { flexDirection:'row', alignItems:'center', gap:6, backgroundColor: COLORS.gold, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
   btnPrimaryText: { color:'#1b1b1b', fontWeight:'900' },
-  empty: { color: COLORS.yellow, textAlign:'center', marginTop: 24 },
+  emptyWrap: { paddingVertical: 32, alignItems:'center', justifyContent:'center' },
+  empty: { color: COLORS.yellow, textAlign:'center', marginTop: 8 },
 });

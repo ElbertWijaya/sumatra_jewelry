@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
-    "android:clean": "powershell -NoProfile -Command \"$ErrorActionPreference='SilentlyContinue'; $adb = $env:LOCALAPPDATA+'\\Android\\Sdk\\platform-tools\\adb'; & $adb -s emulator-5554 shell pm trim-caches 1073741824; & $adb -s emulator-5554 shell rm -rf /data/local/tmp/*; Push-Location .\\android; .\\gradlew.bat uninstallDebug; Pop-Location; & $adb -s emulator-5554 uninstall com.sumatrajewelrymobile.app\"",
+    "android:clean": "powershell -NoProfile -Command \"$ErrorActionPreference='SilentlyContinue'; Push-Location .\\android; .\\gradlew.bat uninstallDebug; Pop-Location;\"",
     "android": "npm run android:clean && expo run:android",
     "prebuild": "expo prebuild",
     "run:android": "npm run android:clean && expo run:android",
